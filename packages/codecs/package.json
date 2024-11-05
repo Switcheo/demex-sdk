@@ -1,0 +1,52 @@
+{
+  "name": "@demex-sdk/codecs",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es": "tsc -p tsconfig.es.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "codecs:copy": "cp ~/go/src/github.com/Switcheo/carbon/gen/proto-ts.tar.gz .",
+    "codecs:update": "sh scripts/update-codecs.sh",
+    "codecs:register": "yarn codecs:reset && sh scripts/generate-registry.sh",
+    "codecs:reset": "find . -type f -name 'export.ts' -delete && rm -f src/*-models.ts"
+  },
+  "main": "./dist-cjs/index.js",
+  "module": "./dist-es/index.js",
+  "types": "./dist-types/index.d.ts",
+  "dependencies": {
+    "lodash": "^4.17.21",
+    "tslib": "^2.6.2"
+  },
+  "exports": {
+    ".": {
+      "module": "./dist-es/index.js",
+      "node": "./dist-cjs/index.js",
+      "import": "./dist-es/index.js",
+      "require": "./dist-cjs/index.js",
+      "types": "./dist-types/index.d.ts"
+    },
+    "./package.json": {
+      "module": "./package.json",
+      "node": "./package.json",
+      "import": "./package.json",
+      "require": "./package.json"
+    },
+    "./alliance/*": {
+      "module": "./dist-es/alliance/*",
+      "node": "./dist-cjs/alliance/*",
+      "import": "./dist-es/alliance/*",
+      "require": "./dist-cjs/alliance/*",
+      "types": "./dist-types/alliance/*"
+    }
+  },
+  "files": [
+    "dist-*/**"
+  ],
+  "devDependencies": {
+    "@types/lodash": "^4.17.13",
+    "concurrently": "7.0.0",
+    "eslint": "^9.13.0"
+  }
+}
