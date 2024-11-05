@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "rootDir": "src",
+    "declarationDir": "dist-types",
+    "baseUrl": ".",
+    "paths": {
+      "@demex-sdk/codecs/alliance/*": ["./src/alliance/*"],
+      "@demex-sdk/codecs/amino/*": ["./src/amino/*"],
+      "@demex-sdk/codecs/cosmos/*": ["./src/cosmos/*"],
+      "@demex-sdk/codecs/ethermint/*": ["./src/ethermint/*"],
+      "@demex-sdk/codecs/Switcheo/*": ["./src/Switcheo/*"],
+    },
+  },
+  "extends": "../../tsconfig.types.json",
+  "include": ["src/"]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@demex-sdk/core",
+  "version": "1.0.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es": "tsc -p tsconfig.es.json",
+    "build:types": "tsc -p tsconfig.types.json"
+  },
+  "main": "./dist-cjs/index.js",
+  "module": "./dist-es/index.js",
+  "types": "./dist-types/index.d.ts",
+  "dependencies": {
+    "@cosmjs/stargate": "^0.32.4",
+    "@improbable-eng/grpc-web": "^0.15.0",
+    "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
+    "tslib": "^2.6.2"
+  },
+  "exports": {
+    ".": {
+      "module": "./dist-es/index.js",
+      "node": "./dist-cjs/index.js",
+      "import": "./dist-es/index.js",
+      "require": "./dist-cjs/index.js",
+      "types": "./dist-types/index.d.ts"
+    },
+    "./package.json": {
+      "module": "./package.json",
+      "node": "./package.json",
+      "import": "./package.json",
+      "require": "./package.json"
+    }
+  },
+  "files": [
+    "dist-*/**"
+  ],
+  "devDependencies": {
+    "eslint": "^9.13.0",
+    "concurrently": "7.0.0"
+  }
+}
