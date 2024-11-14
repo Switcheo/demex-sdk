@@ -24,9 +24,8 @@
       "outputs": ["dist-types/**"],
       "dependsOn": ["^build:types"]
     },
-    "build:types:downlevel": {
-      "outputs": ["dist-types/ts3.4/**"],
-      "dependsOn": ["^build:types:downlevel"]
+    "build:clean": {
+      "dependsOn": ["^build:clean"]
     },
     "clean": {
       "cache": false
