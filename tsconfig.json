@@ -9,18 +9,20 @@
     "moduleResolution": "node",
     "noEmitHelpers": false,
     "noFallthroughCasesInSwitch": true,
-    "paths": {
-      "@demex-sdk/*": ["packages/*/"]
-    },
     "preserveConstEnums": true,
     "removeComments": true,
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": false,
+    "composite": true,
     "experimentalDecorators": true,
     "jsx": "react",
     "jsxFactory": "JSX.createElement",
-    "jsxFragmentFactory": "JSX.Fragment"
+    "jsxFragmentFactory": "JSX.Fragment",
+    "paths": {
+      "@demex-sdk/codecs/*": ["packages/codecs/src/*"],
+      "@demex-sdk/*": ["packages/*"]
+    }
   },
-  "include": ["packages/", "lib/"],
+  "include": ["packages/"],
   "exclude": ["node_modules/", "**/*.spec.ts", "vitest.*.ts"]
 }

@@ -7,6 +7,7 @@
     "build:cjs": "tsc -p tsconfig.cjs.json",
     "build:es": "tsc -p tsconfig.es.json",
     "build:types": "tsc -p tsconfig.types.json",
+    "build:clean": "concurrently 'rimraf ./dist-*' 'rimraf ./tsconfig.*.tsbuildinfo'",
     "codecs:copy": "cp ~/go/src/github.com/Switcheo/carbon/gen/proto-ts.tar.gz .",
     "codecs:update": "sh scripts/update-codecs.sh",
     "codecs:register": "yarn codecs:reset && sh scripts/generate-registry.sh",
@@ -39,6 +40,62 @@
       "import": "./dist-es/alliance/*",
       "require": "./dist-cjs/alliance/*",
       "types": "./dist-types/alliance/*"
+    },
+    "./amino/*": {
+      "module": "./dist-es/amino/*",
+      "node": "./dist-cjs/amino/*",
+      "import": "./dist-es/amino/*",
+      "require": "./dist-cjs/amino/*",
+      "types": "./dist-types/amino/*"
+    },
+    "./cosmos/*": {
+      "module": "./dist-es/cosmos/*",
+      "node": "./dist-cjs/cosmos/*",
+      "import": "./dist-es/cosmos/*",
+      "require": "./dist-cjs/cosmos/*",
+      "types": "./dist-types/cosmos/*"
+    },
+    "./ethermint/*": {
+      "module": "./dist-es/ethermint/*",
+      "node": "./dist-cjs/ethermint/*",
+      "import": "./dist-es/ethermint/*",
+      "require": "./dist-cjs/ethermint/*",
+      "types": "./dist-types/ethermint/*"
+    },
+    "./google/*": {
+      "module": "./dist-es/google/*",
+      "node": "./dist-cjs/google/*",
+      "import": "./dist-es/google/*",
+      "require": "./dist-cjs/google/*",
+      "types": "./dist-types/google/*"
+    },
+    "./ibc/*": {
+      "module": "./dist-es/ibc/*",
+      "node": "./dist-cjs/ibc/*",
+      "import": "./dist-es/ibc/*",
+      "require": "./dist-cjs/ibc/*",
+      "types": "./dist-types/ibc/*"
+    },
+    "./oraclesvc/*": {
+      "module": "./dist-es/oraclesvc/*",
+      "node": "./dist-cjs/oraclesvc/*",
+      "import": "./dist-es/oraclesvc/*",
+      "require": "./dist-cjs/oraclesvc/*",
+      "types": "./dist-types/oraclesvc/*"
+    },
+    "./Switcheo/*": {
+      "module": "./dist-es/Switcheo/*",
+      "node": "./dist-cjs/Switcheo/*",
+      "import": "./dist-es/Switcheo/*",
+      "require": "./dist-cjs/Switcheo/*",
+      "types": "./dist-types/Switcheo/*"
+    },
+    "./tendermint/*": {
+      "module": "./dist-es/tendermint/*",
+      "node": "./dist-cjs/tendermint/*",
+      "import": "./dist-es/tendermint/*",
+      "require": "./dist-cjs/tendermint/*",
+      "types": "./dist-types/tendermint/*"
     }
   },
   "files": [
