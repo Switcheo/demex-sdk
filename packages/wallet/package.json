@@ -1,0 +1,50 @@
+{
+  "name": "@demex-sdk/wallet",
+  "version": "0.0.3",
+  "license": "MIT",
+  "scripts": {
+    "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es": "tsc -p tsconfig.es.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:clean": "concurrently 'rimraf ./dist-*' 'rimraf ./tsconfig.*.tsbuildinfo'"
+  },
+  "main": "./dist-cjs/index.js",
+  "module": "./dist-es/index.js",
+  "types": "./dist-types/index.d.ts",
+  "dependencies": {
+    "@cosmjs/crypto": "^0.32.4",
+    "@cosmjs/ledger-amino": "^0.32.4",
+    "@cosmjs/proto-signing": "^0.32.4",
+    "@cosmjs/stargate": "^0.32.4",
+    "@cosmjs/tendermint-rpc": "^0.32.4",
+    "@demex-sdk/codecs": "0.0.3",
+    "@demex-sdk/core": "0.0.3",
+    "@types/elliptic": "^6.4.18",
+    "bip39": "^3.1.0",
+    "elliptic": "^6.6.1",
+    "tslib": "^2.6.2"
+  },
+  "exports": {
+    ".": {
+      "module": "./dist-es/index.js",
+      "node": "./dist-cjs/index.js",
+      "import": "./dist-es/index.js",
+      "require": "./dist-cjs/index.js",
+      "types": "./dist-types/index.d.ts"
+    },
+    "./package.json": {
+      "module": "./package.json",
+      "node": "./package.json",
+      "import": "./package.json",
+      "require": "./package.json"
+    }
+  },
+  "files": [
+    "dist-*/**"
+  ],
+  "devDependencies": {
+    "concurrently": "7.0.0",
+    "eslint": "^9.13.0"
+  }
+}

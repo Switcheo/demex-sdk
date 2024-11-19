@@ -5,3 +5,5 @@ yarn-error.log
 *.tsbuildinfo
 dist
 dist-*
+
+.env
