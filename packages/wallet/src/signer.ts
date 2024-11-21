@@ -1,7 +1,7 @@
 import { AminoSignResponse, OfflineAminoSigner, Secp256k1Wallet, StdSignDoc } from "@cosmjs/amino";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
 import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, OfflineDirectSigner, OfflineSigner } from "@cosmjs/proto-signing";
-import { constructAdr36SignDoc } from "@demex-sdk/core/src/util/message";
+import { constructAdr36SignDoc } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 
 export enum DemexSignerTypes {
