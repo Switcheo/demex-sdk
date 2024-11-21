@@ -4,7 +4,7 @@ import { AdlQueryClient, AllianceQueryClient, AuthQueryClient, AuthzQueryClient,
 import { BlockchainClient } from "./chain";
 import { GrpcQueryClient } from "./grpc";
 
-export interface CarbonQueryClientOpts {
+export interface DemexQueryClientOpts {
   tmClient: Tendermint37Client;
   grpcClient?: GrpcQueryClient;
 }
@@ -80,12 +80,12 @@ const extendQueryClient = (tmClient: Tendermint37Client, rpcClient: Rpc) => Quer
   },
 }))
 
-type CarbonQueryClient = ReturnType<typeof extendQueryClient>;
-namespace CarbonQueryClient {
-  export const instance = (opts: CarbonQueryClientOpts) => {
+type DemexQueryClient = ReturnType<typeof extendQueryClient>;
+namespace DemexQueryClient {
+  export const instance = (opts: DemexQueryClientOpts) => {
     const rpcClient = opts.grpcClient ?? createProtobufRpcClient(new QueryClient(opts.tmClient));
     return extendQueryClient(opts.tmClient, rpcClient);
   }
 }
 
-export { CarbonQueryClient };
+export { DemexQueryClient };
