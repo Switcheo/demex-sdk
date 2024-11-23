@@ -13,12 +13,19 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
+    "@cityofzion/neon-core-next": "npm:@cityofzion/neon-core@^5.0.0",
     "@cosmjs/stargate": "^0.32.4",
     "@cosmjs/tendermint-rpc": "^0.32.4",
     "@demex-sdk/codecs": "0.0.3",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
+    "base58check": "^2.0.0",
     "bignumber.js": "^9.1.2",
+    "bip32": "^2.0.6",
+    "bip39": "^3.0.4",
+    "ethers": "^6.13.4",
+    "secp256k1": "^4.0.2",
+    "secp256r1": "^0.0.3",
     "tslib": "^2.6.2"
   },
   "exports": {
@@ -40,6 +47,9 @@
     "dist-*/**"
   ],
   "devDependencies": {
+    "@types/crypto-js": "4.2.0",
+    "@types/secp256k1": "^4.0.2",
+    "@types/wif": "^2.0.2",
     "concurrently": "7.0.0",
     "eslint": "^9.13.0"
   }
