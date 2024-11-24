@@ -13,6 +13,10 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
+    "@cityofzion/neon-api": "^4.9.0",
+    "@cityofzion/neon-core": "^4.9.0",
+    "@cityofzion/neon-core-next": "npm:@cityofzion/neon-core@^5.0.0",
+    "@zilliqa-js/zilliqa": "^2.2.0",
     "tslib": "^2.6.2"
   },
   "exports": {
