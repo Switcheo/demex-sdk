@@ -1,11 +1,10 @@
 import CarbonSDK from "@carbon-sdk/CarbonSDK";
-import { EthNetworkConfig, NativeTokenHash, NetworkConfigProvider } from "@carbon-sdk/constant";
 import { Carbon } from "@carbon-sdk/CarbonSDK";
-import { Blockchain, blockchainForChainId } from "@carbon-sdk/util/blockchain";
-import { TokenInitInfo, TokensWithExternalBalance } from "@carbon-sdk/util/external";
-import { BN_ZERO, NetworkConfig, SWTHAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { BN_ZERO, NetworkConfig, NetworkConfigProvider, SWTHAddress, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { Blockchain, EthNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
+import { blockchainForChainId } from "@demex-sdk/polynetwork/util";
 import BigNumber from "bignumber.js";
-import { ethers, FixedNumber } from "ethers";
+import { ethers } from "ethers";
 import TokenClient from "./TokenClient";
 import ABIs from "./abis";
 
@@ -210,7 +209,7 @@ export class ETHClient {
     const targetAddressBytes = SWTHAddress.getAddressBytes(tokenCreator, carbonNetwork);
     const targetProxyHash = ethers.hexlify(targetAddressBytes);
 
-    const ethAmount = fromToken.tokenAddress === NativeTokenHash ? amount : BN_ZERO;
+    const ethAmount = fromToken.tokenAddress === stripHexPrefix(ZeroAddress) ? amount : BN_ZERO;
     const bridgeResultTx = await contract.connect(signer).lock(
       fromTokenAddress, // the asset to deposit (from) (0x00 if eth)
       [

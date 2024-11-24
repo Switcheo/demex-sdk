@@ -10,6 +10,8 @@ import * as secp256r1 from "secp256r1";
 import { Bech32AddrType, BIP44_PURPOSE, NEO_COIN_TYPE, ETH_COIN_TYPE, SWTH_COIN_TYPE, Network, defaultNetworkConfig } from "../env";
 import { BIP44Path, randomMnemonic, stringOrBufferToBuffer, stripHexPrefix } from "./crypto";
 
+export const ZeroAddress = "0x0000000000000000000000000000000000000000";
+
 export interface AddressOptions {}
 
 export interface AddressBuilder<T extends AddressOptions = AddressOptions> {

@@ -1,9 +1,8 @@
 import CarbonSDK from "@carbon-sdk/CarbonSDK";
-import { NetworkConfig, NetworkConfigProvider, ZilNetworkConfig } from "@carbon-sdk/constant";
-import { Blockchain, blockchainForChainId, BLOCKCHAIN_V2_TO_V1_MAPPING } from "@carbon-sdk/util/blockchain";
-import { TokensWithExternalBalance } from "@carbon-sdk/util/external";
 import { Carbon } from "@demex-sdk/codecs";
-import { SWTHAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { NetworkConfig, NetworkConfigProvider, SWTHAddress, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, ZilNetworkConfig, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
+import { blockchainForChainId } from "@demex-sdk/polynetwork/util";
 import { Transaction, Wallet } from "@zilliqa-js/account";
 import { CallParams, Contract, Value } from "@zilliqa-js/contract";
 import { BN, bytes, Long } from "@zilliqa-js/util";
@@ -12,7 +11,7 @@ import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 
 const uint128Max = "340282366920938463463374607431768211356";
-const zeroAddress = "0000000000000000000000000000000000000000";
+const zeroAddress = stripHexPrefix(ZeroAddress);
 
 export declare type WalletProvider = Omit<
   Zilliqa & {

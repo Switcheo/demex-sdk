@@ -1,12 +1,10 @@
 import CarbonSDK from "@carbon-sdk/CarbonSDK";
-import { NetworkConfigProvider } from "@carbon-sdk/constant";
 import { NeoLedgerAccount } from "@carbon-sdk/provider/account";
 import { O3Types, O3Wallet } from "@carbon-sdk/provider/o3";
-import { Blockchain } from "@carbon-sdk/util/blockchain";
-import { TokensWithExternalBalance } from "@carbon-sdk/util/external";
 import { CONST, rpc, sc, tx, u, wallet } from "@cityofzion/neon-core-next";
 import { GetContractStateResult, InvokeResult } from "@cityofzion/neon-core-next/lib/rpc";
-import { N3Address, SimpleMap, SWTHAddress } from "@demex-sdk/core";
+import { NetworkConfigProvider, N3Address, SimpleMap, SWTHAddress } from "@demex-sdk/core";
+import { Blockchain, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
 import BigNumber from "bignumber.js";
 
 export interface N3ClientOpts {
