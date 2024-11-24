@@ -1,11 +1,9 @@
 import CarbonSDK from "@carbon-sdk/CarbonSDK";
-import { NeoNetworkConfig, NetworkConfig, NetworkConfigProvider, ZeroAddress } from "@carbon-sdk/constant";
 import { Carbon } from "@carbon-sdk/CarbonSDK";
 import { NeoLedgerAccount } from "@carbon-sdk/provider/account";
 import { O3Types, O3Wallet } from "@carbon-sdk/provider/o3";
-import { Blockchain, blockchainForChainId, BLOCKCHAIN_V2_TO_V1_MAPPING } from "@carbon-sdk/util/blockchain";
-import { TokenInitInfo, TokensWithExternalBalance } from "@carbon-sdk/util/external";
-import { NEOAddress, SimpleMap, SWTHAddress, stripHexPrefix } from "@demex-sdk/core";
+import { NetworkConfig, NetworkConfigProvider, NEOAddress, SimpleMap, SWTHAddress, ZeroAddress, stripHexPrefix } from "@demex-sdk/core";
+import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, NeoNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
 import * as Neon from "@cityofzion/neon-core";
 import { api } from "@cityofzion/neon-js";
 import BigNumber from "bignumber.js";

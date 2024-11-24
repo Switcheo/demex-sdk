@@ -15,8 +15,12 @@ export interface NetworkConfig {
 
   feeAddress: string;
 
-  bech32Prefix: string
-}
+  bech32Prefix: string;
+};
+
+export interface NetworkConfigProvider {
+  getConfig(): NetworkConfig;
+};
 
 export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
   [Network.MainNet]: {
@@ -66,4 +70,4 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
 
     bech32Prefix: "tswth",
   },
-}
+};
