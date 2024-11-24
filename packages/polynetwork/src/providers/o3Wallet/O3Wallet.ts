@@ -1,7 +1,6 @@
-import { CarbonSDK } from "@carbon-sdk/index";
-import { Carbon } from "@carbon-sdk/CarbonSDK";
+import { Carbon } from "@demex-sdk/codecs";
 import * as Neon from "@cityofzion/neon-core-next";
-import { NEOAddress, NetworkConfig, NetworkConfigs, N3Address, SimpleMap } from "@demex-sdk/core";
+import { NEOAddress, Network, NetworkConfig, NetworkConfigs, N3Address, SimpleMap } from "@demex-sdk/core";
 import { TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
 import neoDapi from "neo-dapi";
 import neo3Dapi from "neo3-dapi";
@@ -17,7 +16,7 @@ export class O3Wallet {
   public address: string = "";
   private publicKey: string = "";
 
-  private constructor(public readonly network: CarbonSDK.Network) {
+  private constructor(public readonly network: Network) {
     const networkConfig = NetworkConfigs[network];
     this.networkConfig = networkConfig;
 

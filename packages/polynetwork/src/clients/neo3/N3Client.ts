@@ -1,15 +1,16 @@
-import CarbonSDK from "@carbon-sdk/CarbonSDK";
 import { CONST, rpc, sc, tx, u, wallet } from "@cityofzion/neon-core-next";
 import { GetContractStateResult, InvokeResult } from "@cityofzion/neon-core-next/lib/rpc";
-import { NetworkConfigProvider, N3Address, SimpleMap, SWTHAddress } from "@demex-sdk/core";
-import { Blockchain, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
-import { O3Types, O3Wallet } from "@demex-sdk/providers/o3Wallet";
-import { NeoLedgerAccount } from "@demex-sdk/providers/neoLedger";
+import { N3Address, Network, NetworkConfigProvider, SimpleMap, SWTHAddress, TokenClient } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
+import { Blockchain, TokensWithExternalBalance } from "../../env";
+import { NeoLedgerAccount } from "../../providers/neoLedger";
+import { O3Types, O3Wallet } from "../../providers/o3Wallet";
 
 export interface N3ClientOpts {
   configProvider: NetworkConfigProvider;
+  tokenClient: TokenClient;
   blockchain?: Blockchain;
+  network: Network;
 }
 
 export interface LockLedgerDepositParams {
@@ -62,7 +63,12 @@ export class N3Client {
 
   private rpcClient: rpc.RPCClient;
 
-  private constructor(public readonly configProvider: NetworkConfigProvider, public readonly blockchain: Blockchain) {
+  private constructor(
+    public readonly configProvider: NetworkConfigProvider,
+    public readonly tokenClient: TokenClient,
+    public readonly blockchain: Blockchain,
+    public readonly network: Network,
+  ) {
     const config = configProvider.getConfig();
     const isValidNeoRpcUrl = config.n3.rpcURL?.length > 0;
     this.rpcClient = isValidNeoRpcUrl ? new rpc.RPCClient(config.n3.rpcURL) : null!;
@@ -91,15 +97,15 @@ export class N3Client {
   }
 
   public static instance(opts: N3ClientOpts) {
-    const { configProvider, blockchain = Blockchain.Neo3 } = opts;
+    const { configProvider, tokenClient, blockchain = Blockchain.Neo3, network } = opts;
 
     if (!N3Client.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
 
-    return new N3Client(configProvider, blockchain);
+    return new N3Client(configProvider, tokenClient, blockchain, network);
   }
 
-  public async getExternalBalances(sdk: CarbonSDK, address: string, whitelistDenoms?: string[]): Promise<TokensWithExternalBalance[]> {
-    const tokens = await sdk.token.getAllTokens();
+  public async getExternalBalances(address: string, whitelistDenoms?: string[]): Promise<TokensWithExternalBalance[]> {
+    const tokens = await this.tokenClient.getAllTokens();
 
     const balances: SimpleMap<string> = await this.getAllN3Balances(address);
     const tokensWithBalance: TokensWithExternalBalance[] = [];

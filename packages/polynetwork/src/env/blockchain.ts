@@ -1,3 +1,5 @@
+import { SimpleMap } from "@demex-sdk/core";
+
 export enum Blockchain {
   Neo = "neo",
   Ethereum = "eth",

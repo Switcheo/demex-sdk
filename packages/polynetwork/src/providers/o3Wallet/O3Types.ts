@@ -1,7 +1,7 @@
-import { CarbonSDK } from "@carbon-sdk/index";
-import { TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
+import { Network } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import neo3Dapi from "neo3-dapi";
+import { TokensWithExternalBalance } from "../../env";
 
 export type AcceptedNets = "N3MainNet" | "MainNet";
 
@@ -105,5 +105,5 @@ export interface LockDepositParams {
 };
 
 export interface O3WalletOpts {
-  network: CarbonSDK.Network;
+  network: Network;
 };

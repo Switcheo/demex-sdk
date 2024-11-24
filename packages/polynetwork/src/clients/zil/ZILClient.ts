@@ -1,14 +1,13 @@
-import CarbonSDK from "@carbon-sdk/CarbonSDK";
 import { Carbon } from "@demex-sdk/codecs";
-import { NetworkConfig, NetworkConfigProvider, SWTHAddress, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
-import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, ZilNetworkConfig, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
-import { blockchainForChainId } from "@demex-sdk/polynetwork/util";
+import { appendHexPrefix, Network, NetworkConfig, NetworkConfigProvider, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import { Transaction, Wallet } from "@zilliqa-js/account";
 import { CallParams, Contract, Value } from "@zilliqa-js/contract";
 import { BN, bytes, Long } from "@zilliqa-js/util";
 import { fromBech32Address, Zilliqa } from "@zilliqa-js/zilliqa";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
+import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, TokensWithExternalBalance, ZilNetworkConfig } from "../../env";
+import { blockchainForChainId } from "../../util";
 
 const uint128Max = "340282366920938463463374607431768211356";
 const zeroAddress = stripHexPrefix(ZeroAddress);
@@ -28,7 +27,9 @@ export declare type WalletProvider = Omit<
 
 export interface ZILClientOpts {
   configProvider: NetworkConfigProvider;
-  blockchain: Blockchain;
+  tokenClient: TokenClient;
+  blockchain?: Blockchain;
+  network: Network;
 }
 
 interface ZILTxParams {
@@ -125,27 +126,32 @@ export class ZILClient {
 
   private walletProvider?: WalletProvider; // zilpay
 
-  private constructor(public readonly configProvider: NetworkConfigProvider, public readonly blockchain: Blockchain) { }
+  private constructor(
+    public readonly configProvider: NetworkConfigProvider,
+    public readonly tokenClient: TokenClient,
+    public readonly blockchain: Blockchain,
+    public readonly network: Network,
+  ) { }
 
   public static instance(opts: ZILClientOpts) {
-    const { configProvider, blockchain } = opts;
+    const { configProvider, tokenClient, blockchain, network } = opts;
     if (!ZILClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) {
       throw new Error(`unsupported blockchain - ${blockchain}`);
     }
 
-    return new ZILClient(configProvider, blockchain);
+    return new ZILClient(configProvider, tokenClient, blockchain, network);
   }
 
-  public async getExternalBalances(sdk: CarbonSDK, address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
-    const tokenQueryResults = await sdk.token.getAllTokens();
+  public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
+    const tokenQueryResults = await this.tokenClient.getAllTokens();
     const tokens = tokenQueryResults.filter(
       (token) => {
         const isCorrectBlockchain =
           version === "V2"
             ?
-            !!sdk.token.getBlockchainV2(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[sdk.token.getBlockchainV2(token.denom)!] == this.blockchain)
+            !!this.tokenClient.getBlockchainV2(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchainV2(token.denom)!] == this.blockchain)
             :
-            blockchainForChainId(token.chainId.toNumber(), sdk.network) == this.blockchain
+            blockchainForChainId(token.chainId.toNumber(), this.network) == this.blockchain
         return isCorrectBlockchain && token.tokenAddress.length == 40 && (!whitelistDenoms || whitelistDenoms.includes(token.denom))
       }
     );
