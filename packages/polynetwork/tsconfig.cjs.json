@@ -2,7 +2,12 @@
   "compilerOptions": {
     "rootDir": "./src",
     "outDir": "./dist-cjs",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@demex-sdk/polynetwork/env/": ["./src/env/"],
+      "@demex-sdk/polynetwork/providers/": ["./src/providers/"],
+      "@demex-sdk/polynetwork/util/": ["./src/util/"]
+    }
   },
   "extends": "../../tsconfig.cjs.json",
   "include": ["src/"]

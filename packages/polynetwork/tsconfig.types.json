@@ -3,6 +3,11 @@
     "baseUrl": ".",
     "declarationDir": "dist-types",
     "rootDir": "src",
+    "paths": {
+      "@demex-sdk/polynetwork/env/": ["./src/env/"],
+      "@demex-sdk/polynetwork/providers/": ["./src/providers/"],
+      "@demex-sdk/polynetwork/util/": ["./src/util/"]
+    }
   },
   "extends": "../../tsconfig.types.json",
   "include": ["src/"]
