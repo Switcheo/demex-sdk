@@ -1,17 +1,16 @@
-import CarbonSDK from "@carbon-sdk/CarbonSDK";
-import { Carbon } from "@carbon-sdk/CarbonSDK";
-import { BN_ZERO, NetworkConfig, NetworkConfigProvider, SWTHAddress, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
-import { Blockchain, EthNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
-import { blockchainForChainId } from "@demex-sdk/polynetwork/util";
+import { Carbon } from "@demex-sdk/codecs";
+import { BN_ZERO, Network, NetworkConfig, NetworkConfigProvider, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import TokenClient from "./TokenClient";
+import { Blockchain, EthNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
+import { blockchainForChainId } from "../../util";
 import ABIs from "./abis";
 
 export interface ETHClientOpts {
   configProvider: NetworkConfigProvider;
   tokenClient: TokenClient;
   blockchain: typeof ETHClient.SUPPORTED_BLOCKCHAINS[number];
+  network: Network;
 }
 
 interface ETHTxParams {
@@ -85,19 +84,20 @@ export class ETHClient {
   private constructor(
     public readonly configProvider: NetworkConfigProvider,
     public readonly blockchain: typeof ETHClient.SUPPORTED_BLOCKCHAINS[number],
-    public readonly tokenClient: TokenClient
+    public readonly tokenClient: TokenClient,
+    public readonly network: Network,
   ) { }
 
   public static instance(opts: ETHClientOpts) {
-    const { configProvider, blockchain, tokenClient } = opts;
+    const { configProvider, blockchain, tokenClient, network } = opts;
 
     if (!ETHClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
 
-    return new ETHClient(configProvider, blockchain, tokenClient);
+    return new ETHClient(configProvider, blockchain, tokenClient, network);
   }
 
-  public async getExternalBalances(api: CarbonSDK, address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
-    const tokenQueryResults = await api.token.getAllTokens();
+  public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
+    const tokenQueryResults = await this.tokenClient.getAllTokens();
     const lockProxyAddress = this.getLockProxyAddress().toLowerCase();
     const tokens = tokenQueryResults.filter(
       (token) => {
@@ -106,7 +106,7 @@ export class ETHClient {
             ?
             this.tokenClient.getBlockchainV2(token.denom) == ETHClient.BLOCKCHAINV2_MAPPING[this.blockchain]
             :
-            blockchainForChainId(token.chainId.toNumber(), api.network) == this.blockchain
+            blockchainForChainId(token.chainId.toNumber(), this.network) == this.blockchain
         return isCorrectBlockchain &&
           token.tokenAddress.length == 40 &&
           token.bridgeAddress.toLowerCase() == stripHexPrefix(lockProxyAddress) &&

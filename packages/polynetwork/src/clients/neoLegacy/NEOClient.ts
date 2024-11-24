@@ -1,18 +1,19 @@
-import CarbonSDK from "@carbon-sdk/CarbonSDK";
-import { Carbon } from "@carbon-sdk/CarbonSDK";
 import * as Neon from "@cityofzion/neon-core";
 import { api } from "@cityofzion/neon-js";
-import { NetworkConfig, NetworkConfigProvider, NEOAddress, SimpleMap, SWTHAddress, ZeroAddress, stripHexPrefix } from "@demex-sdk/core";
-import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, NeoNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
-import { O3Types, O3Wallet } from "@demex-sdk/providers/o3Wallet";
-import { NeoLedgerAccount } from "@demex-sdk/providers/neoLedger";
+import { Carbon } from "@demex-sdk/codecs";
+import { NEOAddress, Network, NetworkConfig, NetworkConfigProvider, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { chunk } from "lodash";
+import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, NeoNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
+import { NeoLedgerAccount } from "../../providers/neoLedger";
+import { O3Types, O3Wallet } from "../../providers/o3Wallet";
 
 export interface NEOClientOpts {
   configProvider: NetworkConfigProvider;
+  tokenClient: TokenClient;
   blockchain?: Blockchain;
+  network: Network;
 }
 
 export interface LockLedgerDepositParams {
@@ -43,14 +44,19 @@ export class NEOClient {
     [Blockchain.Neo]: "Neo",
   };
 
-  private constructor(public readonly configProvider: NetworkConfigProvider, public readonly blockchain: Blockchain) { }
+  private constructor(
+    public readonly configProvider: NetworkConfigProvider,
+    public readonly tokenClient: TokenClient,
+    public readonly blockchain: Blockchain,
+    public readonly network: Network,
+  ) { }
 
   public static instance(opts: NEOClientOpts) {
-    const { configProvider, blockchain = Blockchain.Neo } = opts;
+    const { configProvider, tokenClient, blockchain = Blockchain.Neo, network } = opts;
 
     if (!NEOClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
 
-    return new NEOClient(configProvider, blockchain);
+    return new NEOClient(configProvider, tokenClient, blockchain, network);
   }
 
   public static parseHexNum(hex: string, exp: number = 0): string {
@@ -60,22 +66,21 @@ export class NEOClient {
   }
 
   public async getExternalBalances(
-    sdk: CarbonSDK,
     address: string,
     url: string,
     whitelistDenoms?: string[],
     version = "V1",
   ): Promise<TokensWithExternalBalance[]> {
-    const tokenQueryResults = await sdk.token.getAllTokens();
+    const tokenQueryResults = await this.tokenClient.getAllTokens();
     const account = new Neon.wallet.Account(address);
     const tokens = tokenQueryResults.filter(
       (token) => {
         const isCorrectBlockchain =
           version === "V2"
             ?
-            !!sdk.token.getBlockchainV2(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[sdk.token.getBlockchainV2(token.denom)!] == this.blockchain)
+            !!this.tokenClient.getBlockchainV2(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchainV2(token.denom)!] == this.blockchain)
             :
-            blockchainForChainId(token.chainId.toNumber(), sdk.network) == this.blockchain
+            blockchainForChainId(token.chainId.toNumber(), this.network) == this.blockchain
         return (isCorrectBlockchain || token.denom === "swth") && token.tokenAddress.length == 40 && token.bridgeAddress.length == 40
       }
     );
