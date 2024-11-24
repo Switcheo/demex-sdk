@@ -1,16 +1,16 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { BN_ZERO, Network, NetworkConfig, NetworkConfigProvider, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { BN_ZERO, Network, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import { Blockchain, EthNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
+import { Blockchain, EthNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
 import { blockchainForChainId } from "../../util";
 import ABIs from "./abis";
 
 export interface ETHClientOpts {
-  configProvider: NetworkConfigProvider;
   tokenClient: TokenClient;
   blockchain: typeof ETHClient.SUPPORTED_BLOCKCHAINS[number];
   network: Network;
+  polynetworkConfig: PolynetworkConfig;
 }
 
 interface ETHTxParams {
@@ -82,18 +82,18 @@ export class ETHClient {
   };
 
   private constructor(
-    public readonly configProvider: NetworkConfigProvider,
+    public readonly polynetworkConfig: PolynetworkConfig,
     public readonly blockchain: typeof ETHClient.SUPPORTED_BLOCKCHAINS[number],
     public readonly tokenClient: TokenClient,
     public readonly network: Network,
   ) { }
 
   public static instance(opts: ETHClientOpts) {
-    const { configProvider, blockchain, tokenClient, network } = opts;
+    const { blockchain, tokenClient, network, polynetworkConfig } = opts;
 
     if (!ETHClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
 
-    return new ETHClient(configProvider, blockchain, tokenClient, network);
+    return new ETHClient(polynetworkConfig, blockchain, tokenClient, network);
   }
 
   public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
@@ -189,7 +189,7 @@ export class ETHClient {
       throw new Error("Invalid recovery address");
     }
 
-    const carbonNetwork = networkConfig.network;
+    const carbonNetwork = this.network;
 
     const fromTokenId = fromToken.id;
     const fromTokenAddress = appendHexPrefix(fromToken.tokenAddress);
@@ -290,7 +290,7 @@ export class ETHClient {
   }
 
   public async getDepositContractAddress(swthBech32Address: string, ownerEthAddress: string): Promise<string> {
-    const network = this.getNetworkConfig().network;
+    const network = this.network;
     const addressBytes = SWTHAddress.getAddressBytes(swthBech32Address, network);
     const swthAddress = ethers.hexlify(addressBytes);
 
@@ -350,7 +350,7 @@ export class ETHClient {
       s: rsv.s,
     };
 
-    const network = this.getNetworkConfig().network;
+    const network = this.network;
     const addressBytes = SWTHAddress.getAddressBytes(swthAddress, network);
     const swthAddressHex = ethers.hexlify(addressBytes);
     const body = {
@@ -380,7 +380,7 @@ export class ETHClient {
     if (!feeInfo.deposit_fee) {
       throw new Error("unsupported token");
     }
-    if (blockchainForChainId(token.chainId.toNumber(), this.configProvider.getConfig().network) !== this.blockchain) {
+    if (blockchainForChainId(token.chainId.toNumber(), globalThis.network) !== this.blockchain) {
       throw new Error("unsupported token");
     }
 
@@ -444,8 +444,7 @@ export class ETHClient {
    * @param token
    */
   public getTargetProxyHash(token: Carbon.Coin.Token) {
-    const networkConfig = this.getNetworkConfig();
-    const addressBytes = SWTHAddress.getAddressBytes(token.creator, networkConfig.network);
+    const addressBytes = SWTHAddress.getAddressBytes(token.creator, this.network);
     const addressHex = stripHexPrefix(ethers.hexlify(addressBytes));
     return addressHex;
   }
@@ -454,8 +453,8 @@ export class ETHClient {
     return new ethers.JsonRpcProvider(this.getProviderUrl());
   }
 
-  public getNetworkConfig(): NetworkConfig {
-    return this.configProvider.getConfig();
+  public getNetworkConfig(): PolynetworkConfig {
+    return this.polynetworkConfig;
   }
 
   public getConfig(): EthNetworkConfig {

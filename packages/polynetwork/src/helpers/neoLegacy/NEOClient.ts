@@ -1,16 +1,16 @@
 import * as Neon from "@cityofzion/neon-core";
 import { api } from "@cityofzion/neon-js";
 import { Carbon } from "@demex-sdk/codecs";
-import { NEOAddress, Network, NetworkConfig, NetworkConfigProvider, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
+import { NEOAddress, Network, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { chunk } from "lodash";
-import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, NeoNetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
+import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, NeoNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
 import { NeoLedgerAccount } from "../../providers/neoLedger";
 import { O3Types, O3Wallet } from "../../providers/o3Wallet";
 
 export interface NEOClientOpts {
-  configProvider: NetworkConfigProvider;
+  polynetworkConfig: PolynetworkConfig;
   tokenClient: TokenClient;
   blockchain?: Blockchain;
   network: Network;
@@ -45,18 +45,18 @@ export class NEOClient {
   };
 
   private constructor(
-    public readonly configProvider: NetworkConfigProvider,
+    public readonly polynetworkConfig: PolynetworkConfig,
     public readonly tokenClient: TokenClient,
     public readonly blockchain: Blockchain,
     public readonly network: Network,
   ) { }
 
   public static instance(opts: NEOClientOpts) {
-    const { configProvider, tokenClient, blockchain = Blockchain.Neo, network } = opts;
+    const { polynetworkConfig, tokenClient, blockchain = Blockchain.Neo, network } = opts;
 
     if (!NEOClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
 
-    return new NEOClient(configProvider, tokenClient, blockchain, network);
+    return new NEOClient(polynetworkConfig, tokenClient, blockchain, network);
   }
 
   public static parseHexNum(hex: string, exp: number = 0): string {
@@ -136,7 +136,7 @@ export class NEOClient {
     const fromAddress = Neon.u.reverseHex(account.scriptHash);
     const targetProxyHash = this.getTargetProxyHash(token);
     const toAssetHash = Neon.u.str2hexstring(token.id);
-    const addressBytes = SWTHAddress.getAddressBytes(swthAddress, networkConfig.network);
+    const addressBytes = SWTHAddress.getAddressBytes(swthAddress, this.network);
     const toAddress = stripHexPrefix(ethers.hexlify(addressBytes));
     const zeroAddressHex = stripHexPrefix(ethers.hexlify(ZeroAddress));
 
@@ -371,14 +371,13 @@ export class NEOClient {
    * @param token
    */
   public getTargetProxyHash(token: Carbon.Coin.Token) {
-    const networkConfig = this.getNetworkConfig();
-    const addressBytes = SWTHAddress.getAddressBytes(token.creator, networkConfig.network);
+    const addressBytes = SWTHAddress.getAddressBytes(token.creator, this.network);
     const addressHex = stripHexPrefix(ethers.hexlify(addressBytes));
     return addressHex;
   }
 
-  public getNetworkConfig(): NetworkConfig {
-    return this.configProvider.getConfig();
+  public getNetworkConfig(): PolynetworkConfig {
+    return this.polynetworkConfig;
   }
 
   public getConfig(): NeoNetworkConfig {
