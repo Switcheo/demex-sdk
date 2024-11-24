@@ -340,8 +340,7 @@ export class ETHClient {
     // logger("sendDeposit message", message)
 
     const { address, signature } = await getSignatureCallback(message);
-    const signatureBytes = ethers.getBytes(appendHexPrefix(signature));
-    const rsv = ethers.Signature.from(signatureBytes);
+    const rsv = ethers.Signature.from(appendHexPrefix(signature));
 
     // logger("sign result", address, signature)
 
@@ -425,7 +424,7 @@ export class ETHClient {
   }
 
   public getEthSigner(privateKey: ethers.BytesLike): ethers.Wallet {
-    return new ethers.Wallet(privateKey, this.getProvider());
+    return new ethers.Wallet(new ethers.SigningKey(privateKey), this.getProvider());
   }
 
   public async sign(message: string, privateKey: ethers.BytesLike) {
