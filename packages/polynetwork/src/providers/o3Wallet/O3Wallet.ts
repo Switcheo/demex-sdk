@@ -1,10 +1,9 @@
-import { Carbon } from "@demex-sdk/codecs";
 import * as Neon from "@cityofzion/neon-core-next";
-import { NEOAddress, Network, NetworkConfig, NetworkConfigs, N3Address, SimpleMap } from "@demex-sdk/core";
-import { TokensWithExternalBalance } from "@demex-sdk/polynetwork/env";
+import { Carbon } from "@demex-sdk/codecs";
+import { N3Address, NEOAddress, Network, NetworkConfig, SimpleMap } from "@demex-sdk/core";
 import neoDapi from "neo-dapi";
 import neo3Dapi from "neo3-dapi";
-
+import { PolynetworkConfig, PolynetworkConfigs, TokensWithExternalBalance } from "../../env";
 import * as O3Types from "./O3Types";
 
 export class O3Wallet {
@@ -12,13 +11,13 @@ export class O3Wallet {
   public neo2Dapi: any; // for Neo Legacy
   public neoNetwork: O3Types.AcceptedNets | undefined;
 
-  public networkConfig: NetworkConfig;
+  public networkConfig: PolynetworkConfig;
   public address: string = "";
   private publicKey: string = "";
 
   private constructor(public readonly network: Network) {
-    const networkConfig = NetworkConfigs[network];
-    this.networkConfig = networkConfig;
+    const polynetworkConfig = PolynetworkConfigs[network];
+    this.networkConfig = polynetworkConfig;
 
     this.neo2Dapi = neoDapi;
     this.neo3Dapi = neo3Dapi;

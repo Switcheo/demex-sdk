@@ -1,12 +1,12 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { appendHexPrefix, Network, NetworkConfig, NetworkConfigProvider, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
+import { appendHexPrefix, Network, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import { Transaction, Wallet } from "@zilliqa-js/account";
 import { CallParams, Contract, Value } from "@zilliqa-js/contract";
 import { BN, bytes, Long } from "@zilliqa-js/util";
 import { fromBech32Address, Zilliqa } from "@zilliqa-js/zilliqa";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, TokensWithExternalBalance, ZilNetworkConfig } from "../../env";
+import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, PolynetworkConfig, TokensWithExternalBalance, ZilNetworkConfig } from "../../env";
 import { blockchainForChainId } from "../../util";
 
 const uint128Max = "340282366920938463463374607431768211356";
@@ -26,7 +26,7 @@ export declare type WalletProvider = Omit<
 >;
 
 export interface ZILClientOpts {
-  configProvider: NetworkConfigProvider;
+  polynetworkConfig: PolynetworkConfig;
   tokenClient: TokenClient;
   blockchain?: Blockchain;
   network: Network;
@@ -127,19 +127,19 @@ export class ZILClient {
   private walletProvider?: WalletProvider; // zilpay
 
   private constructor(
-    public readonly configProvider: NetworkConfigProvider,
+    public readonly polynetworkConfig: PolynetworkConfig,
     public readonly tokenClient: TokenClient,
     public readonly blockchain: Blockchain,
     public readonly network: Network,
-  ) { }
+  ) { };
 
   public static instance(opts: ZILClientOpts) {
-    const { configProvider, tokenClient, blockchain, network } = opts;
+    const { polynetworkConfig, tokenClient, blockchain, network } = opts;
     if (!ZILClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) {
       throw new Error(`unsupported blockchain - ${blockchain}`);
     }
 
-    return new ZILClient(configProvider, tokenClient, blockchain, network);
+    return new ZILClient(polynetworkConfig, tokenClient, blockchain, network);
   }
 
   public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
@@ -309,12 +309,12 @@ export class ZILClient {
     } = params;
     const networkConfig = this.getNetworkConfig();
 
-    const recoveryAddrRegex = new RegExp(`^${networkConfig.Bech32Prefix}[a-z0-9]{39}$`)
+    const recoveryAddrRegex = new RegExp(`^${networkConfig.bech32Prefix}[a-z0-9]{39}$`)
     if (!recoveryAddress.match(recoveryAddrRegex)) {
       throw new Error("Invalid recovery address");
     }
 
-    const carbonNetwork = networkConfig.network;
+    const carbonNetwork = this.network;
 
     const fromTokenId = fromToken.id;
     const fromTokenAddr = appendHexPrefix(fromToken.tokenAddress);
@@ -536,14 +536,13 @@ export class ZILClient {
    * @param token
    */
   public getTargetProxyHash(token: Carbon.Coin.Token) {
-    const networkConfig = this.getNetworkConfig();
-    const addressBytes = SWTHAddress.getAddressBytes(token.creator, networkConfig.network);
+    const addressBytes = SWTHAddress.getAddressBytes(token.creator, this.network);
     const addressHex = stripHexPrefix(ethers.hexlify(addressBytes));
     return addressHex;
   }
 
-  public getNetworkConfig(): NetworkConfig {
-    return this.configProvider.getConfig();
+  public getNetworkConfig(): PolynetworkConfig {
+    return this.polynetworkConfig;
   }
 
   public getConfig(): ZilNetworkConfig {

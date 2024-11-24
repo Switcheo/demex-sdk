@@ -13,8 +13,6 @@ export interface NetworkConfig {
   restUrl: string
   grpcUrl: string
 
-  feeAddress: string;
-
   bech32Prefix: string;
 };
 
@@ -31,8 +29,6 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     restUrl: "https://api.carbon.network",
     grpcUrl: "grpc.carbon.network",
 
-    feeAddress: "08d8f59e475830d9a1bb97d74285c4d34c6dac08", // swth1prv0t8j8tqcdngdmjlt59pwy6dxxmtqgycy2h7
-
     bech32Prefix: "swth",
   },
   [Network.TestNet]: {
@@ -42,8 +38,6 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     tmRpcUrl: "https://test-tm-api.carbon.network",
     restUrl: "https://test-api.carbon.network",
     grpcUrl: "test-grpc.carbon.network",
-
-    feeAddress: "989761fb0c0eb0c05605e849cae77d239f98ac7f", // swth1nztkr7cvp6cvq4s9apyu4emayw0e3trl9ezyzs
 
     bech32Prefix: "tswth",
   },
@@ -55,8 +49,6 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     restUrl: "https://dev-api.carbon.network",
     grpcUrl: "dev-grpc.carbon.network",
 
-    feeAddress: "989761fb0c0eb0c05605e849cae77d239f98ac7f", // swth1nztkr7cvp6cvq4s9apyu4emayw0e3trl9ezyzs
-
     bech32Prefix: "swth",
   },
   [Network.Local]: {
@@ -65,8 +57,6 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     tmRpcUrl: "http://localhost:26657",
     restUrl: "http://localhost:1317",
     grpcUrl: "localhost:9090",
-
-    feeAddress: "989761fb0c0eb0c05605e849cae77d239f98ac7f",
 
     bech32Prefix: "tswth",
   },
