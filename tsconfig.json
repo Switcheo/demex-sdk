@@ -19,7 +19,6 @@
     "jsxFactory": "JSX.createElement",
     "jsxFragmentFactory": "JSX.Fragment",
     "paths": {
-      "@demex-sdk/codecs/*": ["packages/codecs/src/*"],
       "@demex-sdk/*": ["packages/*"]
     }
   },

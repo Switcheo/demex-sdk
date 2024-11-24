@@ -1,3 +1,6 @@
+import * as BIP39 from "bip39";
+import * as wif from "wif";
+
 /**
  * Convenience function to coalesce a string/buffer into a buffer
  *
@@ -67,3 +70,20 @@ export class BIP44Path {
     return BIP44Path.generateBIP44String(this.index, this.change, this.account, this.coinType, this.purpose);
   }
 }
+
+export const randomMnemonic = () => {
+  return BIP39.generateMnemonic();
+};
+
+export const wifEncodePrivateKey = (privateKey: string | Buffer, iter: number = 128) => {
+  const privateKeyBuf = stringOrBufferToBuffer(privateKey)!;
+  return wif.encode(iter, privateKeyBuf, true);
+};
+
+export const stripHexPrefix = (input: string) => {
+  return input?.slice(0, 2) === "0x" ? input.slice(2) : input;
+};
+
+export const appendHexPrefix = (input: string) => {
+  return input?.slice(0, 2) === "0x" ? input : `0x${input}`;
+};

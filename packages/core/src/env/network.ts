@@ -13,8 +13,12 @@ export interface NetworkConfig {
   restUrl: string
   grpcUrl: string
 
-  bech32Prefix: string
-}
+  bech32Prefix: string;
+};
+
+export interface NetworkConfigProvider {
+  getConfig(): NetworkConfig;
+};
 
 export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
   [Network.MainNet]: {
@@ -30,6 +34,7 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
   [Network.TestNet]: {
     network: Network.TestNet,
     chainId: "carbon-1",
+
     tmRpcUrl: "https://test-tm-api.carbon.network",
     restUrl: "https://test-api.carbon.network",
     grpcUrl: "test-grpc.carbon.network",
@@ -39,6 +44,7 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
   [Network.DevNet]: {
     network: Network.DevNet,
     chainId: "carbon-1",
+
     tmRpcUrl: "https://dev-tm-api.carbon.network",
     restUrl: "https://dev-api.carbon.network",
     grpcUrl: "dev-grpc.carbon.network",
@@ -54,4 +60,4 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
 
     bech32Prefix: "tswth",
   },
-}
+};
