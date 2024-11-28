@@ -1,4 +1,4 @@
-import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
+import { encodeSecp256k1Signature, rawSecp256k1PubkeyToRawAddress, StdSignature } from "@cosmjs/amino";
 import { keccak256, Slip10, Slip10Curve, stringToPath } from "@cosmjs/crypto";
 import { fromBech32, toBech32, toHex } from "@cosmjs/encoding";
 import { EncodeObject } from "@cosmjs/proto-signing";
@@ -6,7 +6,7 @@ import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerD
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { Tx } from "@demex-sdk/codecs";
-import { BIP44Path, bnOrZero, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
+import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasCost, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import Bip39 from "bip39";
 import elliptic from "elliptic";
@@ -56,6 +56,15 @@ export interface BaseDemexWalletInitOpts {
   txDefaultBroadCastMode?: BroadcastTxMode
   disableRetryOnSequenceError?: boolean
   defaultTimeoutBlocks?: number
+
+  /** Optional callback that will be called before signing is requested/executed. */
+  onRequestSign?: OnRequestSignCallback;
+  /** Optional callback that will be called when signing is complete. */
+  onSignComplete?: OnSignCompleteCallback;
+  /** Optional callback that will be called after tx is broadcast successful. */
+  onBroadcastTxSuccess?: OnBroadcastTxSuccessCallback;
+  /** Optional callback that will be called if tx broadcast fails. */
+  onBroadcastTxFail?: OnBroadcastTxFailCallback;
 }
 export type DemexWalletInitOpts = BaseDemexWalletInitOpts & ConnectWalletOpts;
 export type DemexWalletConstructorOpts = Partial<DemexWalletInitOpts> & {
@@ -97,6 +106,12 @@ export class DemexWallet {
   private _queryClient?: DemexQueryClient
   private _signingClient?: SigningStargateClient
 
+
+  private onRequestSign?: OnRequestSignCallback;
+  private onSignComplete?: OnSignCompleteCallback;
+  private onBroadcastTxSuccess?: OnBroadcastTxSuccessCallback;
+  private onBroadcastTxFail?: OnBroadcastTxFailCallback;
+
   public constructor(opts: DemexWalletConstructorOpts) {
     const network = opts.network ?? Network.MainNet;
     this.networkConfig = DemexWallet.overrideConfig(network, opts.networkConfig);
@@ -107,6 +122,11 @@ export class DemexWallet {
     this.defaultTimeoutBlocks = opts.defaultTimeoutBlocks ?? DEFAULT_TX_TIMEOUT_BLOCKS;
     this._tmClient = opts.tmClient;
     this._queryClient = opts.queryClient;
+
+    this.onRequestSign = opts.onRequestSign;
+    this.onSignComplete = opts.onSignComplete;
+    this.onBroadcastTxSuccess = opts.onBroadcastTxSuccess;
+    this.onBroadcastTxFail = opts.onBroadcastTxFail;
 
     this.txDispatchManager = new QueueManager(this.dispatchTx.bind(this));
     this.txSignManager = new QueueManager(this.signTx.bind(this));
@@ -222,6 +242,7 @@ export class DemexWallet {
     const signingClient = await this.getSigningStargateClient();
     const [account] = await this.signer.getAccounts();
 
+    let signature: StdSignature | null = null;
     try {
       const chainId = await this.getChainId();
       await callIgnoreError(() => this.onRequestSign?.(messages));
@@ -231,11 +252,42 @@ export class DemexWallet {
         sequence,
         ...explicitSignerData,
       };
-      const fee = opts?.fee ?? this.estimateTxFee(messages, feeDenom);
-      return await signingClient.sign(signerAddress, messages, fee, memo, signerData);
+      const fee = opts?.fee ?? await this.estimateTxFee(messages, feeDenom ?? TxDefaultGasDenom);
+      const txRaw = await signingClient.sign(signerAddress, messages, fee, memo, signerData);
+      signature = encodeSecp256k1Signature(account.pubkey, txRaw.signatures[0]);
+      return txRaw;
     } finally {
       await callIgnoreError(() => this.onSignComplete?.(signature));
     }
+  }
+
+  public async estimateTxFee(
+    messages: readonly EncodeObject[],
+    feeDenom: string,
+  ) {
+    const denomGasPrice = await this.getGasPrice(feeDenom);
+
+    let totalGasCost = BN_ZERO;
+    for (const msg of messages) {
+      const gasCost = await this.getGasCost(msg.typeUrl);
+      totalGasCost = totalGasCost.plus(gasCost);
+    }
+    let totalFees = totalGasCost.times(denomGasPrice ?? BN_ZERO);
+
+    // override zero gas cost tx with some gas for tx execution
+    // set overall fee to zero, implying 0 gas price.
+    if (totalGasCost.isZero()) {
+      totalGasCost = TxDefaultGasCost;
+      totalFees = BN_ZERO;
+    }
+
+    return {
+      amount: [{
+        amount: totalFees.toString(10),
+        denom: feeDenom,
+      }],
+      gas: totalGasCost.toString(10),
+    };
   }
 
   public async reloadAccountSequence() {
@@ -483,7 +535,10 @@ export class DemexWallet {
     });
   }
 }
-
+export type OnRequestSignCallback = (msgs: readonly EncodeObject[]) => void | Promise<void>;
+export type OnSignCompleteCallback = (signature: StdSignature | null) => void | Promise<void>;
+export type OnBroadcastTxFailCallback = (msgs: readonly EncodeObject[]) => void | Promise<void>;
+export type OnBroadcastTxSuccessCallback = (msgs: readonly EncodeObject[]) => void | Promise<void>;
 
 const delay = (ms: number): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms))

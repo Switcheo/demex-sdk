@@ -13,6 +13,7 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
+    "@demex-sdk/codecs": "0.0.3",
     "tslib": "^2.6.2"
   },
   "exports": {
