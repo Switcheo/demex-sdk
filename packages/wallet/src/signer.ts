@@ -23,7 +23,7 @@ export type DemexAminoSigner = OfflineAminoSigner & { type: DemexSignerTypes }
 export type LegacyEIP712AminoSignResponse = AminoSignResponse & { feePayer: string }
 
 export function isDemexEIP712Signer(signer: OfflineSigner): boolean {
-  return (signer as DemexEIP712Signer).signLegacyEip712 !== undefined
+  return typeof (signer as DemexEIP712Signer).signLegacyEip712 === "function"
 }
 export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigner {
   type = DemexSignerTypes.PrivateKey;

@@ -1,19 +1,19 @@
 import { Carbon, TxTypes } from "@demex-sdk/codecs";
-import { MsgUpdateParams as MsgAuthUpdateParams } from "@demex-sdk/codecs/cosmos/auth/v1beta1/tx.js";
-import { MsgUpdateParams as MsgBankUpdateParams } from "@demex-sdk/codecs/cosmos/bank/v1beta1/tx.js";
-import { CommunityPoolSpendProposal } from "@demex-sdk/codecs/cosmos/distribution/v1beta1/distribution.js";
-import { MsgCommunityPoolSpend, MsgUpdateParams as MsgDistributionUpdateParams } from "@demex-sdk/codecs/cosmos/distribution/v1beta1/tx.js";
-import { MsgExecLegacyContent, MsgUpdateParams as MsgGovUpdateParams } from "@demex-sdk/codecs/cosmos/gov/v1/tx.js";
-import { TextProposal } from "@demex-sdk/codecs/cosmos/gov/v1beta1/gov.js";
-import { ParameterChangeProposal } from "@demex-sdk/codecs/cosmos/params/v1beta1/params.js";
-import { MsgUpdateParams as MsgSlashingUpdateParams } from "@demex-sdk/codecs/cosmos/slashing/v1beta1/tx.js";
-import { MsgUpdateParams as MsgStakingUpdateParams } from "@demex-sdk/codecs/cosmos/staking/v1beta1/tx.js";
-import { MsgCancelUpgrade, MsgSoftwareUpgrade } from "@demex-sdk/codecs/cosmos/upgrade/v1beta1/tx.js";
-import { CancelSoftwareUpgradeProposal, SoftwareUpgradeProposal } from "@demex-sdk/codecs/cosmos/upgrade/v1beta1/upgrade.js";
-import { Any } from "@demex-sdk/codecs/google/protobuf/any.js";
-import { ClientUpdateProposal } from "@demex-sdk/codecs/ibc/core/client/v1/client.js";
-import { MsgRemoveMinGasPrice } from "@demex-sdk/codecs/Switcheo/carbon/fee/tx.js";
-import { MsgUpdateParams as MsgOracleUpdateParams } from "@demex-sdk/codecs/Switcheo/carbon/oracle/tx.js";
+import { MsgUpdateParams as MsgAuthUpdateParams } from "@demex-sdk/codecs/data/cosmos/auth/v1beta1/tx";
+import { MsgUpdateParams as MsgBankUpdateParams } from "@demex-sdk/codecs/data/cosmos/bank/v1beta1/tx";
+import { CommunityPoolSpendProposal } from "@demex-sdk/codecs/data/cosmos/distribution/v1beta1/distribution";
+import { MsgCommunityPoolSpend, MsgUpdateParams as MsgDistributionUpdateParams } from "@demex-sdk/codecs/data/cosmos/distribution/v1beta1/tx";
+import { MsgExecLegacyContent, MsgUpdateParams as MsgGovUpdateParams } from "@demex-sdk/codecs/data/cosmos/gov/v1/tx";
+import { TextProposal } from "@demex-sdk/codecs/data/cosmos/gov/v1beta1/gov";
+import { ParameterChangeProposal } from "@demex-sdk/codecs/data/cosmos/params/v1beta1/params";
+import { MsgUpdateParams as MsgSlashingUpdateParams } from "@demex-sdk/codecs/data/cosmos/slashing/v1beta1/tx";
+import { MsgUpdateParams as MsgStakingUpdateParams } from "@demex-sdk/codecs/data/cosmos/staking/v1beta1/tx";
+import { MsgCancelUpgrade, MsgSoftwareUpgrade } from "@demex-sdk/codecs/data/cosmos/upgrade/v1beta1/tx";
+import { CancelSoftwareUpgradeProposal, SoftwareUpgradeProposal } from "@demex-sdk/codecs/data/cosmos/upgrade/v1beta1/upgrade";
+import { Any } from "@demex-sdk/codecs/data/google/protobuf/any";
+import { ClientUpdateProposal } from "@demex-sdk/codecs/data/ibc/core/client/v1/client";
+import { MsgRemoveMinGasPrice } from "@demex-sdk/codecs/data/Switcheo/carbon/fee/tx";
+import { MsgUpdateParams as MsgOracleUpdateParams } from "@demex-sdk/codecs/data/Switcheo/carbon/oracle/tx";
 
 
 export enum ProposalTypes {

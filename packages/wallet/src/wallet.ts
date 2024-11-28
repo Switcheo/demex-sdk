@@ -1,15 +1,17 @@
 import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
 import { keccak256, Slip10, Slip10Curve, stringToPath } from "@cosmjs/crypto";
 import { fromBech32, toBech32, toHex } from "@cosmjs/encoding";
-import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SigningStargateClient } from "@cosmjs/stargate";
+import { EncodeObject } from "@cosmjs/proto-signing";
+import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerData, SigningStargateClient } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { Tx } from "@demex-sdk/codecs";
-import { BIP44Path, bnOrZero, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, QueueManager, stringOrBufferToBuffer } from "@demex-sdk/core";
+import { BIP44Path, bnOrZero, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
+import BigNumber from "bignumber.js";
 import Bip39 from "bip39";
 import elliptic from "elliptic";
-import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
-import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, DemexBroadcastError, ErrorType, SignTxRequest } from "./types";
+import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
+import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, DemexBroadcastError, ErrorType, SignTxOpts, SignTxRequest } from "./types";
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
 
@@ -84,7 +86,11 @@ export class DemexWallet {
   private sequenceInvalidated = false
   private defaultTimeoutBlocks: number
 
+  // network state caches
   private accountInfo: Account | null = null
+  private chainId: string | null = null
+  private txGasCosts: Record<string, BigNumber> | null = null
+  private txGasPrices: Record<string, BigNumber> | null = null
 
   // cosmjs rpc clients
   private _tmClient?: Tendermint37Client
@@ -156,18 +162,79 @@ export class DemexWallet {
 
     try {
       // retrieve account info, reload if sequenceInvalidated flag is set.
+      if (!this.accountInfo
+        || this.accountInfo?.address === this.evmBech32Address // refresh to check if carbon acc is present
+        || this.sequenceInvalidated)
+        await this.reloadAccountSequence();
 
       // prepare tx timeout height. add a default timeout height to tx if unset.
       // skip if EIP-712 signer, timeoutHeight is not supported for EIP-712
+      let timeoutHeight;
+      if (!isDemexEIP712Signer(this.signer)) {
+        timeoutHeight = await this.getTimeoutHeight();
+      }
 
       // calculate tx sequence number, will be 0 if accountInfo doesnt exist (new account).
       // then increment account info sequence number if not a new account.
+      let sequence: number
+      if (!this.accountInfo) {
+        sequence = signOpts?.sequence ?? 0
+      } else {
+        sequence = this.accountInfo!.sequence;
+        this.accountInfo = {
+          ...this.accountInfo!,
+          sequence: sequence + 1,
+        };
+      }
 
       // obtain signed transaction
+      const _signOpts: SignTxOpts = {
+        ...signOpts,
+        explicitSignerData: {
+          timeoutHeight,
+          ...signOpts?.explicitSignerData,
+        },
+      };
+      const signedTx = await this.getSignedTx(signerAddress, messages, sequence, _signOpts);
 
       // add signed transaction to dispatch queue
+      this.txDispatchManager.enqueue({
+        reattempts,
+        signerAddress,
+        messages,
+        signedTx,
+        broadcastOpts,
+        signOpts: _signOpts,
+        handler: { resolve, reject, requestId: sequence.toString() },
+      });
     } catch (error) {
       reject(error);
+    }
+  }
+
+  public async getSignedTx(
+    signerAddress: string,
+    messages: readonly EncodeObject[],
+    sequence: number,
+    opts: Omit<SignTxOpts, "sequence">,
+  ): Promise<Tx.TxRaw> {
+    const { memo = "", accountNumber, explicitSignerData, feeDenom } = opts;
+    const signingClient = await this.getSigningStargateClient();
+    const [account] = await this.signer.getAccounts();
+
+    try {
+      const chainId = await this.getChainId();
+      await callIgnoreError(() => this.onRequestSign?.(messages));
+      const signerData: SignerData = {
+        accountNumber: accountNumber ?? this.accountInfo!.accountNumber,
+        chainId,
+        sequence,
+        ...explicitSignerData,
+      };
+      const fee = opts?.fee ?? this.estimateTxFee(messages, feeDenom);
+      return await signingClient.sign(signerAddress, messages, fee, memo, signerData);
+    } finally {
+      await callIgnoreError(() => this.onSignComplete?.(signature));
     }
   }
 
@@ -326,6 +393,28 @@ export class DemexWallet {
     const tmClient = await this.getTmClient();
     this._signingClient = await SigningStargateClient.createWithSigner(tmClient, this.signer);
     return this._signingClient;
+  }
+  public async getChainId(): Promise<string> {
+    if (this.chainId) return this.chainId;
+    const queryClient = await this.getQueryClient();
+    this.chainId = await queryClient.chain.getChainId();
+    return this.chainId;
+  }
+  public async getGasCost(msgTypeUrl: string): Promise<BigNumber> {
+    if (!this.txGasCosts) {
+      const queryClient = await this.getQueryClient();
+      const { msgGasCosts } = await queryClient.fee.MsgGasCostAll({ pagination: PGN_1K });
+      this.txGasCosts = Object.fromEntries(msgGasCosts.map(cost => [cost.msgType, bnOrZero(cost.gasCost)]));
+    }
+    return this.txGasCosts[msgTypeUrl] ?? this.txGasCosts[TxGasCostTypeDefaultKey];
+  }
+  public async getGasPrice(denom: string): Promise<BigNumber | null> {
+    if (!this.txGasPrices) {
+      const queryClient = await this.getQueryClient();
+      const { minGasPrices } = await queryClient.fee.MinGasPriceAll({ pagination: PGN_1K });
+      this.txGasPrices = Object.fromEntries(minGasPrices.map(cost => [cost.denom, bnOrZero(cost.gasPrice)]));
+    }
+    return this.txGasPrices[denom] ?? null;
   }
 
   public cloneForNetwork(network: Network, opts: Partial<DemexWalletConstructorOpts> = {}) {
