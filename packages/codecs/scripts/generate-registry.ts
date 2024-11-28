@@ -84,6 +84,9 @@ proposalWhitelist.forEach((file: string) => {
   console.log(`import { ${modelNames.join(", ")} } from "./${file.replace('.ts', '')}";`);
 });
 
+
+console.log("");
+console.log(`export * from "./amino-types"`);
 console.log("");
 const cosmosModelsImportPath = path.relative(registryFile, cosmosModelsFile);
 console.log(`export * from '${cosmosModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);

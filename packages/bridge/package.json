@@ -1,5 +1,5 @@
 {
-  "name": "@demex-sdk/core",
+  "name": "@demex-sdk/bridge",
   "version": "0.0.3",
   "license": "MIT",
   "scripts": {
@@ -13,13 +13,6 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
-    "@cosmjs/stargate": "^0.32.4",
-    "@cosmjs/tendermint-rpc": "^0.32.4",
-    "@demex-sdk/codecs": "0.0.3",
-    "@improbable-eng/grpc-web": "^0.15.0",
-    "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
-    "bignumber.js": "^9.1.2",
-    "ethers": "^6.13.4",
     "tslib": "^2.6.2"
   },
   "exports": {

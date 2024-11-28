@@ -38,7 +38,6 @@ import { ClientUpdateProposal, UpgradeProposal } from "./ibc/core/client/v1/clie
 
 export * from './cosmos-models';
 
-
 export * as IBC from './ibc-models';
 
 import * as PolyNetwork from './polynetwork-models';
