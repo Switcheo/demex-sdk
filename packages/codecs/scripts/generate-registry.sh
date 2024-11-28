@@ -4,8 +4,8 @@ set -eo pipefail
 
 echo "Generating registry…"
 
-TX_FILES=$(find src -path -prune -o -name '*.ts')
-QUERY_FILES=$(find ./src -name 'query.ts')
+TX_FILES=$(find src/data -path -prune -o -name '*.ts')
+QUERY_FILES=$(find ./src/data -name 'query.ts')
 REGISTRY_FILE=src/index.ts
 COSMOS_MODELS_FILE=src/cosmos-models.ts
 IBC_MODELS_FILE=src/ibc-models.ts
@@ -21,5 +21,3 @@ ts-node ./scripts/generate-carbon-models.ts $PWD $CARBON_MODELS_FILE
 ts-node ./scripts/generate-registry.ts $TX_FILES $PWD $REGISTRY_FILE $POLYNETWORK_MODELS_FILE $CARBON_MODELS_FILE $COSMOS_MODELS_FILE $IBC_MODELS_FILE $ETHERMINT_MODELS_FILE >> $REGISTRY_FILE
 ts-node ./scripts/generate-query-clients.ts $QUERY_FILES $REGISTRY_FILE
 
-
-rm -rf ./scripts/protobuf-def.json

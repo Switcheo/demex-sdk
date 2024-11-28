@@ -8,8 +8,6 @@ const files = process.argv;
 const [pwd, registryFile, polynetworkModelsFile, carbonModelsFile, cosmosModelsFile, ibcModelsFile] = files.slice(-7);
 const codecFiles = files.slice(2, files.length - 7);
 
-const prefixCarbonDir = (m: string) => `Switcheo/carbon/${m}`;
-
 const polynetworkFolders = ['btcx', 'ccm', 'headersync', 'lockproxy'];
 
 const carbonFolders = ['admin', 'bank', 'book', 'bridge', 'broker', 'cdp', 'coin',
@@ -38,11 +36,12 @@ for (const moduleFile of codecFiles) {
     continue
   }
 
-  const codecModule = require(`${pwd}/${moduleFile}`);
+  const codecModule = require(path.join(pwd, moduleFile));
   const messages = Object.keys(codecModule).filter((key) => {
     return (key.startsWith("Msg") && key !== "MsgClientImpl") || key.startsWith("Header") || key.endsWith("Proposal")
   });
 
+  if (!codecModule.protobufPackage) continue;
   if (messages.length) {
     if (modules[codecModule.protobufPackage]) {
       modules[codecModule.protobufPackage] = [...modules[codecModule.protobufPackage], ...messages];
@@ -53,12 +52,12 @@ for (const moduleFile of codecFiles) {
       .replace(/^\.\.\//, "./")
       .replace(/\.ts$/, "");
     if (!(
-      moduleFile.includes('src/Switcheo/carbon/btcx/')
-      || moduleFile.includes('src/Switcheo/carbon/ccm/')
-      || moduleFile.includes('src/Switcheo/carbon/headersync/')
-      || moduleFile.includes('src/Switcheo/carbon/lockproxy/')
-      || moduleFile.includes('src/alliance/alliance')
-      || carbonFolders.some(carbonModule => moduleFile.includes("src/Switcheo/carbon/" + carbonModule))
+      moduleFile.includes('src/data/Switcheo/carbon/btcx/')
+      || moduleFile.includes('src/data/Switcheo/carbon/ccm/')
+      || moduleFile.includes('src/data/Switcheo/carbon/headersync/')
+      || moduleFile.includes('src/data/Switcheo/carbon/lockproxy/')
+      || moduleFile.includes('src/data/alliance/alliance')
+      || carbonFolders.some(carbonModule => moduleFile.includes("src/data/Switcheo/carbon/" + carbonModule))
     )) {
       updateImportsAlias(messages, codecModule.protobufPackage)
 
@@ -71,7 +70,8 @@ for (const moduleFile of codecFiles) {
 const proposalWhitelist: string[] = [`${whitelistCosmosExports.Gov}/gov.ts`, `${whitelistIbcExports.Client[0]}/client.ts`]
 
 proposalWhitelist.forEach((file: string) => {
-  const codecModule = require(path.join(pwd, 'src', file));
+  const moduleFile = path.join(pwd, 'src/data', file);
+  const codecModule = require(moduleFile);
   const modelNames = Object.keys(codecModule).filter((key) => key.endsWith("Proposal"));
   const directoryArr = file.split('/');
   directoryArr.pop();
@@ -81,12 +81,12 @@ proposalWhitelist.forEach((file: string) => {
   } else {
     modules[directoryLabel] = modelNames;
   }
-  console.log(`import { ${modelNames.join(", ")} } from "./${file.replace('.ts', '')}";`);
+  const relativePath = path.relative(registryFile, moduleFile)
+    .replace(/^\.\.\//, "./")
+    .replace(/\.ts$/, "");
+  console.log(`import { ${modelNames.join(", ")} } from "${relativePath}";`);
 });
 
-
-console.log("");
-console.log(`export * from "./amino-types"`);
 console.log("");
 const cosmosModelsImportPath = path.relative(registryFile, cosmosModelsFile);
 console.log(`export * from '${cosmosModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
@@ -160,7 +160,7 @@ console.log(`export const TxTypes = ${JSON.stringify(typeMap, null, 2)};\n`);
 console.log("");
 console.log('// Exported for convenience');
 const directoryBlacklist = ['cosmos', 'ibc', 'tendermint', 'btcx', 'ccm', 'headersync', 'lockproxy', 'ethermint']
-const fileNameBlacklist = ['genesis.ts', 'keys.ts']
+const fileNameBlacklist = ['genesis.ts', 'keys.ts', 'export.ts']
 
 
 const modelBlacklist: string[] = ['MsgClientImpl', 'protobufPackage', 'GenesisState', 'QueryClientImpl'];
@@ -175,7 +175,7 @@ for (const moduleFile of codecFiles) {
 
   const file = moduleFile.replace("Switcheo/carbon/", "").split("/")
   const fileName = file[file.length - 1]
-  const firstDirectory = file[1]
+  const firstDirectory = file[2]
 
   // skip next steps if module has been namespaced
   if (directoryBlacklist.includes(firstDirectory) || carbonFolders.includes(firstDirectory) || fileNameBlacklist.includes(fileName)) continue

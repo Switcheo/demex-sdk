@@ -13,9 +13,9 @@ for (const exportName in whitelistIbcExports) {
   const directoryArr: string[] = whitelistIbcExports[exportName];
   // Get common path (e.g. ibc/applications/transfer for Transfer)
   const commonPath = directoryArr[0].split('/').slice(0, 4).join('/');
-  const commonDir = path.join(pwd, 'src', commonPath);
+  const commonDir = path.join(pwd, 'src/data', commonPath);
   for (const subExportId in directoryArr) {
-    const directory = path.join(pwd, 'src', directoryArr[subExportId]);
+    const directory = path.join(pwd, 'src/data', directoryArr[subExportId]);
     // Get file names in directory
     const files = fs.readdirSync(directory);
 
@@ -33,6 +33,6 @@ for (const exportName in whitelistIbcExports) {
       fs.appendFileSync(path.join(commonDir, 'export.ts'), exportLine);
     }
   }
-  const majorExportLine = `export * as ${exportName} from "./${commonPath}/export";\n`;
+  const majorExportLine = `export * as ${exportName} from "./data/${commonPath}/export";\n`;
   fs.appendFileSync(modelsFile, majorExportLine);
 }
