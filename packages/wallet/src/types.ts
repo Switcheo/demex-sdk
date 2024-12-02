@@ -1,41 +1,62 @@
 import { EncodeObject } from "@cosmjs/proto-signing";
-import { DeliverTxResponse, SignerData, StdFee } from "@cosmjs/stargate";
+import { Account, DeliverTxResponse, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, BroadcastTxSyncResponse, Method } from "@cosmjs/tendermint-rpc";
+import { TxRequest } from "@cosmjs/tendermint-rpc/build/comet38";
 import { Tx } from "@demex-sdk/codecs";
+import { DemexSigner } from "./signer";
 
 export type BroadcastTxMode = Method.BroadcastTxAsync | Method.BroadcastTxSync | Method.BroadcastTxCommit;
+
+export type BroadcastTxResult = DeliverTxResponse | BroadcastTxSyncResponse | BroadcastTxAsyncResponse;
 
 export interface PromiseHandler<T> {
   requestId?: string;
   resolve: (result: T) => void;
   reject: (reason?: any) => void;
 }
+
+export type AccountStates = Record<string, AccountState>
+
+export interface AccountState extends Omit<Account, "pubkey"> {
+  sequenceInvalidated: boolean
+}
+
+export interface ReloadAddresses {
+  address: string
+  evmBech32Address?: string
+}
+export interface SigningData extends SignTxRequest {
+  address: string
+  evmBech32Address?: string
+  signer: DemexSigner
+  signingClient: SigningStargateClient,
+}
+
 export interface SignTxRequest {
-  signerAddress: string;
   reattempts?: number;
   messages: readonly EncodeObject[];
   broadcastOpts?: BroadcastTxOpts;
   signOpts?: SignTxOpts;
-  handler: PromiseHandler<DeliverTxResponse | BroadcastTxSyncResponse | BroadcastTxAsyncResponse>;
+  handler: PromiseHandler<BroadcastTxResult>;
 }
 
 export interface BroadcastTxRequest extends SignTxRequest {
+  signerAddress: string;
   signedTx: Tx.TxRaw;
 }
 
 export interface DemexSignerData extends SignerData {
   timeoutHeight?: number;
   evmChainId?: string;
+  memo?: string;
 }
 
 export interface SignTxOpts {
   fee?: StdFee;
   feeDenom?: string;
-  memo?: string;
-  sequence?: number;
-  accountNumber?: number;
   explicitSignerData?: Partial<DemexSignerData>;
   triggerMerge?: boolean; // stack merge account tx if user account is unmerged
+  bypassGrantee?: boolean;
 }
 
 export interface BroadcastTxOpts {

@@ -65,6 +65,7 @@ export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigne
   }
 }
 
+
 export class DemexNonSigner implements DemexDirectSigner {
   type = DemexSignerTypes.PublicKey;
 
