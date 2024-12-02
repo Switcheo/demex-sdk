@@ -1,7 +1,7 @@
 import { AminoConverter } from "@cosmjs/stargate";
 import { Carbon, TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
-import { TextProposal } from "@demex-sdk/codecs/src/data/cosmos/gov/v1beta1/gov";
-import { MsgSubmitProposal } from "@demex-sdk/codecs/src/data/cosmos/gov/v1beta1/tx";
+import { TextProposal } from "@demex-sdk/codecs/cosmos/gov/v1beta1/gov";
+import { MsgSubmitProposal } from "@demex-sdk/codecs/cosmos/gov/v1beta1/tx";
 import * as GovUtils from "../gov";
 import { AminoInit, AminoProcess, AminoValueMap, ConvertEncType, generateAminoType, mapEachIndiv } from "../utils";
 

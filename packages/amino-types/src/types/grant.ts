@@ -1,9 +1,9 @@
 import { AminoConverter } from "@cosmjs/stargate";
 import { Any, TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
-import { GenericAuthorization } from "@demex-sdk/codecs/src/data/cosmos/authz/v1beta1/authz.js";
-import { MsgGrant } from "@demex-sdk/codecs/src/data/cosmos/authz/v1beta1/tx.js";
-import { AllowedMsgAllowance, BasicAllowance } from "@demex-sdk/codecs/src/data/cosmos/feegrant/v1beta1/feegrant.js";
-import { MsgGrantAllowance } from "@demex-sdk/codecs/src/data/cosmos/feegrant/v1beta1/tx.js";
+import { GenericAuthorization } from "@demex-sdk/codecs/cosmos/authz/v1beta1/authz.js";
+import { MsgGrant } from "@demex-sdk/codecs/cosmos/authz/v1beta1/tx.js";
+import { AllowedMsgAllowance, BasicAllowance } from "@demex-sdk/codecs/cosmos/feegrant/v1beta1/feegrant.js";
+import { MsgGrantAllowance } from "@demex-sdk/codecs/cosmos/feegrant/v1beta1/tx.js";
 import { AminoInit, AminoProcess, AminoValueMap, ConvertEncType, generateAminoType, mapEachIndiv } from "../utils";
 
 const TxTypes: Record<string, string> = {

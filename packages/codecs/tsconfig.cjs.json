@@ -4,12 +4,8 @@
     "outDir": "./dist-cjs",
     "baseUrl": ".",
     "paths": {
-      "@demex-sdk/codecs/alliance/*": ["./src/alliance/*"],
-      "@demex-sdk/codecs/amino/*": ["./src/amino/*"],
-      "@demex-sdk/codecs/cosmos/*": ["./src/cosmos/*"],
-      "@demex-sdk/codecs/ethermint/*": ["./src/ethermint/*"],
-      "@demex-sdk/codecs/Switcheo/*": ["./src/Switcheo/*"],
-    },
+      "@demex-sdk/codecs/*": ["./src/data/*"]
+    }
   },
   "extends": "../../tsconfig.cjs.json",
   "include": ["src/"]
