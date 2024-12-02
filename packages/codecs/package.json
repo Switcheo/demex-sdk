@@ -27,7 +27,8 @@
       "node": "./dist-cjs/index.js",
       "import": "./dist-es/index.js",
       "require": "./dist-cjs/index.js",
-      "types": "./dist-types/index.d.ts"
+      "types": "./dist-types/index.d.ts",
+      "default": "./dist-types/index.d.ts"
     },
     "./package.json": {
       "module": "./package.json",
@@ -35,68 +36,46 @@
       "import": "./package.json",
       "require": "./package.json"
     },
-    "./alliance/*": {
-      "module": "./dist-es/data/alliance/*",
-      "node": "./dist-cjs/data/alliance/*",
-      "import": "./dist-es/data/alliance/*",
-      "require": "./dist-cjs/data/alliance/*",
-      "types": "./dist-types/data/alliance/*"
-    },
-    "./amino/*": {
-      "module": "./dist-es/data/amino/*",
-      "node": "./dist-cjs/data/amino/*",
-      "import": "./dist-es/data/amino/*",
-      "require": "./dist-cjs/data/amino/*",
-      "types": "./dist-types/data/amino/*"
-    },
-    "./cosmos/*": {
-      "module": "./dist-es/data/cosmos/*",
-      "node": "./dist-cjs/data/cosmos/*",
-      "import": "./dist-es/data/cosmos/*",
-      "require": "./dist-cjs/data/cosmos/*",
-      "types": "./dist-types/data/cosmos/*"
-    },
-    "./ethermint/*": {
-      "module": "./dist-es/data/ethermint/*",
-      "node": "./dist-cjs/data/ethermint/*",
-      "import": "./dist-es/data/ethermint/*",
-      "require": "./dist-cjs/data/ethermint/*",
-      "types": "./dist-types/data/ethermint/*"
-    },
-    "./google/*": {
-      "module": "./dist-es/data/google/*",
-      "node": "./dist-cjs/data/google/*",
-      "import": "./dist-es/data/google/*",
-      "require": "./dist-cjs/data/google/*",
-      "types": "./dist-types/data/google/*"
-    },
-    "./ibc/*": {
-      "module": "./dist-es/data/ibc/*",
-      "node": "./dist-cjs/data/ibc/*",
-      "import": "./dist-es/data/ibc/*",
-      "require": "./dist-cjs/data/ibc/*",
-      "types": "./dist-types/data/ibc/*"
-    },
-    "./oraclesvc/*": {
-      "module": "./dist-es/data/oraclesvc/*",
-      "node": "./dist-cjs/data/oraclesvc/*",
-      "import": "./dist-es/data/oraclesvc/*",
-      "require": "./dist-cjs/data/oraclesvc/*",
-      "types": "./dist-types/data/oraclesvc/*"
-    },
-    "./Switcheo/*": {
-      "module": "./dist-es/data/Switcheo/*",
-      "node": "./dist-cjs/data/Switcheo/*",
-      "import": "./dist-es/data/Switcheo/*",
-      "require": "./dist-cjs/data/Switcheo/*",
-      "types": "./dist-types/data/Switcheo/*"
-    },
-    "./tendermint/*": {
-      "module": "./dist-es/data/tendermint/*",
-      "node": "./dist-cjs/data/tendermint/*",
-      "import": "./dist-es/data/tendermint/*",
-      "require": "./dist-cjs/data/tendermint/*",
-      "types": "./dist-types/data/tendermint/*"
+    "./*": {
+      "module": "./dist-es/data/*",
+      "node": "./dist-cjs/data/*",
+      "import": "./dist-es/data/*",
+      "require": "./dist-cjs/data/*",
+      "types": "./dist-types/data/*"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist-types/index.d.ts"
+      ],
+      "Switcheo/*": [
+        "./dist-types/data/Switcheo/*"
+      ],
+      "alliance/*": [
+        "./dist-types/data/alliance/*"
+      ],
+      "amino/*": [
+        "./dist-types/data/amino/*"
+      ],
+      "cosmos/*": [
+        "./dist-types/data/cosmos/*"
+      ],
+      "ethermint/*": [
+        "./dist-types/data/ethermint/*"
+      ],
+      "google/*": [
+        "./dist-types/data/google/*"
+      ],
+      "ibc/*": [
+        "./dist-types/data/ibc/*"
+      ],
+      "oraclesvc/*": [
+        "./dist-types/data/oraclesvc/*"
+      ],
+      "tendermint/*": [
+        "./dist-types/data/tendermint/*"
+      ]
     }
   },
   "files": [
