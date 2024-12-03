@@ -8,7 +8,7 @@ import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tenderm
 import { Tx } from "@demex-sdk/codecs";
 import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasCost, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
-import Bip39 from "bip39";
+import * as Bip39 from "bip39";
 import elliptic from "elliptic";
 import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
 import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, DemexBroadcastError, ErrorType, SignTxOpts, SignTxRequest } from "./types";
@@ -143,7 +143,7 @@ export class DemexWallet {
     } else if (opts.privateKey) {
       // mnemonic or private key connection
       const keypair = new elliptic.ec("secp256k1").keyFromPrivate(opts.privateKey);
-      const publicKey = Buffer.from(keypair.getPrivate("hex"), "hex");
+      const publicKey = Buffer.from(keypair.getPublic(true, "hex"), "hex");
       const rawAddress = rawSecp256k1PubkeyToRawAddress(publicKey);
 
       this.publicKey = publicKey;
