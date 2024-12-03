@@ -1,5 +1,5 @@
 {
-  "name": "@demex-sdk/wallet",
+  "name": "@demex-sdk/ledger",
   "version": "0.0.3",
   "license": "MIT",
   "scripts": {
@@ -13,17 +13,12 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
-    "@cosmjs/crypto": "^0.32.4",
-    "@cosmjs/ledger-amino": "^0.32.4",
-    "@cosmjs/proto-signing": "^0.32.4",
-    "@cosmjs/stargate": "^0.32.4",
-    "@cosmjs/tendermint-rpc": "^0.32.4",
-    "@demex-sdk/codecs": "0.0.3",
-    "@demex-sdk/core": "0.0.3",
-    "@types/elliptic": "^6.4.18",
-    "bignumber.js": "^9.1.2",
-    "bip39": "^3.1.0",
-    "elliptic": "^6.6.1",
+    "@ledgerhq/hw-transport-webhid": "^6.29.4",
+    "@ledgerhq/hw-transport-webusb": "^6.29.4",
+    "@types/node": "^22.10.1",
+    "@types/secp256k1": "^4.0.6",
+    "ledger-cosmos-js": "^2.1.8",
+    "secp256k1": "^5.0.1",
     "tslib": "^2.6.2",
     "typescript": "^5.7.2"
   },
