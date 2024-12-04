@@ -6,15 +6,15 @@ import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerD
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { registry, Tx, TxTypes } from "@demex-sdk/codecs";
-import { MsgExec } from "@demex-sdk/codecs/dist-types/data/cosmos/authz/v1beta1/tx";
-import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
-import { DefaultGas } from "@demex-sdk/core/src";
+import { MsgExec } from "@demex-sdk/codecs/cosmos/group/v1/tx";
+import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
 import elliptic from "elliptic";
 import { Grantee } from "./grantee";
 import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
 import { AccountState, AccountStates, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, DemexBroadcastError, ErrorType, ReloadAddresses, SigningData, SignTxOpts, SignTxRequest } from "./types";
+
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
 
