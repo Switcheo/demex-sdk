@@ -2,9 +2,9 @@
 
 set -eo pipefail
 
-rm -rf ./src/*
+rm -rf ./src/data/*
 tar -zxvf proto-ts.tar.gz --directory ./src/data
-mv src/protobuf-def.json ./scripts/
+mv src/data/protobuf-def.json ./scripts/
 
 
 # Remove unnecessary codec files
