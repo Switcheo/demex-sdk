@@ -186,17 +186,18 @@ export class DemexWallet {
     return !!this.grantee && this.grantee.isAuthorised(typeUrls) && !bypass
   }
 
-  private async getSigningData(txRequest: SignTxRequest): Promise<SigningData> {
-    const { messages, signOpts } = txRequest;
-    if (this.useGrantee(messages, signOpts?.bypassGrantee)) {
-      return {
-        ...txRequest,
-        address: await this.grantee!.getAddress(),
-        messages: [await this.grantee!.constructExecMessage(messages)],
-        signer: this.grantee!.signer,
-        signingClient: await this.grantee!.getSigningClient(await this.getTmClient()),
-      }
+  private async getGranteeSigningData(txRequest: SignTxRequest) {
+    const { messages } = txRequest;
+    return {
+      ...txRequest,
+      address: await this.grantee!.getAddress(),
+      messages: [await this.grantee!.constructExecMessage(messages)],
+      signer: this.grantee!.signer,
+      signingClient: await this.grantee!.getSigningClient(await this.getTmClient()),
     }
+  }
+
+  private async getDefaultSigningData(txRequest: SignTxRequest) {
     return {
       ...txRequest,
       address: this.bech32Address,
@@ -204,6 +205,12 @@ export class DemexWallet {
       signer: this.signer,
       signingClient: await this.getSigningStargateClient(),
     }
+  }
+
+  private async getSigningData(txRequest: SignTxRequest): Promise<SigningData> {
+    const { messages, signOpts } = txRequest;
+    if (this.useGrantee(messages, signOpts?.bypassGrantee)) return await this.getGranteeSigningData(txRequest);
+    return await this.getDefaultSigningData(txRequest);
   }
 
   private async checkReloadAccountState(reloadAddresses: ReloadAddresses) {
@@ -224,7 +231,7 @@ export class DemexWallet {
     };
   }
 
-  private async constructBroadcastTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
+  private async signAndConstructBroadcastTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
     const signingData = await this.getSigningData(txRequest);
     const { address, evmBech32Address, messages, signer, signingClient, signOpts, handler } = signingData;
 
@@ -264,7 +271,7 @@ export class DemexWallet {
 
   private async signTx(txRequest: SignTxRequest) {
     try {
-      const broadcastTx = await this.constructBroadcastTxRequest(txRequest);
+      const broadcastTx = await this.signAndConstructBroadcastTxRequest(txRequest);
       this.txDispatchManager.enqueue(broadcastTx);
     } catch (error) {
       txRequest.handler.reject(error);
