@@ -3,7 +3,7 @@ import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { registry, TxTypes } from "@demex-sdk/codecs";
 import { DemexSigner } from "./signer";
 import { EncodeObject } from "@cosmjs/proto-signing";
-import { MsgExec } from "@demex-sdk/codecs/cosmos/authz/v1beta1/tx";
+import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
 
 export interface InitOpts {
   mnemonic: string;

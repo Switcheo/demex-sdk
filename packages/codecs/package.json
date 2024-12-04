@@ -49,32 +49,8 @@
       ".": [
         "./dist-types/index.d.ts"
       ],
-      "Switcheo/*": [
-        "./dist-types/data/Switcheo/*"
-      ],
-      "alliance/*": [
-        "./dist-types/data/alliance/*"
-      ],
-      "amino/*": [
-        "./dist-types/data/amino/*"
-      ],
-      "cosmos/*": [
-        "./dist-types/data/cosmos/*"
-      ],
-      "ethermint/*": [
-        "./dist-types/data/ethermint/*"
-      ],
-      "google/*": [
-        "./dist-types/data/google/*"
-      ],
-      "ibc/*": [
-        "./dist-types/data/ibc/*"
-      ],
-      "oraclesvc/*": [
-        "./dist-types/data/oraclesvc/*"
-      ],
-      "tendermint/*": [
-        "./dist-types/data/tendermint/*"
+      "data/*": [
+        "./dist-types/data/*"
       ]
     }
   },
