@@ -36,12 +36,10 @@
       "import": "./package.json",
       "require": "./package.json"
     },
-    "./*": {
-      "module": "./dist-es/data/*",
-      "node": "./dist-cjs/data/*",
-      "import": "./dist-es/data/*",
-      "require": "./dist-cjs/data/*",
-      "types": "./dist-types/data/*"
+    "./data/*": {
+      "types": "./dist-types/data/*.d.ts",
+      "import": "./dist-es/data/*.js",
+      "require": "./dist-cjs/data/*.js"
     }
   },
   "typesVersions": {
