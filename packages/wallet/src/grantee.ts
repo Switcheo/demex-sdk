@@ -50,12 +50,13 @@ export class Grantee {
         return false;
       }
     }
-    return this.hasExpired();
+
+    return !this.hasExpired();
   }
 
   public async getSigningClient(tmClient: Tendermint37Client) {
     if (this._signingClient) return this._signingClient;
-    this._signingClient = await SigningStargateClient.createWithSigner(tmClient, this.signer);
+    this._signingClient = await SigningStargateClient.createWithSigner(tmClient, this.signer, { registry });
     return this._signingClient;
   }
 

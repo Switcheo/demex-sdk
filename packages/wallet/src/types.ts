@@ -54,6 +54,7 @@ export interface DemexSignerData extends SignerData {
 export interface SignTxOpts {
   fee?: StdFee;
   feeDenom?: string;
+  feeGranter?: string;
   explicitSignerData?: Partial<DemexSignerData>;
   triggerMerge?: boolean; // stack merge account tx if user account is unmerged
   bypassGrantee?: boolean;
