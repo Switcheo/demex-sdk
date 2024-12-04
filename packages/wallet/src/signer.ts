@@ -45,7 +45,7 @@ export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigne
 
   async getAccounts() {
     const wallet = await this.initWallet();
-    return wallet.getAccounts();
+    return await wallet.getAccounts();
   }
 
   async signAmino(signerAddress: string, signDoc: StdSignDoc): Promise<AminoSignResponse> {

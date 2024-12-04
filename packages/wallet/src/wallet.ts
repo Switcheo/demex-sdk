@@ -559,8 +559,11 @@ export class DemexWallet {
   public static withPrivateKey(privateKey: string | Buffer, opts: Omit<DemexWalletInitOpts, "privateKey"> = {}) {
     const privateKeyBuffer = stringOrBufferToBuffer(privateKey);
     if (!privateKeyBuffer || !privateKeyBuffer.length) throw new Error("");
+    
+    const network = opts.network ?? Network.MainNet;
+    const { bech32Prefix } = DemexWallet.overrideConfig(network, opts.networkConfig);
 
-    const signer = new DemexPrivateKeySigner(privateKeyBuffer, "");
+    const signer = new DemexPrivateKeySigner(privateKeyBuffer, bech32Prefix);
     return new DemexWallet({
       ...opts,
       privateKey: privateKeyBuffer,
