@@ -6,7 +6,7 @@ import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerD
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { registry, Tx, TxTypes } from "@demex-sdk/codecs";
-import { MsgExec } from "@demex-sdk/codecs/cosmos/group/v1/tx";
+import { MsgExec } from "@demex-sdk/codecs/cosmos/authz/v1beta1/tx";
 import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
