@@ -1,9 +1,6 @@
-<<<<<<< HEAD
 import * as BIP39 from "bip39";
 import * as wif from "wif";
 
-=======
->>>>>>> staging
 /**
  * Convenience function to coalesce a string/buffer into a buffer
  *
