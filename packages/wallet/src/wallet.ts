@@ -213,21 +213,29 @@ export class DemexWallet {
     return await this.getDefaultSigningData(txRequest);
   }
 
-  private async checkReloadAccountState(address: string, signer?: DemexSigner) {
+  private async checkReloadAccountState(signer: DemexSigner) {
+    const address = await getSignerAddress(signer);
     const state = this.walletAccounts?.[address]
-    if (!state || state.sequenceInvalidated) return await this.reloadAccount(address, signer)
+    if (!state || state.sequenceInvalidated) return await this.reloadAccount(signer)
   }
 
-  public async reloadAccount(address: string, signer?: DemexSigner) {
-    const info = await this.reloadAccountInfo(address, signer);
+  /**
+  * Reloads primary account state as priority
+  * Only tries to reload secondary account state if primary account state is not found 
+  * and signer implements interface to get secondary account address
+  */
+  public async reloadAccount(signer: DemexSigner) {
+    const info = await this.reloadAccountInfo(signer);
+    const address = await getSignerAddress(signer);
     if (!info) return;
     this.walletAccounts[address] = { ...info, sequenceInvalidated: false };
   }
-  
-  private async reloadAccountInfo(address: string, signer?: DemexSigner) {
+
+  private async reloadAccountInfo(signer: DemexSigner) {
+    const address = await getSignerAddress(signer);
     const account: Account | undefined = await this.getAccount(address);
     if (account) return account;
-    if (!signer) return;  
+    if (!signer) return;
     const evmHexAddress = await getSignerEvmAddress(signer);
     if (evmHexAddress) {
       const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), 'hex');
@@ -255,7 +263,7 @@ export class DemexWallet {
 
     const address = await getSignerAddress(signer);
 
-    await this.checkReloadAccountState(address, signer);
+    await this.checkReloadAccountState(signer);
 
     const accountState: WalletAccount | undefined = this.walletAccounts[address];
 
