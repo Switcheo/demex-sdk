@@ -1,17 +1,22 @@
 import { encodeSecp256k1Signature, rawSecp256k1PubkeyToRawAddress, StdSignature } from "@cosmjs/amino";
 import { keccak256, Slip10, Slip10Curve, stringToPath } from "@cosmjs/crypto";
 import { fromBech32, toBech32, toHex } from "@cosmjs/encoding";
-import { EncodeObject } from "@cosmjs/proto-signing";
-import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerData, SigningStargateClient } from "@cosmjs/stargate";
+import { AccountData, EncodeObject } from "@cosmjs/proto-signing";
+import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
-import { Tx } from "@demex-sdk/codecs";
-import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasCost, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
+import { registry, Tx, TxTypes } from "@demex-sdk/codecs";
+import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
+import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
 import elliptic from "elliptic";
-import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
-import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, DemexBroadcastError, ErrorType, SignTxOpts, SignTxRequest } from "./types";
+import { Grantee } from "./grantee";
+import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
+import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest } from "./types";
+import { getSignerAddress, getSignerEvmAddress, isDemexEIP712Signer } from "./utils";
+import { WalletError } from "./constant";
+
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
 
@@ -85,6 +90,7 @@ export class DemexWallet {
   public readonly evmBech32Address: string
 
   public readonly signer: DemexSigner
+  public grantee: Grantee | null = null;
 
   public txDefaultBroadCastMode?: BroadcastTxMode
   public disableRetryOnSequenceError: boolean = false
@@ -92,11 +98,10 @@ export class DemexWallet {
   // tx queue management
   private txSignManager: QueueManager<SignTxRequest>
   private txDispatchManager: QueueManager<BroadcastTxRequest>
-  private sequenceInvalidated = false
   private defaultTimeoutBlocks: number
 
   // network state caches
-  private accountInfo: Account | null = null
+  private walletAccounts: Record<string, WalletAccount>
   private chainId: string | null = null
   private txGasCosts: Record<string, BigNumber> | null = null
   private txGasPrices: Record<string, BigNumber> | null = null
@@ -122,6 +127,7 @@ export class DemexWallet {
     this.defaultTimeoutBlocks = opts.defaultTimeoutBlocks ?? DEFAULT_TX_TIMEOUT_BLOCKS;
     this._tmClient = opts.tmClient;
     this._queryClient = opts.queryClient;
+    this.walletAccounts = {};
 
     this.onRequestSign = opts.onRequestSign;
     this.onSignComplete = opts.onSignComplete;
@@ -129,14 +135,14 @@ export class DemexWallet {
     this.onBroadcastTxFail = opts.onBroadcastTxFail;
 
     this.txDispatchManager = new QueueManager(this.dispatchTx.bind(this));
-    this.txSignManager = new QueueManager(this.signTx.bind(this));
+    this.txSignManager = new QueueManager(this.signAndBroadcastTx.bind(this));
 
     const bech32Prefix = this.networkConfig.bech32Prefix;
 
     if (opts.bech32Address) {
       // address (view-only) connection
       if (opts.bech32Address.startsWith(bech32Prefix))
-        throw new Error("invalid address, prefix does not match");
+        throw new WalletError("invalid address, prefix does not match");
 
       this.publicKey = Buffer.from([]);
       this.bech32Address = opts.bech32Address;
@@ -156,7 +162,7 @@ export class DemexWallet {
       this.bech32Address = toBech32(bech32Prefix, rawAddress);
       this.publicKey = publicKey;
     } else {
-      throw new Error("cannot instantiate wallet address");
+      throw new WalletError("cannot instantiate wallet address");
     }
 
     this.hexAddress = "0x".concat(toHex(fromBech32(this.bech32Address).data));
@@ -170,90 +176,175 @@ export class DemexWallet {
     }
   }
 
-  private async signTx(txRequest: SignTxRequest) {
-    const {
-      reattempts,
-      signerAddress,
-      signOpts,
-      messages,
-      broadcastOpts,
-      handler: { resolve, reject },
-    } = txRequest;
+  public async setGrantee(grantee: Grantee) {
+    this.grantee = grantee;
+  }
 
-    try {
-      // retrieve account info, reload if sequenceInvalidated flag is set.
-      if (!this.accountInfo
-        || this.accountInfo?.address === this.evmBech32Address // refresh to check if carbon acc is present
-        || this.sequenceInvalidated)
-        await this.reloadAccountSequence();
 
-      // prepare tx timeout height. add a default timeout height to tx if unset.
-      // skip if EIP-712 signer, timeoutHeight is not supported for EIP-712
-      let timeoutHeight;
-      if (!isDemexEIP712Signer(this.signer)) {
-        timeoutHeight = await this.getTimeoutHeight();
+  private useGrantee(messages: readonly EncodeObject[], bypass?: boolean) {
+    const typeUrls = new Set(messages.map(m => m.typeUrl))
+    return !!this.grantee && this.grantee.isAuthorised(typeUrls) && !bypass
+  }
+
+  private async getGranteeSigningData(txRequest: SignTxRequest): Promise<SigningData> {
+    const { messages } = txRequest;
+    return {
+      ...txRequest,
+      signOpts: { ...txRequest.signOpts, tx: { ...txRequest.signOpts?.tx, feeGranter: await getSignerAddress(this.signer) } },
+      messages: [await this.grantee!.constructExecMessage(messages)],
+      signer: this.grantee!.signer,
+      signingClient: await this.grantee!.getSigningClient(await this.getTmClient()),
+    }
+  }
+
+  private async getDefaultSigningData(txRequest: SignTxRequest): Promise<SigningData> {
+    return {
+      ...txRequest,
+      signer: this.signer,
+      signingClient: await this.getSigningStargateClient(),
+    }
+  }
+
+  private async getSigningData(txRequest: SignTxRequest): Promise<SigningData> {
+    const { messages, signOpts } = txRequest;
+    if (this.useGrantee(messages, signOpts?.bypassGrantee)) return await this.getGranteeSigningData(txRequest);
+    return await this.getDefaultSigningData(txRequest);
+  }
+
+  private async checkReloadAccountState(signer: DemexSigner) {
+    const address = await getSignerAddress(signer);
+    const state = this.walletAccounts?.[address]
+    if (!state || state.sequenceInvalidated) return await this.reloadAccount(signer)
+  }
+
+  /**
+  * Reloads primary account state as priority
+  * Only tries to reload secondary account state if primary account state is not found 
+  * and signer implements interface to get secondary account address
+  */
+  public async reloadAccount(signer: DemexSigner) {
+    const info = await this.reloadAccountInfo(signer);
+    const address = await getSignerAddress(signer);
+    if (!info) return;
+    this.walletAccounts[address] = { ...info, sequenceInvalidated: false };
+  }
+
+  private async reloadAccountInfo(signer: DemexSigner) {
+    const address = await getSignerAddress(signer);
+    const account: Account | undefined = await this.getAccount(address);
+    if (account) return account;
+    if (!signer) return;
+    const evmHexAddress = await getSignerEvmAddress(signer);
+    if (evmHexAddress) {
+      const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), 'hex');
+      const evmBech32Address = toBech32(this.networkConfig.bech32Prefix, evmAddressBytes);
+      const evmAccount: Account | undefined = await this.getAccount(evmBech32Address);
+      if (evmAccount) return evmAccount
+    }
+  }
+
+
+  private determineTimeoutHeight(signer: DemexSigner) {
+    return isDemexEIP712Signer(signer) ? undefined : this.getTimeoutHeight();
+  }
+
+  private updateAccountState(address: string, update: Partial<WalletAccount>) {
+    this.walletAccounts[address] = {
+      ...this.walletAccounts[address],
+      ...update,
+    };
+  }
+
+  private async signAndConstructBroadcastTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
+    const signingData = await this.getSigningData(txRequest);
+    const { messages, signer, signingClient, signOpts, handler } = signingData;
+
+    const address = await getSignerAddress(signer);
+
+    await this.checkReloadAccountState(signer);
+
+    const accountState: WalletAccount | undefined = this.walletAccounts[address];
+
+    if (!accountState) throw new WalletError(`account not found: ${address}`)
+
+    const timeoutHeight = await this.determineTimeoutHeight(signer);
+
+    const { sequence, accountNumber } = accountState;
+
+    const _signOpts: SignTxOpts = {
+      ...signOpts,
+      tx: {
+        timeoutHeight: signOpts?.tx?.timeoutHeight ?? timeoutHeight,
+        ...signOpts?.tx,
+      },
+      signer: {
+        accountNumber: signOpts?.signer?.accountNumber ?? accountNumber,
+        sequence: signOpts?.signer?.sequence ?? sequence,
+        ...signOpts?.signer,
       }
+    };
 
-      // calculate tx sequence number, will be 0 if accountInfo doesnt exist (new account).
-      // then increment account info sequence number if not a new account.
-      let sequence: number
-      if (!this.accountInfo) {
-        sequence = signOpts?.sequence ?? 0
-      } else {
-        sequence = this.accountInfo!.sequence;
-        this.accountInfo = {
-          ...this.accountInfo!,
-          sequence: sequence + 1,
-        };
-      }
+    const [account] = await signer.getAccounts();
+    const signedTx = await this.getSignedTx(address, messages, signingClient, account, _signOpts);
+    this.updateAccountState(address, { sequence });
 
-      // obtain signed transaction
-      const _signOpts: SignTxOpts = {
-        ...signOpts,
-        explicitSignerData: {
-          timeoutHeight,
-          ...signOpts?.explicitSignerData,
-        },
-      };
-      const signedTx = await this.getSignedTx(signerAddress, messages, sequence, _signOpts);
+    return {
+      ...signingData,
+      signerAddress: address,
+      signedTx,
+      signOpts: _signOpts,
+      handler: { ...handler, requestId: sequence.toString() },
+    }
+  }
 
-      // add signed transaction to dispatch queue
-      this.txDispatchManager.enqueue({
-        reattempts,
-        signerAddress,
+  async signAndBroadcast(
+    messages: EncodeObject[],
+    signOpts?: SignTxOpts,
+    broadcastOpts?: BroadcastTxOpts
+  ): Promise<BroadcastTxResult> {
+    const promise = new Promise<BroadcastTxResult>((resolve, reject) => {
+      this.txSignManager.enqueue({
         messages,
-        signedTx,
         broadcastOpts,
-        signOpts: _signOpts,
-        handler: { resolve, reject, requestId: sequence.toString() },
+        signOpts,
+        handler: { resolve, reject },
       });
+    });
+
+    return promise;
+  }
+
+  private async signAndBroadcastTx(txRequest: SignTxRequest) {
+    try {
+      const broadcastTx = await this.signAndConstructBroadcastTxRequest(txRequest);
+      this.txDispatchManager.enqueue(broadcastTx);
     } catch (error) {
-      reject(error);
+      txRequest.handler.reject(error);
     }
   }
 
   public async getSignedTx(
     signerAddress: string,
     messages: readonly EncodeObject[],
-    sequence: number,
-    opts: Omit<SignTxOpts, "sequence">,
+    signingClient: SigningStargateClient,
+    account: AccountData,
+    opts: SignTxOpts,
   ): Promise<Tx.TxRaw> {
-    const { memo = "", accountNumber, explicitSignerData, feeDenom } = opts;
-    const signingClient = await this.getSigningStargateClient();
-    const [account] = await this.signer.getAccounts();
+    const { signer, tx } = opts;
+    const { memo = "", fee, feeDenom, feeGranter } = tx ?? {};
+    const { sequence = 0, accountNumber = 0 } = signer ?? {};
 
     let signature: StdSignature | null = null;
     try {
       const chainId = await this.getChainId();
       await callIgnoreError(() => this.onRequestSign?.(messages));
       const signerData: SignerData = {
-        accountNumber: accountNumber ?? this.accountInfo!.accountNumber,
+        accountNumber,
         chainId,
         sequence,
-        ...explicitSignerData,
       };
-      const fee = opts?.fee ?? await this.estimateTxFee(messages, feeDenom ?? TxDefaultGasDenom);
-      const txRaw = await signingClient.sign(signerAddress, messages, fee, memo, signerData);
+      const txFee = fee ?? await this.estimateTxFee(messages, feeDenom ?? TxDefaultGasDenom, feeGranter);
+      const txRaw = await signingClient.sign(signerAddress, messages, txFee, memo, signerData);
       signature = encodeSecp256k1Signature(account.pubkey, txRaw.signatures[0]);
       return txRaw;
     } finally {
@@ -263,48 +354,57 @@ export class DemexWallet {
 
   public async estimateTxFee(
     messages: readonly EncodeObject[],
-    feeDenom: string,
-  ) {
-    const denomGasPrice = await this.getGasPrice(feeDenom);
+    denom: string,
+    granter?: string,
+  ): Promise<StdFee> {
+    const denomGasPrice = await this.getGasPrice(denom);
 
-    let totalGasCost = BN_ZERO;
-    for (const msg of messages) {
-      const gasCost = await this.getGasCost(msg.typeUrl);
-      totalGasCost = totalGasCost.plus(gasCost);
-    }
+    const totalGasCost = await this.getTotalGasCost(messages);
+
     let totalFees = totalGasCost.times(denomGasPrice ?? BN_ZERO);
 
     // override zero gas cost tx with some gas for tx execution
     // set overall fee to zero, implying 0 gas price.
     if (totalGasCost.isZero()) {
-      totalGasCost = TxDefaultGasCost;
       totalFees = BN_ZERO;
     }
 
     return {
-      amount: [{
-        amount: totalFees.toString(10),
-        denom: feeDenom,
-      }],
-      gas: totalGasCost.toString(10),
+      amount: [
+        {
+          amount: totalFees.toString(10),
+          denom,
+        },
+      ],
+      gas: DefaultGas.toString(10),
+      granter,
     };
   }
 
-  public async reloadAccountSequence() {
-    if (this.sequenceInvalidated) this.sequenceInvalidated = false;
-
-    const info = await this.reloadAccountInfo()
-    const pubkey = this.accountInfo?.pubkey ?? {
-      type: "tendermint/PubKeySecp256k1",
-      value: this.publicKey.toString("base64"),
-    };
-    if (info) {
-      this.accountInfo = {
-        ...info,
-        pubkey,
-      };
+  private async getTotalGasCost(messages: readonly EncodeObject[]) {
+    let totalGasCost = BN_ZERO;
+    for (const message of messages) {
+      const gasCost = await this.getGasCost(message.typeUrl);
+      const additionalGasCost = await this.addAdditionalGasCost(message);
+      totalGasCost = totalGasCost.plus(gasCost).plus(additionalGasCost);
     }
+    return totalGasCost;
   }
+
+  private async addAdditionalGasCost(message: EncodeObject) {
+    switch (message.typeUrl) {
+      case TxTypes.MsgExec: return await this.getExecGasCost(message.value as MsgExec);
+    }
+    return BN_ZERO;
+  }
+
+  private async getExecGasCost(message: MsgExec) {
+    const { msgs } = message;
+    return await this.getTotalGasCost(msgs);
+  }
+
+
+
   public async getTimeoutHeight() {
     try {
       const cacheBuster = ~~(new Date().getTime() / 1000);
@@ -317,15 +417,8 @@ export class DemexWallet {
     }
   }
 
-  private async reloadAccountInfo() {
-    // carbon account always takes priority
-    let account: Account | undefined = undefined;
-    if (this.bech32Address)
-      account = await this.getAccount(this.bech32Address);
-    if (!account && this.evmBech32Address)
-      account = await this.getAccount(this.evmBech32Address);
-    return account
-  }
+
+
   private getBroadcastFunc(broadcastMode?: BroadcastTxMode) {
     switch (broadcastMode) {
       case Method.BroadcastTxSync: return this.broadcastTxToMempoolWithoutConfirm.bind(this);
@@ -333,30 +426,22 @@ export class DemexWallet {
     }
     return this.broadcastTx.bind(this)
   }
-  private async getAccount(queryAddress: string, retryCount: number = 0): Promise<Account | undefined> {
+
+  private async getAccount(queryAddress: string): Promise<Account | undefined> {
     try {
       const queryClient = await this.getQueryClient();
       const result = await queryClient.auth.Account({ address: queryAddress });
-      if (result.account)
-        return accountFromAny(result.account);
+      if (result.account) return accountFromAny(result.account);
     } catch (error) {
-      if (!isAccountNotFoundError(error, queryAddress))
-        throw error
+      if (!isAccountNotFoundError(error, queryAddress)) throw error
     }
-    // when grant is just created, querying grantee account info immediately may fail maybe due to backend caching
-    // retry query after 1s to buffer for backend to catch up
-    if (retryCount < 1) {
-      await delay(1000);
-      return this.getAccount(queryAddress, retryCount + 1)
-    }
-
-    return undefined
   }
 
   private async dispatchTx(txRequest: BroadcastTxRequest) {
     const {
       broadcastOpts,
       signedTx,
+      signerAddress,
       handler: { resolve, reject },
     } = txRequest;
     const broadcastMode = broadcastOpts?.mode ?? this.txDefaultBroadCastMode;
@@ -369,12 +454,11 @@ export class DemexWallet {
       // retry sendTx if nonce error once.
       if (!this.disableRetryOnSequenceError && reattempts < 1 && isNonceMismatchError(error)) {
         // invalidate account sequence for reload on next signTx call
-        this.sequenceInvalidated = true;
+        this.walletAccounts[signerAddress].sequenceInvalidated = true;
 
         // requeue transaction for signTx
         this.txSignManager.enqueue({
           reattempts: (reattempts ?? 0) + 1,
-          signerAddress: txRequest.signerAddress,
           messages: txRequest.messages,
           broadcastOpts,
           signOpts: txRequest.signOpts,
@@ -393,14 +477,10 @@ export class DemexWallet {
    */
   async broadcastTx(txRaw: Tx.TxRaw, opts: BroadcastTxOpts = {}): Promise<DeliverTxResponse> {
     const { pollIntervalMs = 3_000, timeoutMs = 60_000 } = opts;
-
     const tx = Tx.TxRaw.encode(txRaw).finish();
     const carbonClient = await this.getSigningStargateClient();
     const response = await carbonClient.broadcastTx(tx, timeoutMs, pollIntervalMs);
-    if (isDeliverTxFailure(response)) {
-      // tx failed
-      throw new DemexBroadcastError(`[${response.code}] ${response.rawLog}`, ErrorType.BlockFail, response)
-    }
+    if (isDeliverTxFailure(response)) throw new DemexBroadcastError(`[${response.code}] ${response.rawLog}`, ErrorType.BlockFail, response)
     return response;
   }
 
@@ -412,10 +492,7 @@ export class DemexWallet {
     const tx = Tx.TxRaw.encode(txRaw).finish();
     const tmClient = await this.getTmClient();
     const response = await tmClient.broadcastTxSync({ tx });
-    if (!broadcastTxSyncSuccess(response)) {
-      // tx failed
-      throw new DemexBroadcastError(`[${response.code}] ${response.log}`, ErrorType.BroadcastFail, response);
-    }
+    if (!broadcastTxSyncSuccess(response)) throw new DemexBroadcastError(`[${response.code}] ${response.log}`, ErrorType.BroadcastFail, response);
     return response
   }
 
@@ -443,7 +520,7 @@ export class DemexWallet {
   public async getSigningStargateClient(): Promise<SigningStargateClient> {
     if (this._signingClient) return this._signingClient;
     const tmClient = await this.getTmClient();
-    this._signingClient = await SigningStargateClient.createWithSigner(tmClient, this.signer);
+    this._signingClient = await SigningStargateClient.createWithSigner(tmClient, this.signer, { registry });
     return this._signingClient;
   }
   public async getChainId(): Promise<string> {
@@ -498,9 +575,12 @@ export class DemexWallet {
 
   public static withPrivateKey(privateKey: string | Buffer, opts: Omit<DemexWalletInitOpts, "privateKey"> = {}) {
     const privateKeyBuffer = stringOrBufferToBuffer(privateKey);
-    if (!privateKeyBuffer || !privateKeyBuffer.length) throw new Error("");
+    if (!privateKeyBuffer || !privateKeyBuffer.length) throw new WalletError("");
 
-    const signer = new DemexPrivateKeySigner(privateKeyBuffer, "");
+    const network = opts.network ?? Network.MainNet;
+    const { bech32Prefix } = DemexWallet.overrideConfig(network, opts.networkConfig);
+
+    const signer = new DemexPrivateKeySigner(privateKeyBuffer, bech32Prefix);
     return new DemexWallet({
       ...opts,
       privateKey: privateKeyBuffer,

@@ -1,30 +1,27 @@
 import { AminoSignResponse, OfflineAminoSigner, Secp256k1Wallet, StdSignDoc } from "@cosmjs/amino";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
-import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, OfflineDirectSigner, OfflineSigner } from "@cosmjs/proto-signing";
+import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, OfflineDirectSigner } from "@cosmjs/proto-signing";
 import { constructAdr36SignDoc } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import { EIP712Tx } from "./eip712";
+import { WalletError } from "./constant";
 
 export enum DemexSignerTypes {
   Ledger,
   PrivateKey,
-  BrowserInjected,
   PublicKey,
 }
-
 export interface EIP712Signer {
-  legacyEip712SignMode: boolean
-  readonly signLegacyEip712: (signerAddress: string, signDoc: StdSignDoc) => Promise<LegacyEIP712AminoSignResponse>;
+  getEvmAddress: () => Promise<string>;
+  getEvmChainId: () => Promise<string>;
+  signEIP712: (hexAddress: string, doc: EIP712Tx) => Promise<string>;
 }
+
 export type DemexEIP712Signer = (DemexDirectSigner | DemexAminoSigner) & EIP712Signer
 export type DemexSigner = DemexDirectSigner | DemexAminoSigner | DemexEIP712Signer;
 export type DemexDirectSigner = OfflineDirectSigner & { type: DemexSignerTypes };
 export type DemexAminoSigner = OfflineAminoSigner & { type: DemexSignerTypes }
 
-export type LegacyEIP712AminoSignResponse = AminoSignResponse & { feePayer: string }
-
-export function isDemexEIP712Signer(signer: OfflineSigner): boolean {
-  return typeof (signer as DemexEIP712Signer).signLegacyEip712 === "function"
-}
 export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigner {
   type = DemexSignerTypes.PrivateKey;
   wallet?: DirectSecp256k1Wallet;
@@ -45,7 +42,7 @@ export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigne
 
   async getAccounts() {
     const wallet = await this.initWallet();
-    return wallet.getAccounts();
+    return await wallet.getAccounts();
   }
 
   async signAmino(signerAddress: string, signDoc: StdSignDoc): Promise<AminoSignResponse> {
@@ -65,19 +62,20 @@ export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigne
   }
 }
 
+
 export class DemexNonSigner implements DemexDirectSigner {
   type = DemexSignerTypes.PublicKey;
 
   async getAccounts(): Promise<readonly AccountData[]> {
-    throw new Error("signing not available");
+    throw new WalletError("signing not available");
   }
 
   async signDirect(): Promise<DirectSignResponse> {
-    throw new Error("signing not available");
+    throw new WalletError("signing not available");
   }
 
   async signMessage(address: string, message: string): Promise<string> { // eslint-disable-line
-    throw new Error("signing not available");
+    throw new WalletError("signing not available");
   }
 }
 
