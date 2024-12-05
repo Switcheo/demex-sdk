@@ -16,8 +16,6 @@
     "@cityofzion/neon-api": "^4.9.0",
     "@cityofzion/neon-core": "^4.9.0",
     "@cityofzion/neon-core-next": "npm:@cityofzion/neon-core@^5.0.0",
-    "@ledgerhq/hw-transport-webhid": "^6.29.4",
-    "@ledgerhq/hw-transport-webusb": "^6.29.4",
     "@zilliqa-js/zilliqa": "^2.2.0",
     "neo-dapi": "^2.0.4",
     "neo3-dapi": "^1.0.1",
