@@ -303,16 +303,16 @@ export class DemexWallet {
     opts: SignTxOpts,
   ): Promise<Tx.TxRaw> {
     const { explicitSignerData, feeDenom, feeGranter, fee } = opts;
-    const { sequence, accountNumber, memo = "" } = explicitSignerData ?? {};
+    const { sequence = 0, accountNumber = 0, memo = "" } = explicitSignerData ?? {};
 
     let signature: StdSignature | null = null;
     try {
       const chainId = await this.getChainId();
       await callIgnoreError(() => this.onRequestSign?.(messages));
       const signerData: SignerData = {
-        accountNumber: accountNumber ?? 0,
+        accountNumber,
         chainId,
-        sequence: sequence ?? 0,
+        sequence,
         ...explicitSignerData,
       };
       const txFee = fee ?? await this.estimateTxFee(messages, feeDenom ?? TxDefaultGasDenom, feeGranter);
