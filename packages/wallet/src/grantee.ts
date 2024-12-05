@@ -5,16 +5,16 @@ import { DemexSigner } from "./signer";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
 
-export interface InitOpts {
+export interface GranteeInitOpts {
   mnemonic: string;
 }
 
-export interface UpdateOpts {
+export interface GranteeUpdateOpts {
   mnemonic: string;
   expiry: Date;
 }
 
-export interface Details {
+export interface GranteeDetails {
   expiry: Date;
   authorisedMessages: string[];
 }
