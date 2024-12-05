@@ -365,13 +365,13 @@ export class DemexWallet {
 
   private async addAdditionalGasCost(message: EncodeObject) {
     switch (message.typeUrl) {
-      case TxTypes.MsgExec: return await this.getExecGasCost(message);
+      case TxTypes.MsgExec: return await this.getExecGasCost(message.value as MsgExec);
     }
     return BN_ZERO;
   }
 
-  private async getExecGasCost(message: EncodeObject) {
-    const { msgs } = message.value as MsgExec;
+  private async getExecGasCost(message: MsgExec) {
+    const { msgs } = message;
     return await this.getTotalGasCost(msgs);
   }
 
