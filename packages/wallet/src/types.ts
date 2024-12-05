@@ -15,9 +15,7 @@ export interface PromiseHandler<T> {
   reject: (reason?: any) => void;
 }
 
-export type AccountStates = Record<string, AccountState>
-
-export interface AccountState extends Omit<Account, "pubkey"> {
+export interface WalletAccount extends Account {
   sequenceInvalidated: boolean
 }
 
@@ -45,18 +43,18 @@ export interface BroadcastTxRequest extends SignTxRequest {
   signedTx: Tx.TxRaw;
 }
 
-export interface DemexSignerData extends SignerData {
+
+export interface TxOverrides {
+  fee?: StdFee;
+  feeDenom?: string;
+  feeGranter?: string;
   timeoutHeight?: number;
-  evmChainId?: string;
   memo?: string;
 }
 
 export interface SignTxOpts {
-  fee?: StdFee;
-  feeDenom?: string;
-  feeGranter?: string;
-  explicitSignerData?: Partial<DemexSignerData>;
-  triggerMerge?: boolean; // stack merge account tx if user account is unmerged
+  tx?: TxOverrides;
+  signer?: Partial<SignerData>;
   bypassGrantee?: boolean;
 }
 

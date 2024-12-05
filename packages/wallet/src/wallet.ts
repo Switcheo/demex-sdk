@@ -13,7 +13,7 @@ import * as Bip39 from "bip39";
 import elliptic from "elliptic";
 import { Grantee } from "./grantee";
 import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
-import { AccountState, AccountStates, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, ReloadAddresses, SigningData, SignTxOpts, SignTxRequest } from "./types";
+import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, ReloadAddresses, SigningData, SignTxOpts, SignTxRequest } from "./types";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -99,7 +99,7 @@ export class DemexWallet {
   private defaultTimeoutBlocks: number
 
   // network state caches
-  private accountStates: AccountStates
+  private walletAccounts: Record<string, WalletAccount>
   private chainId: string | null = null
   private txGasCosts: Record<string, BigNumber> | null = null
   private txGasPrices: Record<string, BigNumber> | null = null
@@ -125,7 +125,7 @@ export class DemexWallet {
     this.defaultTimeoutBlocks = opts.defaultTimeoutBlocks ?? DEFAULT_TX_TIMEOUT_BLOCKS;
     this._tmClient = opts.tmClient;
     this._queryClient = opts.queryClient;
-    this.accountStates = {};
+    this.walletAccounts = {};
 
     this.onRequestSign = opts.onRequestSign;
     this.onSignComplete = opts.onSignComplete;
@@ -186,11 +186,11 @@ export class DemexWallet {
     return !!this.grantee && this.grantee.isAuthorised(typeUrls) && !bypass
   }
 
-  private async getGranteeSigningData(txRequest: SignTxRequest) {
+  private async getGranteeSigningData(txRequest: SignTxRequest): Promise<SigningData> {
     const { messages } = txRequest;
     return {
       ...txRequest,
-      signOpts: { ...txRequest.signOpts, feeGranter: this.bech32Address },
+      signOpts: { ...txRequest.signOpts, tx: { ...txRequest.signOpts?.tx, feeGranter: this.bech32Address } },
       address: await this.grantee!.getAddress(),
       messages: [await this.grantee!.constructExecMessage(messages)],
       signer: this.grantee!.signer,
@@ -198,7 +198,7 @@ export class DemexWallet {
     }
   }
 
-  private async getDefaultSigningData(txRequest: SignTxRequest) {
+  private async getDefaultSigningData(txRequest: SignTxRequest): Promise<SigningData> {
     return {
       ...txRequest,
       address: this.bech32Address,
@@ -216,7 +216,7 @@ export class DemexWallet {
 
   private async checkReloadAccountState(reloadAddresses: ReloadAddresses) {
     const { address } = reloadAddresses
-    const state = this.accountStates?.[address]
+    const state = this.walletAccounts?.[address]
     if (!state || state.sequenceInvalidated) return await this.reloadAccount(reloadAddresses)
   }
 
@@ -225,9 +225,9 @@ export class DemexWallet {
     return isDemexEIP712Signer(signer) ? undefined : this.getTimeoutHeight();
   }
 
-  private updateAccountState(address: string, update: Partial<AccountState>) {
-    this.accountStates[address] = {
-      ...this.accountStates[address],
+  private updateAccountState(address: string, update: Partial<WalletAccount>) {
+    this.walletAccounts[address] = {
+      ...this.walletAccounts[address],
       ...update,
     };
   }
@@ -238,7 +238,7 @@ export class DemexWallet {
 
     await this.checkReloadAccountState({ address, evmBech32Address });
 
-    const accountState: AccountState | undefined = this.accountStates[address];
+    const accountState: WalletAccount | undefined = this.walletAccounts[address];
 
     if (!accountState) throw Error(`account not found: ${address}`)
 
@@ -246,14 +246,18 @@ export class DemexWallet {
 
     const { sequence, accountNumber } = accountState;
 
+
     const _signOpts: SignTxOpts = {
       ...signOpts,
-      explicitSignerData: {
-        timeoutHeight,
-        accountNumber,
-        sequence,
-        ...signOpts?.explicitSignerData,
+      tx: {
+        timeoutHeight: signOpts?.tx?.timeoutHeight ?? timeoutHeight,
+        ...signOpts?.tx,
       },
+      signer: {
+        accountNumber: signOpts?.signer?.accountNumber ?? accountNumber,
+        sequence: signOpts?.signer?.sequence ?? sequence,
+        ...signOpts?.signer,
+      }
     };
 
     const [account] = await signer.getAccounts();
@@ -302,8 +306,9 @@ export class DemexWallet {
     account: AccountData,
     opts: SignTxOpts,
   ): Promise<Tx.TxRaw> {
-    const { explicitSignerData, feeDenom, feeGranter, fee } = opts;
-    const { sequence = 0, accountNumber = 0, memo = "" } = explicitSignerData ?? {};
+    const { signer, tx } = opts;
+    const { memo = "", fee, feeDenom, feeGranter } = tx ?? {};
+    const { sequence = 0, accountNumber = 0 } = signer ?? {};
 
     let signature: StdSignature | null = null;
     try {
@@ -313,7 +318,6 @@ export class DemexWallet {
         accountNumber,
         chainId,
         sequence,
-        ...explicitSignerData,
       };
       const txFee = fee ?? await this.estimateTxFee(messages, feeDenom ?? TxDefaultGasDenom, feeGranter);
       const txRaw = await signingClient.sign(signerAddress, messages, txFee, memo, signerData);
@@ -378,8 +382,7 @@ export class DemexWallet {
   public async reloadAccount(reloadAddresses: ReloadAddresses) {
     const info = await this.reloadAccountInfo(reloadAddresses);
     if (!info) return;
-    const { pubkey, ...rest } = info;
-    this.accountStates[reloadAddresses.address] = { ...rest, sequenceInvalidated: false };
+    this.walletAccounts[reloadAddresses.address] = { ...info, sequenceInvalidated: false };
   }
 
   public async getTimeoutHeight() {
@@ -439,7 +442,7 @@ export class DemexWallet {
       // retry sendTx if nonce error once.
       if (!this.disableRetryOnSequenceError && reattempts < 1 && isNonceMismatchError(error)) {
         // invalidate account sequence for reload on next signTx call
-        this.accountStates[signerAddress].sequenceInvalidated = true;
+        this.walletAccounts[signerAddress].sequenceInvalidated = true;
 
         // requeue transaction for signTx
         this.txSignManager.enqueue({
