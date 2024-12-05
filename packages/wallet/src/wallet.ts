@@ -174,8 +174,6 @@ export class DemexWallet {
       this.evmHexAddress = "";
       this.evmBech32Address = "";
     }
-
-
   }
 
   public async setGrantee(grantee: Grantee) {
