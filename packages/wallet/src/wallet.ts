@@ -142,7 +142,7 @@ export class DemexWallet {
     if (opts.bech32Address) {
       // address (view-only) connection
       if (opts.bech32Address.startsWith(bech32Prefix))
-        throw new Error("invalid address, prefix does not match");
+        throw new WalletError("invalid address, prefix does not match");
 
       this.publicKey = Buffer.from([]);
       this.bech32Address = opts.bech32Address;
@@ -162,7 +162,7 @@ export class DemexWallet {
       this.bech32Address = toBech32(bech32Prefix, rawAddress);
       this.publicKey = publicKey;
     } else {
-      throw new Error("cannot instantiate wallet address");
+      throw new WalletError("cannot instantiate wallet address");
     }
 
     this.hexAddress = "0x".concat(toHex(fromBech32(this.bech32Address).data));
@@ -569,7 +569,7 @@ export class DemexWallet {
 
   public static withPrivateKey(privateKey: string | Buffer, opts: Omit<DemexWalletInitOpts, "privateKey"> = {}) {
     const privateKeyBuffer = stringOrBufferToBuffer(privateKey);
-    if (!privateKeyBuffer || !privateKeyBuffer.length) throw new Error("");
+    if (!privateKeyBuffer || !privateKeyBuffer.length) throw new WalletError("");
 
     const network = opts.network ?? Network.MainNet;
     const { bech32Prefix } = DemexWallet.overrideConfig(network, opts.networkConfig);

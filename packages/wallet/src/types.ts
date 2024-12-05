@@ -3,6 +3,7 @@ import { Account, DeliverTxResponse, SignerData, SigningStargateClient, StdFee }
 import { BroadcastTxAsyncResponse, BroadcastTxSyncResponse, Method } from "@cosmjs/tendermint-rpc";
 import { Tx } from "@demex-sdk/codecs";
 import { DemexSigner } from "./signer";
+import { WalletError } from "./constant";
 
 export type BroadcastTxMode = Method.BroadcastTxAsync | Method.BroadcastTxSync | Method.BroadcastTxCommit;
 
@@ -64,7 +65,7 @@ export enum ErrorType {
   BroadcastFail = "broadcast_fail",
   BlockFail = "block_fail",
 }
-export class DemexBroadcastError extends Error {
+export class DemexBroadcastError extends WalletError {
   readonly type?: ErrorType
   readonly data?: any
   constructor(msg: string, type?: ErrorType, data?: any) {

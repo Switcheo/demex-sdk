@@ -4,6 +4,7 @@ import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, OfflineDirectSi
 import { constructAdr36SignDoc } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { EIP712Tx } from "./eip712";
+import { WalletError } from "./constant";
 
 export enum DemexSignerTypes {
   Ledger,
@@ -66,15 +67,15 @@ export class DemexNonSigner implements DemexDirectSigner {
   type = DemexSignerTypes.PublicKey;
 
   async getAccounts(): Promise<readonly AccountData[]> {
-    throw new Error("signing not available");
+    throw new WalletError("signing not available");
   }
 
   async signDirect(): Promise<DirectSignResponse> {
-    throw new Error("signing not available");
+    throw new WalletError("signing not available");
   }
 
   async signMessage(address: string, message: string): Promise<string> { // eslint-disable-line
-    throw new Error("signing not available");
+    throw new WalletError("signing not available");
   }
 }
 
