@@ -357,9 +357,8 @@ export class DemexWallet {
     let totalGasCost = BN_ZERO;
     for (const message of messages) {
       const gasCost = await this.getGasCost(message.typeUrl);
-      totalGasCost = totalGasCost
-        .plus(gasCost ?? BN_ZERO)
-        .plus(await this.addAdditionalGasCost(message));
+      const additionalGasCost = await this.addAdditionalGasCost(message);
+      totalGasCost = totalGasCost.plus(gasCost).plus(additionalGasCost);
     }
     return totalGasCost;
   }
