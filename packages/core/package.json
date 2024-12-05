@@ -22,11 +22,12 @@
     "base58check": "^2.0.0",
     "bignumber.js": "^9.1.2",
     "bip32": "^2.0.6",
-    "bip39": "^3.0.4",
+    "bip39": "^3.1.0",
     "ethers": "^6.13.4",
-    "secp256k1": "^4.0.2",
+    "secp256k1": "^5.0.1",
     "secp256r1": "^0.0.3",
-    "tslib": "^2.6.2"
+    "tslib": "^2.6.2",
+    "typescript": "^5.7.2"
   },
   "exports": {
     ".": {
@@ -48,7 +49,7 @@
   ],
   "devDependencies": {
     "@types/crypto-js": "4.2.0",
-    "@types/secp256k1": "^4.0.2",
+    "@types/secp256k1": "^4.0.6",
     "@types/wif": "^2.0.2",
     "concurrently": "7.0.0",
     "eslint": "^9.13.0"

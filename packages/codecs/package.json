@@ -11,7 +11,7 @@
     "codecs:copy": "cp ~/go/src/github.com/Switcheo/carbon/gen/proto-ts.tar.gz .",
     "codecs:update": "sh scripts/update-codecs.sh",
     "codecs:register": "yarn codecs:reset && sh scripts/generate-registry.sh",
-    "codecs:reset": "find . -type f -name 'export.ts' -delete && rm -f src/*-models.ts"
+    "codecs:reset": "find . -type f -name 'export.ts' -delete && rm -f src/*-models.ts && rm -f src/index.ts"
   },
   "main": "./dist-cjs/index.js",
   "module": "./dist-es/index.js",
@@ -27,7 +27,8 @@
       "node": "./dist-cjs/index.js",
       "import": "./dist-es/index.js",
       "require": "./dist-cjs/index.js",
-      "types": "./dist-types/index.d.ts"
+      "types": "./dist-types/index.d.ts",
+      "default": "./dist-types/index.d.ts"
     },
     "./package.json": {
       "module": "./package.json",
@@ -35,68 +36,46 @@
       "import": "./package.json",
       "require": "./package.json"
     },
-    "./alliance/*": {
-      "module": "./dist-es/alliance/*",
-      "node": "./dist-cjs/alliance/*",
-      "import": "./dist-es/alliance/*",
-      "require": "./dist-cjs/alliance/*",
-      "types": "./dist-types/alliance/*"
-    },
-    "./amino/*": {
-      "module": "./dist-es/amino/*",
-      "node": "./dist-cjs/amino/*",
-      "import": "./dist-es/amino/*",
-      "require": "./dist-cjs/amino/*",
-      "types": "./dist-types/amino/*"
-    },
-    "./cosmos/*": {
-      "module": "./dist-es/cosmos/*",
-      "node": "./dist-cjs/cosmos/*",
-      "import": "./dist-es/cosmos/*",
-      "require": "./dist-cjs/cosmos/*",
-      "types": "./dist-types/cosmos/*"
-    },
-    "./ethermint/*": {
-      "module": "./dist-es/ethermint/*",
-      "node": "./dist-cjs/ethermint/*",
-      "import": "./dist-es/ethermint/*",
-      "require": "./dist-cjs/ethermint/*",
-      "types": "./dist-types/ethermint/*"
-    },
-    "./google/*": {
-      "module": "./dist-es/google/*",
-      "node": "./dist-cjs/google/*",
-      "import": "./dist-es/google/*",
-      "require": "./dist-cjs/google/*",
-      "types": "./dist-types/google/*"
-    },
-    "./ibc/*": {
-      "module": "./dist-es/ibc/*",
-      "node": "./dist-cjs/ibc/*",
-      "import": "./dist-es/ibc/*",
-      "require": "./dist-cjs/ibc/*",
-      "types": "./dist-types/ibc/*"
-    },
-    "./oraclesvc/*": {
-      "module": "./dist-es/oraclesvc/*",
-      "node": "./dist-cjs/oraclesvc/*",
-      "import": "./dist-es/oraclesvc/*",
-      "require": "./dist-cjs/oraclesvc/*",
-      "types": "./dist-types/oraclesvc/*"
-    },
-    "./Switcheo/*": {
-      "module": "./dist-es/Switcheo/*",
-      "node": "./dist-cjs/Switcheo/*",
-      "import": "./dist-es/Switcheo/*",
-      "require": "./dist-cjs/Switcheo/*",
-      "types": "./dist-types/Switcheo/*"
-    },
-    "./tendermint/*": {
-      "module": "./dist-es/tendermint/*",
-      "node": "./dist-cjs/tendermint/*",
-      "import": "./dist-es/tendermint/*",
-      "require": "./dist-cjs/tendermint/*",
-      "types": "./dist-types/tendermint/*"
+    "./*": {
+      "module": "./dist-es/data/*",
+      "node": "./dist-cjs/data/*",
+      "import": "./dist-es/data/*",
+      "require": "./dist-cjs/data/*",
+      "types": "./dist-types/data/*"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "./dist-types/index.d.ts"
+      ],
+      "Switcheo/*": [
+        "./dist-types/data/Switcheo/*"
+      ],
+      "alliance/*": [
+        "./dist-types/data/alliance/*"
+      ],
+      "amino/*": [
+        "./dist-types/data/amino/*"
+      ],
+      "cosmos/*": [
+        "./dist-types/data/cosmos/*"
+      ],
+      "ethermint/*": [
+        "./dist-types/data/ethermint/*"
+      ],
+      "google/*": [
+        "./dist-types/data/google/*"
+      ],
+      "ibc/*": [
+        "./dist-types/data/ibc/*"
+      ],
+      "oraclesvc/*": [
+        "./dist-types/data/oraclesvc/*"
+      ],
+      "tendermint/*": [
+        "./dist-types/data/tendermint/*"
+      ]
     }
   },
   "files": [
