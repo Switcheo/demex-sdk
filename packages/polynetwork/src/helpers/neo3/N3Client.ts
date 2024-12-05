@@ -3,7 +3,6 @@ import { GetContractStateResult, InvokeResult } from "@cityofzion/neon-core-next
 import { N3Address, Network, SimpleMap, SWTHAddress, TokenClient } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { Blockchain, PolynetworkConfig, TokensWithExternalBalance } from "../../env";
-import { NeoLedgerAccount } from "../../providers/neoLedger";
 import { O3Types, O3Wallet } from "../../providers/o3Wallet";
 
 export interface N3ClientOpts {
@@ -11,18 +10,6 @@ export interface N3ClientOpts {
   tokenClient: TokenClient;
   blockchain?: Blockchain;
   network: Network;
-}
-
-export interface LockLedgerDepositParams {
-  token: TokensWithExternalBalance;
-
-  toAddressHex: string;
-
-  feeAmount: BigNumber;
-  amount: BigNumber;
-
-  signCompleteCallback?: () => void;
-  ledger: NeoLedgerAccount;
 }
 
 export interface LockO3DepositParams {
@@ -80,17 +67,6 @@ export class N3Client {
       scriptHash: account.scriptHash,
       sign: async (txn: tx.Transaction, networkMagic: number = CONST.MAGIC_NUMBER.MainNet, k?: string | number) => {
         await txn.sign(account, networkMagic, k);
-        return txn;
-      },
-    };
-  };
-  public static signerFromLedger(ledger: NeoLedgerAccount): N3Signer {
-    return {
-      scriptHash: ledger.scriptHash,
-      sign: async (txn: tx.Transaction, networkMagic: number = CONST.MAGIC_NUMBER.MainNet) => {
-        const signature = await ledger.sign(txn.serialize(false), networkMagic);
-        const encodedPublicKey = wallet.getPublicKeyEncoded(ledger.publicKey);
-        txn.addWitness(tx.Witness.fromSignature(signature, encodedPublicKey));
         return txn;
       },
     };
@@ -257,17 +233,6 @@ export class N3Client {
       ],
     });
     return result.txid;
-  };
-
-  public async lockLedgerDeposit(params: LockLedgerDepositParams) {
-    const { feeAmount, toAddressHex, amount, token, ledger } = params;
-
-    const scriptHash = u.reverseHex(token.bridgeAddress);
-    const tokenScriptHash = u.reverseHex(token.tokenAddress);
-    const fromAddressHex = ledger.displayAddress;
-
-    const n3Signer = N3Client.signerFromLedger(ledger);
-    return await this.lock(scriptHash, tokenScriptHash, fromAddressHex, toAddressHex, amount, feeAmount, n3Signer);
   };
 
   public async getNetworkFee(txn: tx.Transaction, networkFee: number) {
