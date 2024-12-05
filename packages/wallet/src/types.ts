@@ -18,10 +18,6 @@ export interface WalletAccount extends Account {
   sequenceInvalidated: boolean
 }
 
-export interface ReloadAddresses {
-  address: string
-  evmBech32Address?: string
-}
 export interface SigningData extends SignTxRequest {
   signer: DemexSigner
   signingClient: SigningStargateClient,

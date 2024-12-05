@@ -13,7 +13,7 @@ import * as Bip39 from "bip39";
 import elliptic from "elliptic";
 import { Grantee } from "./grantee";
 import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
-import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, ReloadAddresses, SigningData, SignTxOpts, SignTxRequest } from "./types";
+import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest } from "./types";
 import { getSignerAddress, getSignerEvmAddress, isDemexEIP712Signer } from "./utils";
 
 
