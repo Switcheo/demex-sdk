@@ -15,6 +15,7 @@ import { Grantee } from "./grantee";
 import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
 import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest } from "./types";
 import { getSignerAddress, getSignerEvmAddress, isDemexEIP712Signer } from "./utils";
+import { WalletError } from "./constant";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -258,7 +259,7 @@ export class DemexWallet {
 
     const accountState: WalletAccount | undefined = this.walletAccounts[address];
 
-    if (!accountState) throw Error(`account not found: ${address}`)
+    if (!accountState) throw new WalletError(`account not found: ${address}`)
 
     const timeoutHeight = await this.determineTimeoutHeight(signer);
 
