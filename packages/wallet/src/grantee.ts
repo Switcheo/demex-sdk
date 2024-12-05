@@ -60,13 +60,9 @@ export class Grantee {
     return this._signingClient;
   }
 
-  public async getAddress() {
-    const [account] = await this.signer.getAccounts();
-    return account.address;
-  }
-
   public async constructExecMessage(messages: readonly EncodeObject[]): Promise<EncodeObject> {
-    const address = await this.getAddress();
+    const [account] = await this.signer.getAccounts();
+    const address = account.address;
     const msgs = messages.map((message) => registry.encodeAsAny({ ...message }))
     return {
       typeUrl: TxTypes.MsgExec,

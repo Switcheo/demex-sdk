@@ -1,7 +1,6 @@
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { Account, DeliverTxResponse, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, BroadcastTxSyncResponse, Method } from "@cosmjs/tendermint-rpc";
-import { TxRequest } from "@cosmjs/tendermint-rpc/build/comet38";
 import { Tx } from "@demex-sdk/codecs";
 import { DemexSigner } from "./signer";
 
@@ -24,8 +23,6 @@ export interface ReloadAddresses {
   evmBech32Address?: string
 }
 export interface SigningData extends SignTxRequest {
-  address: string
-  evmBech32Address?: string
   signer: DemexSigner
   signingClient: SigningStargateClient,
 }

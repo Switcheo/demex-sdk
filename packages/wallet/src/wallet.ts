@@ -12,8 +12,9 @@ import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
 import elliptic from "elliptic";
 import { Grantee } from "./grantee";
-import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
+import { DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
 import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, ReloadAddresses, SigningData, SignTxOpts, SignTxRequest } from "./types";
+import { getSignerAddress, getSignerEvmAddress, isDemexEIP712Signer } from "./utils";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -190,8 +191,7 @@ export class DemexWallet {
     const { messages } = txRequest;
     return {
       ...txRequest,
-      signOpts: { ...txRequest.signOpts, tx: { ...txRequest.signOpts?.tx, feeGranter: this.bech32Address } },
-      address: await this.grantee!.getAddress(),
+      signOpts: { ...txRequest.signOpts, tx: { ...txRequest.signOpts?.tx, feeGranter: await getSignerAddress(this.signer) } },
       messages: [await this.grantee!.constructExecMessage(messages)],
       signer: this.grantee!.signer,
       signingClient: await this.grantee!.getSigningClient(await this.getTmClient()),
@@ -201,8 +201,6 @@ export class DemexWallet {
   private async getDefaultSigningData(txRequest: SignTxRequest): Promise<SigningData> {
     return {
       ...txRequest,
-      address: this.bech32Address,
-      evmBech32Address: this.evmBech32Address,
       signer: this.signer,
       signingClient: await this.getSigningStargateClient(),
     }
@@ -214,10 +212,28 @@ export class DemexWallet {
     return await this.getDefaultSigningData(txRequest);
   }
 
-  private async checkReloadAccountState(reloadAddresses: ReloadAddresses) {
-    const { address } = reloadAddresses
+  private async checkReloadAccountState(address: string, signer?: DemexSigner) {
     const state = this.walletAccounts?.[address]
-    if (!state || state.sequenceInvalidated) return await this.reloadAccount(reloadAddresses)
+    if (!state || state.sequenceInvalidated) return await this.reloadAccount(address, signer)
+  }
+
+  public async reloadAccount(address: string, signer?: DemexSigner) {
+    const info = await this.reloadAccountInfo(address, signer);
+    if (!info) return;
+    this.walletAccounts[address] = { ...info, sequenceInvalidated: false };
+  }
+  
+  private async reloadAccountInfo(address: string, signer?: DemexSigner) {
+    const account: Account | undefined = await this.getAccount(address);
+    if (account) return account;
+    if (!signer) return;  
+    const evmHexAddress = await getSignerEvmAddress(signer);
+    if (evmHexAddress) {
+      const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), 'hex');
+      const evmBech32Address = toBech32(this.networkConfig.bech32Prefix, evmAddressBytes);
+      const evmAccount: Account | undefined = await this.getAccount(evmBech32Address);
+      if (evmAccount) return evmAccount
+    }
   }
 
 
@@ -234,9 +250,11 @@ export class DemexWallet {
 
   private async signAndConstructBroadcastTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
     const signingData = await this.getSigningData(txRequest);
-    const { address, evmBech32Address, messages, signer, signingClient, signOpts, handler } = signingData;
+    const { messages, signer, signingClient, signOpts, handler } = signingData;
 
-    await this.checkReloadAccountState({ address, evmBech32Address });
+    const address = await getSignerAddress(signer);
+
+    await this.checkReloadAccountState(address, signer);
 
     const accountState: WalletAccount | undefined = this.walletAccounts[address];
 
@@ -245,7 +263,6 @@ export class DemexWallet {
     const timeoutHeight = await this.determineTimeoutHeight(signer);
 
     const { sequence, accountNumber } = accountState;
-
 
     const _signOpts: SignTxOpts = {
       ...signOpts,
@@ -379,11 +396,7 @@ export class DemexWallet {
     return await this.getTotalGasCost(msgs);
   }
 
-  public async reloadAccount(reloadAddresses: ReloadAddresses) {
-    const info = await this.reloadAccountInfo(reloadAddresses);
-    if (!info) return;
-    this.walletAccounts[reloadAddresses.address] = { ...info, sequenceInvalidated: false };
-  }
+
 
   public async getTimeoutHeight() {
     try {
@@ -397,15 +410,7 @@ export class DemexWallet {
     }
   }
 
-  private async reloadAccountInfo(reloadAddresses: ReloadAddresses) {
-    const { address, evmBech32Address } = reloadAddresses
-    const account: Account | undefined = await this.getAccount(address);
-    if (account) return account
-    if (evmBech32Address) {
-      const evmAccount: Account | undefined = await this.getAccount(evmBech32Address);
-      if (evmAccount) return evmAccount
-    }
-  }
+
 
   private getBroadcastFunc(broadcastMode?: BroadcastTxMode) {
     switch (broadcastMode) {

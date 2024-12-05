@@ -1,30 +1,26 @@
 import { AminoSignResponse, OfflineAminoSigner, Secp256k1Wallet, StdSignDoc } from "@cosmjs/amino";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
-import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, OfflineDirectSigner, OfflineSigner } from "@cosmjs/proto-signing";
+import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, OfflineDirectSigner } from "@cosmjs/proto-signing";
 import { constructAdr36SignDoc } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
+import { EIP712Tx } from "./eip712";
 
 export enum DemexSignerTypes {
   Ledger,
   PrivateKey,
-  BrowserInjected,
   PublicKey,
 }
-
 export interface EIP712Signer {
-  legacyEip712SignMode: boolean
-  readonly signLegacyEip712: (signerAddress: string, signDoc: StdSignDoc) => Promise<LegacyEIP712AminoSignResponse>;
+  getEvmAddress: () => Promise<string>;
+  getEvmChainId: () => Promise<string>;
+  signEIP712: (hexAddress: string, doc: EIP712Tx) => Promise<string>;
 }
+
 export type DemexEIP712Signer = (DemexDirectSigner | DemexAminoSigner) & EIP712Signer
 export type DemexSigner = DemexDirectSigner | DemexAminoSigner | DemexEIP712Signer;
 export type DemexDirectSigner = OfflineDirectSigner & { type: DemexSignerTypes };
 export type DemexAminoSigner = OfflineAminoSigner & { type: DemexSignerTypes }
 
-export type LegacyEIP712AminoSignResponse = AminoSignResponse & { feePayer: string }
-
-export function isDemexEIP712Signer(signer: OfflineSigner): boolean {
-  return typeof (signer as DemexEIP712Signer).signLegacyEip712 === "function"
-}
 export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigner {
   type = DemexSignerTypes.PrivateKey;
   wallet?: DirectSecp256k1Wallet;
