@@ -1,0 +1,45 @@
+{
+  "name": "@demex-sdk/websocket",
+  "version": "0.0.3",
+  "license": "MIT",
+  "scripts": {
+    "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:es": "tsc -p tsconfig.es.json",
+    "build:types": "tsc -p tsconfig.types.json",
+    "build:clean": "concurrently 'rimraf ./dist-*' 'rimraf ./tsconfig.*.tsbuildinfo'"
+  },
+  "main": "./dist-cjs/index.js",
+  "module": "./dist-es/index.js",
+  "types": "./dist-types/index.d.ts",
+  "dependencies": {
+    "@demex-sdk/codecs": "0.0.3",
+    "tslib": "^2.6.2",
+    "typescript": "^5.7.2",
+    "ws": "^8.18.0"
+  },
+  "exports": {
+    ".": {
+      "module": "./dist-es/index.js",
+      "node": "./dist-cjs/index.js",
+      "import": "./dist-es/index.js",
+      "require": "./dist-cjs/index.js",
+      "types": "./dist-types/index.d.ts"
+    },
+    "./package.json": {
+      "module": "./package.json",
+      "node": "./package.json",
+      "import": "./package.json",
+      "require": "./package.json"
+    }
+  },
+  "files": [
+    "dist-*/**"
+  ],
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/ws": "^8.5.13",
+    "concurrently": "7.0.0",
+    "eslint": "^9.13.0"
+  }
+}
