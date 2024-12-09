@@ -37,10 +37,9 @@ export interface WsConnectorOptions {
 export interface WsResult<T = unknown> {
   requestId?: string
   channel?: string
-  outOfSequence: boolean
+  blockHeight?: number
+  updateType?: "full_state" | "delta"
   timestamp: Date
-  blockHeight: number
-  updateType: string
   data: T
 }
 
@@ -58,7 +57,6 @@ interface WsError {
 interface WsMessage<T extends any> {
   requestId: string;
   channel?: string;
-  sequenceNumber: number;
   error?: WsError;
   result?: WsResult<T>;
 }
@@ -514,25 +512,23 @@ export class WsConnector {
    */
   private parseWsMessage<T>(ev: MessageEvent): WsMessage<T> {
     try {
-      const { id, sequence_number: sequenceNumber, error, channel, block_height: blockHeight, update_type: updateType, result, ...rest } = JSON.parse(ev.data);
-      const outOfSequence = sequenceNumber < (this.sequenceNumberCache[channel] ?? 0);
-      if (!outOfSequence) {
-        this.sequenceNumberCache[channel] = sequenceNumber;
-      }
+      const {
+        id, error, channel, result,
+        block_height: blockHeight,
+        update_type: updateType,
+        ...rest
+      } = JSON.parse(ev.data);
 
       return {
         requestId: id,
         channel,
-        sequenceNumber,
         error: error as WsError,
         result: {
           ...rest,
-          requestId: id,
-          channel,
-          timestamp: new Date(),
-          outOfSequence,
           blockHeight,
           updateType,
+          channel,
+          timestamp: new Date(),
           data: result,
         },
       };

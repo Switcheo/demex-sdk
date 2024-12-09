@@ -21,7 +21,7 @@ run(async () => {
     address: "swth1prv0t8j8tqcdngdmjlt59pwy6dxxmtqgycy2h7",
   }
   await wsConnector.subscribe(subscribeParams, (result: WsResult<Balance[]>) => {
-    console.log("balance update", result.data[0])
+    console.log("balance update", result.updateType, result.data)
 
     if (result.updateType !== "full_state")
       wsConnector.disconnect();
@@ -30,10 +30,10 @@ run(async () => {
   await new Promise((resolve) => {
     setTimeout(async () => {
       if (wsConnector.connected) {
-        console.log("disconnecting subscription after 30 seconds");
+        console.log("disconnecting subscription after 60 seconds");
         await wsConnector.disconnect();
       }
       resolve(null);
-    }, 30000);
+    }, 60000);
   })
 });
