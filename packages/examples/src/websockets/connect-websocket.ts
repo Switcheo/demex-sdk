@@ -1,12 +1,13 @@
 import { WsChannel, WsConnector, WsResult, WsSubscribeWalletBalanceParams } from "@demex-sdk/websocket";
 import { run } from "../utils";
 import { Carbon } from "@demex-sdk/codecs";
+import { defaultNetworkConfig } from "@demex-sdk/core";
 
 type Balance = Carbon.Coin.TokenBalance;
 
 run(async () => {
   const wsConnector = new WsConnector({
-    endpoint: "https://ws-api.carbon.network/ws",
+    endpoint: defaultNetworkConfig.mainnet.wsUrl,
     timeoutConnect: 5000,
     onStatusChange: (connected: boolean) => {
       console.log(`ws connection changed: ${connected ? 'connected' : 'disconnected'}`)

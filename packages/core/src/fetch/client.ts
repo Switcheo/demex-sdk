@@ -58,7 +58,7 @@ export const createFetchClient = <Options extends Record<string, Definition<any,
   };
 
   for (const key in options) {
-    client[key] = options[key].queryFn;
+    client[key] = options[key]!.queryFn;
   }
 
   return client;

@@ -12,6 +12,7 @@ export interface NetworkConfig {
   tmRpcUrl: string
   restUrl: string
   grpcUrl: string
+  wsUrl: string
 
   bech32Prefix: string
 }
@@ -24,6 +25,7 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     tmRpcUrl: "https://tm-api.carbon.network",
     restUrl: "https://api.carbon.network",
     grpcUrl: "grpc.carbon.network",
+    wsUrl: "wss://ws-api.carbon.network/ws",
 
     bech32Prefix: "swth",
   },
@@ -33,6 +35,7 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     tmRpcUrl: "https://test-tm-api.carbon.network",
     restUrl: "https://test-api.carbon.network",
     grpcUrl: "test-grpc.carbon.network",
+    wsUrl: "wss://test-ws-api.carbon.network/ws",
 
     bech32Prefix: "tswth",
   },
@@ -42,6 +45,7 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     tmRpcUrl: "https://dev-tm-api.carbon.network",
     restUrl: "https://dev-api.carbon.network",
     grpcUrl: "dev-grpc.carbon.network",
+    wsUrl: "wss://dev-ws-api.carbon.network/ws",
 
     bech32Prefix: "swth",
   },
@@ -51,6 +55,7 @@ export const defaultNetworkConfig: Record<Network, NetworkConfig> = {
     tmRpcUrl: "http://localhost:26657",
     restUrl: "http://localhost:1317",
     grpcUrl: "localhost:9090",
+    wsUrl: "ws://localhost:5001",
 
     bech32Prefix: "tswth",
   },
