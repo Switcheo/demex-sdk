@@ -1,6 +1,6 @@
 import NodeWebSocket from "ws";
 import { generateChannelId, parseChannelId } from "./channel";
-import { WsChannel, WsSubscriptionParams } from "./types";
+import { WsChannel, WsSubscriptionParams, WsUpdateType } from "./types";
 
 // delay between pings.
 // see WsConnector.intervalHeartbeat
@@ -38,7 +38,7 @@ export interface WsResult<T = unknown> {
   requestId?: string
   channel?: string
   blockHeight?: number
-  updateType?: "full_state" | "delta"
+  updateType?: WsUpdateType
   timestamp: Date
   data: T
 }

@@ -30,6 +30,10 @@ export enum WsChannel {
   token_supply_by_denom = "token_supply_by_denom",
   market_liquidity_usage_multiplier = "market_liquidity_usage_multiplier",
 }
+export enum WsUpdateType {
+  FullState = "full_state",
+  Delta = "delta",
+}
 
 export interface WsSubscribeParams {
   channel: WsChannel;

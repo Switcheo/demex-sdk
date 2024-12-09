@@ -1,7 +1,7 @@
-import { WsChannel, WsConnector, WsResult, WsSubscribeWalletBalanceParams, WsUpdateType } from "@demex-sdk/websocket";
-import { run } from "../utils";
 import { Carbon } from "@demex-sdk/codecs";
 import { defaultNetworkConfig } from "@demex-sdk/core";
+import { WsChannel, WsConnector, WsResult, WsSubscribeMarketStatsAllParams, WsUpdateType } from "@demex-sdk/websocket";
+import { run } from "../utils";
 
 type Balance = Carbon.Coin.TokenBalance;
 
@@ -16,12 +16,11 @@ run(async () => {
 
   await wsConnector.connect();
 
-  const subscribeParams: WsSubscribeWalletBalanceParams = {
-    channel: WsChannel.balances,
-    address: "swth1prv0t8j8tqcdngdmjlt59pwy6dxxmtqgycy2h7",
+  const subscribeParams: WsSubscribeMarketStatsAllParams = {
+    channel: WsChannel.market_stats,
   }
   await wsConnector.subscribe(subscribeParams, (result: WsResult<Balance[]>) => {
-    console.log("balance update", result.updateType, result.data)
+    console.log("market stats update", result.updateType, result.data)
 
     if (result.updateType !== WsUpdateType.FullState)
       wsConnector.disconnect();
