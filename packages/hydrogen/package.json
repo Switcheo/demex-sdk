@@ -13,6 +13,8 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
+    "@demex-sdk/core": "0.0.3",
+    "query-string": "^6.0.0",
     "tslib": "^2.6.2"
   },
   "exports": {
