@@ -4,6 +4,7 @@ import { registry, TxTypes } from "@demex-sdk/codecs";
 import { DemexSigner } from "./signer";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
+import { getDefaultSignerAddress } from "./utils";
 
 export interface GranteeInitOpts {
   mnemonic: string;
@@ -61,8 +62,7 @@ export class Grantee {
   }
 
   public async constructExecMessage(messages: readonly EncodeObject[]): Promise<EncodeObject> {
-    const [account] = await this.signer.getAccounts();
-    const address = account.address;
+    const address = await getDefaultSignerAddress(this.signer);
     const msgs = messages.map((message) => registry.encodeAsAny({ ...message }))
     return {
       typeUrl: TxTypes.MsgExec,

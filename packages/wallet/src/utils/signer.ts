@@ -1,13 +1,31 @@
-import { DemexEIP712Signer, DemexSigner } from "../signer"
+import { WalletError } from "../constant";
+import { DemexSigner } from "../signer";
+import { getEvmHexAddress } from "./address";
 
-export const getSignerAddress = async (signer: DemexSigner) => {
-  return (await signer.getAccounts())[0].address;
+
+export enum DemexSignerTypes {
+  Ledger,
+  PrivateKey,
+  PublicKey,
+  EIP712,
 }
 
-export const getSignerEvmAddress = async (signer: DemexSigner) => {
-  if (isDemexEIP712Signer(signer)) return (signer as DemexEIP712Signer).getEvmAddress();
+export const getDefaultSignerAddress = async (signer: DemexSigner) => {
+  const account = await getDefaultSignerAccount(signer);
+  return account.address;
+}
+
+export const getDefaultSignerAccount = async (signer: DemexSigner) => {
+  const [account] = await signer.getAccounts();
+  if (!account) throw new WalletError('failed to get account from signer')
+  return account
+}
+
+export const getDefaultSignerEvmAddress = async (signer: DemexSigner) => {
+  const account = await getDefaultSignerAccount(signer);
+  return getEvmHexAddress(account.pubkey);
 }
 
 export function isDemexEIP712Signer(signer: DemexSigner): boolean {
-  return typeof (signer as DemexEIP712Signer).signEIP712 === "function"
+  return signer.type === DemexSignerTypes.EIP712
 }

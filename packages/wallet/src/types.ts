@@ -45,7 +45,6 @@ export interface TxOverrides {
   timeoutHeight?: number;
   memo?: string;
 }
-
 export interface SignTxOpts {
   tx?: TxOverrides;
   signer?: Partial<SignerData>;
