@@ -3,7 +3,7 @@ import { AminoMsg } from "@cosmjs/amino/build";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { EIP712Types } from "@demex-sdk/codecs";
 import { WalletError } from "./constant";
-import { capitalize } from "@demex-sdk/core/src/util";
+import { capitalize } from "@demex-sdk/core";
 export interface TypedDataField {
   name: string;
   type: string;

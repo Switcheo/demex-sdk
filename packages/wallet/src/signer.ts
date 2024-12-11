@@ -7,7 +7,7 @@ import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { registry } from "@demex-sdk/codecs";
 import { AuthInfo } from "@demex-sdk/codecs/data/cosmos/tx/v1beta1/tx";
 import { constructAdr36SignDoc } from "@demex-sdk/core";
-import { evmChainIds } from "@demex-sdk/core/src/env";
+import { evmChainIds } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { WalletError } from "./constant";
 import { constructEIP712Tx, EIP712Tx, parseChainId } from "./eip712";
