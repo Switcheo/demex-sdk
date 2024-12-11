@@ -2,7 +2,10 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+type EvmTxTypes = 'EthereumTx'
+
+const TxTypes: Record<EvmTxTypes, string> = {
   EthereumTx: "evm/v1/MsgEthereumTx",
 };
 

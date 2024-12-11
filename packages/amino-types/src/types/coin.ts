@@ -2,7 +2,9 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+type CoinTxTypes = 'MintToken' | 'Withdraw' | 'DepositToGroup' | 'WithdrawFromGroup'
+
+const TxTypes: Record<CoinTxTypes, string> = {
   MintToken: "carbon/MsgMintToken",
   Withdraw: "carbon/MsgWithdraw",
   DepositToGroup: "coin/DepositToGroup",

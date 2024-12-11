@@ -6,7 +6,10 @@ import { AllowedMsgAllowance, BasicAllowance } from "@demex-sdk/codecs/data/cosm
 import { MsgGrantAllowance } from "@demex-sdk/codecs/data/cosmos/feegrant/v1beta1/tx";
 import { AminoInit, AminoProcess, AminoValueMap, ConvertEncType, generateAminoType, mapEachIndiv } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+type GrantTxTypes = 'GrantAuthz' | 'GrantAllowance' | 'RevokeAuthz' | 'RevokeFeegrant' | 'MsgExec'
+
+const TxTypes: Record<GrantTxTypes, string> = {
   GrantAuthz: "cosmos-sdk/MsgGrant",
   GrantAllowance: "cosmos-sdk/MsgGrantAllowance",
   RevokeAuthz: "cosmos-sdk/MsgRevoke",
@@ -31,17 +34,17 @@ const ContentTypes: Record<string, string> = {
 };
 
 const GenericAuthorizationAminoType: AminoInit = {
-  aminoType: ContentTypes[GrantTypes.GenericAuthorization],
+  aminoType: ContentTypes[GrantTypes.GenericAuthorization]!,
   valueMap: {},
 }
 
 const AllowedMsgAllowanceAminoType: AminoInit = {
-  aminoType: ContentTypes[GrantTypes.AllowedMsgAllowance],
+  aminoType: ContentTypes[GrantTypes.AllowedMsgAllowance]!,
   valueMap: {},
 }
 
 const BasicAllowanceAminoType: AminoInit = {
-  aminoType: ContentTypes[GrantTypes.BasicAllowance],
+  aminoType: ContentTypes[GrantTypes.BasicAllowance]!,
   valueMap: {
     expiration: ConvertEncType.Date,
   },
@@ -111,7 +114,7 @@ const preProcessAmino = (value: Record<string, any>, valueMap: AminoValueMap): R
 const checkDecodeGrantAuthz = (content: any, amino: AminoValueMap): AminoRes => {
   const decodedValue = decodeContent(content);
   const newContent = {
-    type: ContentTypes[content.typeUrl],
+    type: ContentTypes[content.typeUrl]!,
     value: decodedValue.value,
   }
 
@@ -126,7 +129,7 @@ const checkDecodeGrantAuthz = (content: any, amino: AminoValueMap): AminoRes => 
 }
 
 const checkEncodeGrantAuthz = (content: any, amino: AminoValueMap): DirectRes => {
-  const grantAuthzMsg = preProcessAmino(content.value, GenericAuthorizationAmino.value.msg)
+  const grantAuthzMsg = preProcessAmino(content.value, GenericAuthorizationAmino.value!.msg!)
   const grantAuthzProp = GenericAuthorization.fromPartial({
     ...content.value,
     msg: grantAuthzMsg,
@@ -175,7 +178,7 @@ const grantAuthzAminoProcess: AminoProcess = {
 
 
 const checkEncodeFeegrant = (content: any, amino: AminoValueMap): DirectRes => {
-  const msg = preProcessAmino(content.value, MsgFeeGrantAllowanceAmino.value.msg)
+  const msg = preProcessAmino(content.value, MsgFeeGrantAllowanceAmino.value!.msg!)
   const grantAllowance = MsgGrantAllowance.fromPartial({
     ...content.value,
     msg,
@@ -199,7 +202,7 @@ const checkDecodeFeegrant = (content: any, amino: AminoValueMap): AminoRes => {
   }
 
   const newContent = {
-    type: ContentTypes[content.typeUrl],
+    type: ContentTypes[content.typeUrl]!,
     value: decodedValue.value,
   }
 
