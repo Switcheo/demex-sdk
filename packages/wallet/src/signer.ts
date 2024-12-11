@@ -1,17 +1,15 @@
 import { AminoSignResponse, makeSignDoc as makeSignDocAmino, OfflineAminoSigner, Secp256k1Wallet, StdSignDoc } from "@cosmjs/amino";
-import { toBase64 } from "@cosmjs/encoding";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
-import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, makeSignDoc as makeSignDocProto, OfflineDirectSigner } from "@cosmjs/proto-signing";
+import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, makeSignDoc as makeSignDocProto, OfflineDirectSigner, TxBodyEncodeObject } from "@cosmjs/proto-signing";
 import { StdFee } from "@cosmjs/stargate";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { registry } from "@demex-sdk/codecs";
-import { AuthInfo } from "@demex-sdk/codecs/data/cosmos/tx/v1beta1/tx";
-import { constructAdr36SignDoc } from "@demex-sdk/core";
-import { evmChainIds } from "@demex-sdk/core";
+import { AuthInfo, TxBody } from "@demex-sdk/codecs/data/cosmos/tx/v1beta1/tx";
+import { constructAdr36SignDoc, evmChainIds } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { WalletError } from "./constant";
 import { constructEIP712Tx, EIP712Tx, parseChainId } from "./eip712";
-import { DemexSignerTypes } from "./utils";
+import { DemexSignerTypes, getEvmHexAddress } from "./utils";
 export interface EIP712Signer {
   getEvmChainId: () => Promise<string>;
   signEIP712: (hexAddress: string, doc: EIP712Tx) => Promise<string>;
@@ -30,60 +28,67 @@ export abstract class DemexEIP712Signer implements DemexDirectSigner, DemexAmino
   abstract getEvmChainId(): Promise<string>;
 
   async signAmino(address: string, signDoc: StdSignDoc): Promise<AminoSignResponse> {
-    const signerChainId = await this.getEvmChainId()
-    const updatedMemo = await this.updateMemo(signDoc.memo, signDoc.chain_id, signerChainId)
-    const updatedSignDoc: StdSignDoc = { ...signDoc, memo: updatedMemo, chain_id: signerChainId }
-    const eip712Tx = constructEIP712Tx(updatedSignDoc, signerChainId)
-    const signature = await this.signEIP712(address, eip712Tx)
-    const sigBz = Uint8Array.from(Buffer.from(signature, 'hex'))
+    const walletChainId = await this.getEvmChainId()
     const pubkey = await this.getPublicKey(address)
+    const hexAddress = getEvmHexAddress(pubkey)
+    const evmChainId = evmChainIds[signDoc.chain_id]!
+    const updatedMemo = await this.updateMemo(signDoc.memo, evmChainId, walletChainId)
+    const updatedSignDoc: StdSignDoc = { ...signDoc, memo: updatedMemo, chain_id: evmChainId }
+    const eip712Tx = constructEIP712Tx(updatedSignDoc, walletChainId)
+    const signature = await this.signEIP712(hexAddress, eip712Tx)
     return {
       signature: {
         pub_key: {
           type: "ethermint/PubKeyEthSecp256k1",
           value: Buffer.from(pubkey).toString("base64"),
         },
-        // Remove recovery `v` from signature
-        signature: toBase64(Buffer.from(sigBz.slice(0, -1)))
+        signature: Buffer.from(signature, 'hex').toString('base64'),
       },
       signed: updatedSignDoc
     }
   }
 
   async signDirect(address: string, signDoc: SignDoc): Promise<DirectSignResponse> {
-    const txBody = registry.decodeTxBody(signDoc.bodyBytes)
-    const signerChainId = await this.getEvmChainId()
-    const updatedMemo = await this.updateMemo(txBody.memo, signDoc.chainId, signerChainId)
-    const updatedTxBodyBytes = registry.encodeTxBody({
-      ...txBody,
-      memo: updatedMemo,
-    })
-    const updatedProtoSignDoc = makeSignDocProto(updatedTxBodyBytes, signDoc.authInfoBytes, signDoc.chainId, Number(signDoc.accountNumber));
-    const authInfo = AuthInfo.decode(signDoc.authInfoBytes)
+    const txBody = TxBody.decode(signDoc.bodyBytes)
+    const walletChainId = await this.getEvmChainId()
+    const evmChainId = evmChainIds[signDoc.chainId]!
+    const updatedMemo = await this.updateMemo(txBody.memo, evmChainId, walletChainId)
     const msgs = txBody.messages.map(message => {
       const msg = registry.decode({ ...message })
       return {
         typeUrl: message.typeUrl,
         value: msg,
       }
-    }).map(msg => AminoTypesMap.toAmino(msg))
+    })
+    const signedTxBodyEncodeObject: TxBodyEncodeObject = {
+      typeUrl: "/cosmos.tx.v1beta1.TxBody",
+      value: {
+        ...txBody,
+        messages: msgs,
+        timeoutHeight: BigInt(txBody.timeoutHeight.toString()),
+        memo: updatedMemo,
+      },
+    };
+    const updatedTxBodyBytes = registry.encode(signedTxBodyEncodeObject);
+    const updatedProtoSignDoc = makeSignDocProto(updatedTxBodyBytes, signDoc.authInfoBytes, evmChainId, Number(signDoc.accountNumber));
+    const authInfo = AuthInfo.decode(signDoc.authInfoBytes)
     const fee: StdFee = {
       amount: authInfo.fee?.amount ?? [],
       gas: authInfo.fee?.gasLimit.toString() ?? "0",
     }
-    const aminoSignDoc = makeSignDocAmino(msgs, fee, signerChainId, updatedMemo, Number(signDoc.accountNumber), Number(authInfo.signerInfos[0]!.sequence), txBody.timeoutHeight)
-    const eip712Tx = constructEIP712Tx(aminoSignDoc, signerChainId)
-    const signature = await this.signEIP712(address, eip712Tx)
-    const sigBz = Uint8Array.from(Buffer.from(signature, 'hex'))
+    const aminoMsgs = msgs.map(msg => AminoTypesMap.toAmino(msg))
+    const aminoSignDoc = makeSignDocAmino(aminoMsgs, fee, evmChainId, updatedMemo, Number(signDoc.accountNumber), Number(authInfo.signerInfos[0]!.sequence), BigInt(txBody.timeoutHeight.toString()))
+    const eip712Tx = constructEIP712Tx(aminoSignDoc, walletChainId)
     const pubkey = await this.getPublicKey(address)
+    const hexAddress = getEvmHexAddress(pubkey)
+    const signature = await this.signEIP712(hexAddress, eip712Tx)
     return {
       signature: {
         pub_key: {
           type: "ethermint/PubKeyEthSecp256k1",
           value: Buffer.from(pubkey).toString("base64"),
         },
-        // Remove recovery `v` from signature
-        signature: toBase64(Buffer.from(sigBz.slice(0, -1)))
+        signature: Buffer.from(signature, 'hex').toString('base64'),
       },
       signed: updatedProtoSignDoc
     }
@@ -96,10 +101,9 @@ export abstract class DemexEIP712Signer implements DemexDirectSigner, DemexAmino
     return account.pubkey;
   }
 
-  private updateMemo(currentMemo: string = "", docChainId: string, signerChainId: string): string {
-    const signDocEvmChainId = parseChainId(evmChainIds[docChainId])
-    const signerEvmChainId = parseChainId(signerChainId)
-    const updatedMemo = signDocEvmChainId === signerEvmChainId ? currentMemo : `${currentMemo}|CROSSCHAIN-SIGNING|signed-chain-id:${signerEvmChainId};carbon-chain-id:${signDocEvmChainId}`
+  private updateMemo(currentMemo: string = "", signDocEvmChainId: string, walletChainId: string): string {
+    const evmChainId = parseChainId(signDocEvmChainId)
+    const updatedMemo = evmChainId === walletChainId ? currentMemo : `${currentMemo}|CROSSCHAIN-SIGNING|signed-chain-id:carbon_${walletChainId}-1;carbon-chain-id:${signDocEvmChainId}`
     return updatedMemo
   }
 

@@ -30,7 +30,7 @@ export class DemexEIP712SigningClient extends SigningStargateClient {
     // Use amino sigining for metamask as there is a bug with signDirect signature verification
     // ethermint verifies sign direct legacyDec type as shifted by 18dp when it should be unshifted (verified with keplr)
     // therefore the alternative which works here would be to use signamino where the verification is not broken on ethermint.
-    return this.signEIP712Amino(signerAddress, messages, fee, memo, explicitSignerData, timeoutHeight);
+    return this.signAminoEIP712(signerAddress, messages, fee, memo, explicitSignerData, timeoutHeight);
   }
 
   private async signDirectEIP712(signerAddress: string, messages: readonly EncodeObject[], fee: StdFee, memo: string, explicitSignerData: SignerData, timeoutHeight?: bigint): Promise<TxRaw> {
@@ -67,7 +67,7 @@ export class DemexEIP712SigningClient extends SigningStargateClient {
     });
   }
 
-  private async signEIP712Amino(signerAddress: string, messages: readonly EncodeObject[], fee: StdFee, memo: string, explicitSignerData: SignerData, timeoutHeight?: bigint): Promise<TxRaw> {
+  private async signAminoEIP712(signerAddress: string, messages: readonly EncodeObject[], fee: StdFee, memo: string, explicitSignerData: SignerData, timeoutHeight?: bigint): Promise<TxRaw> {
     const pubkey = encodeAnyEthSecp256k1PubKey(await this.eip712Signer.getPublicKey(signerAddress));
     const signMode = SignMode.SIGN_MODE_LEGACY_AMINO_JSON;
     if (!this.eip712AminoTypes) throw new WalletError("Amino types not set");

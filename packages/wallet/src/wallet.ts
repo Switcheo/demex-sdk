@@ -1,23 +1,23 @@
-import { encodeSecp256k1Signature, rawSecp256k1PubkeyToRawAddress, StdSignature } from "@cosmjs/amino";
+import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
 import { keccak256, Slip10, Slip10Curve, stringToPath } from "@cosmjs/crypto";
 import { fromBech32, toBech32, toHex } from "@cosmjs/encoding";
-import { AccountData, EncodeObject } from "@cosmjs/proto-signing";
+import { EncodeObject } from "@cosmjs/proto-signing";
 import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
+import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { registry, Tx, TxTypes } from "@demex-sdk/codecs";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
-import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
+import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
 import elliptic from "elliptic";
+import { WalletError } from "./constant";
 import { Grantee } from "./grantee";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
-import { WalletAccount, BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest } from "./types";
-import { getDefaultSignerAccount, getDefaultSignerAddress, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
-import { WalletError } from "./constant";
-import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { DemexEIP712SigningClient } from "./signingClient/eip712";
+import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest, WalletAccount } from "./types";
+import { getDefaultSignerAddress, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -158,7 +158,7 @@ export class DemexWallet {
       this.bech32Address = toBech32(bech32Prefix, rawAddress);
     } else if (opts.publicKeyBase64) {
       // custom signer connection
-      const publicKey = stringOrBufferToBuffer(opts.publicKeyBase64)!;
+      const publicKey = stringOrBufferToBuffer(Buffer.from(opts.publicKeyBase64, 'base64'))!;
       const rawAddress = rawSecp256k1PubkeyToRawAddress(publicKey);
 
       this.bech32Address = toBech32(bech32Prefix, rawAddress);
@@ -288,10 +288,8 @@ export class DemexWallet {
       }
     };
 
-    const account = await getDefaultSignerAccount(signer);
-
     const signedTx = await this.getSignedTx(address, messages, signingClient, _signOpts);
-    this.updateAccountSequence(address, sequence);
+    this.updateAccountSequence(address, sequence + 1);
 
     return {
       ...signingData,
@@ -362,11 +360,9 @@ export class DemexWallet {
     granter?: string,
   ): Promise<StdFee> {
     const denomGasPrice = await this.getGasPrice(denom);
-
     const totalGasCost = await this.getTotalGasCost(messages);
 
     let totalFees = totalGasCost.times(denomGasPrice ?? BN_ZERO);
-
     // override zero gas cost tx with some gas for tx execution
     // set overall fee to zero, implying 0 gas price.
     if (totalGasCost.isZero()) {
@@ -550,7 +546,7 @@ export class DemexWallet {
     if (!this.txGasPrices) {
       const queryClient = await this.getQueryClient();
       const { minGasPrices } = await queryClient.fee.MinGasPriceAll({ pagination: PGN_1K });
-      this.txGasPrices = Object.fromEntries(minGasPrices.map(cost => [cost.denom, bnOrZero(cost.gasPrice)]));
+      this.txGasPrices = Object.fromEntries(minGasPrices.map(cost => [cost.denom, bnOrZero(cost.gasPrice).shiftedBy(-SHIFT_DEC_DECIMALS)]));
     }
     return this.txGasPrices[denom] ?? null;
   }

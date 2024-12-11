@@ -288,12 +288,12 @@ function isNonZeroField(fieldValue: any): boolean {
   return fieldValue
 }
 
-export function constructEIP712Tx(doc: StdSignDoc, chainId?: string): EIP712Tx {
+export function constructEIP712Tx(doc: StdSignDoc, chainId: string): EIP712Tx {
   const { account_number, chain_id, fee, memo, sequence } = doc
   const eip712Tx = {
     types: getTypes(doc.msgs),
     primaryType: "Tx",
-    domain: { ...DEFAULT_CARBON_DOMAIN_FIELDS, chainId: parseChainId(chainId || chain_id) },
+    domain: { ...DEFAULT_CARBON_DOMAIN_FIELDS, chainId },
     message: { account_number, chain_id, fee, memo, sequence, ...convertMsgs(doc.msgs) },
   }
 
