@@ -1,8 +1,9 @@
 import { Carbon } from "@demex-sdk/codecs";
+import { GetFeeQuoteResponse } from "@demex-sdk/hydrogen";
 import Long from "long";
-import { DemexQueryClient, Network, NetworkConfigProvider, OptionalNetworkMap } from "@demex-sdk/core";
-import { AxelarBridge, BlockchainV2, BRIDGE_IDS, BridgeMap, IbcBridge, ibcTokenRegex, regexLPDenom, regexCdpDenom } from "../../env";
-import { SimpleMap } from "../../util";
+import { AxelarBridge, BlockchainV2, BRIDGE_IDS, BridgeMap, IbcBridge, ibcTokenRegex, Network, NetworkConfig, PolyNetworkBridge, regexCdpDenom, regexLPDenom } from "../env";
+import { DemexQueryClient } from "../query";
+import { OptionalNetworkMap, SimpleMap } from "../util";
 
 export const TokenBlacklist: OptionalNetworkMap<string[]> = {
   [Network.MainNet]: [
@@ -17,10 +18,10 @@ export class TokenClient {
   public readonly tokens: SimpleMap<Carbon.Coin.Token> = {};
   public readonly bridges: BridgeMap = { polynetwork: [], ibc: [], axelar: [] };
 
-  private constructor(public readonly query: DemexQueryClient, public readonly configProvider: NetworkConfigProvider) { }
+  private constructor(public readonly query: DemexQueryClient, public readonly networkConfig: NetworkConfig) { }
 
-  public static instance(query: DemexQueryClient, configProvider: NetworkConfigProvider) {
-    return new TokenClient(query, configProvider);
+  public static instance(query: DemexQueryClient, networkConfig: NetworkConfig) {
+    return new TokenClient(query, networkConfig);
   }
 
   public async getAllTokens(): Promise<Carbon.Coin.Token[]> {
@@ -34,12 +35,11 @@ export class TokenClient {
       },
     });
 
-    const networkConfig = this.configProvider.getConfig();
-    const tokenBlacklist = TokenBlacklist[networkConfig.network] ?? [];
-    return result.tokens.filter((token) => !tokenBlacklist.includes(token.denom));
+    const tokenBlacklist = TokenBlacklist[this.networkConfig.network] ?? [];
+    return result.tokens.filter((token: Carbon.Coin.Token) => !tokenBlacklist.includes(token.denom));
   };
 
-  public getBlockchainV2(denom: string | undefined): BlockchainV2 | undefined {
+  public getBlockchain(denom: string | undefined): BlockchainV2 | undefined {
     if (!denom) return undefined
     const token = this.tokens[denom]
     if (this.isNativeToken(denom) || this.isNativeStablecoin(denom) || TokenClient.isPoolToken(denom) || TokenClient.isCdpToken(denom) || this.isGroupedToken(denom)) {
@@ -52,7 +52,7 @@ export class TokenClient {
       // brdg tokens will all be chain_id 0 which will also be deprecated in future
       // hence for brdg tokens cannot use chain_id to differentiate between blockchains
       const bridgeList = this.bridges.axelar
-      const chainName = bridgeList.find((bridge) => bridge.bridgeAddress === token.bridgeAddress)?.chainName
+      const chainName = bridgeList.find((bridge: AxelarBridge) => bridge.bridgeAddress === token.bridgeAddress)?.chainName
       return chainName
     }
     const bridge = this.getBridgeFromToken(token)
@@ -77,6 +77,36 @@ export class TokenClient {
     const bridgeList = this.getBridgesFromBridgeId(token.bridgeId.toNumber())
     return bridgeList.find(bridge => token.chainId.equals(bridge.chainId))
   };
+
+  public async getFeeInfo(denom: string): Promise<GetFeeQuoteResponse> {
+    const url = `${this.networkConfig.hydrogenUrl}/fee_quote?token_denom=${denom}`;
+    const requestOptions = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    }
+    const result = await fetch(url, requestOptions).then((res) => res.json());
+
+    return result as GetFeeQuoteResponse;
+  };
+
+  public getPolynetworkBlockchainNames(): string[] {
+    return this.bridges.polynetwork.map((bridge: PolyNetworkBridge) => bridge.chainName);
+  };
+
+  public getIbcBlockchainNames(): string[] {
+    return this.bridges.ibc.map((bridge: IbcBridge) => bridge.chainName)
+  }
+
+  public getAxelarBlockchainNames(): string[] {
+    return this.bridges.axelar.map((bridge: AxelarBridge) => bridge.chainName)
+  }
+
+  public getAllBlockchainNames(): string[] {
+    return this.getIbcBlockchainNames().concat(this.getPolynetworkBlockchainNames()).concat(this.getAxelarBlockchainNames())
+  }
 
   public isNativeToken(denom: string): boolean {
     return denom === "swth";

@@ -1,5 +1,5 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { appendHexPrefix, Network, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
+import { appendHexPrefix, BlockchainV2, Network, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import { Transaction, Wallet } from "@zilliqa-js/account";
 import { CallParams, Contract, Value } from "@zilliqa-js/contract";
 import { BN, bytes, Long } from "@zilliqa-js/util";
@@ -7,7 +7,6 @@ import { fromBech32Address, Zilliqa } from "@zilliqa-js/zilliqa";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, PolynetworkConfig, TokensWithExternalBalance, ZilNetworkConfig } from "../../env";
-import { blockchainForChainId } from "../../util";
 
 const uint128Max = "340282366920938463463374607431768211356";
 const zeroAddress = stripHexPrefix(ZeroAddress);
@@ -28,7 +27,6 @@ export declare type WalletProvider = Omit<
 export interface ZILClientOpts {
   polynetworkConfig: PolynetworkConfig;
   tokenClient: TokenClient;
-  blockchain?: Blockchain;
   network: Network;
 }
 
@@ -119,44 +117,30 @@ export const balanceBatchRequest = (address: string): BatchRequest => {
 type SupportedBlockchains = Blockchain.Zilliqa;
 
 export class ZILClient {
-  static SUPPORTED_BLOCKCHAINS = [Blockchain.Zilliqa];
-  static BLOCKCHAIN_KEY = {
-    [Blockchain.Zilliqa]: "zil",
-  };
+  static blockchain: BlockchainV2 = "Zilliqa";
 
   private walletProvider?: WalletProvider; // zilpay
 
   private constructor(
     public readonly polynetworkConfig: PolynetworkConfig,
     public readonly tokenClient: TokenClient,
-    public readonly blockchain: Blockchain,
     public readonly network: Network,
   ) { };
 
   public static instance(opts: ZILClientOpts) {
-    const { polynetworkConfig, tokenClient, blockchain, network } = opts;
-    if (!ZILClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) {
-      throw new Error(`unsupported blockchain - ${blockchain}`);
-    }
+    const { polynetworkConfig, tokenClient, network } = opts;
 
-    return new ZILClient(polynetworkConfig, tokenClient, blockchain, network);
+    return new ZILClient(polynetworkConfig, tokenClient, network);
   }
 
   public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
     const tokenQueryResults = await this.tokenClient.getAllTokens();
-    const tokens = tokenQueryResults.filter(
-      (token) => {
-        const isCorrectBlockchain =
-          version === "V2"
-            ?
-            !!this.tokenClient.getBlockchainV2(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchainV2(token.denom)!] == this.blockchain)
-            :
-            blockchainForChainId(token.chainId.toNumber(), this.network) == this.blockchain
-        return isCorrectBlockchain && token.tokenAddress.length == 40 && (!whitelistDenoms || whitelistDenoms.includes(token.denom))
-      }
-    );
+    const tokens = tokenQueryResults.filter((token: Carbon.Coin.Token) => {
+      const isCorrectBlockchain = !!this.tokenClient.getBlockchain(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchain(token.denom)!] === ZILClient.blockchain);
+      return isCorrectBlockchain && token.tokenAddress.length == 40 && (!whitelistDenoms || whitelistDenoms.includes(token.denom))
+    });
 
-    const requests = tokens.map((token) =>
+    const requests = tokens.map((token: Carbon.Coin.Token) =>
       token.tokenAddress === zeroAddress
         ? balanceBatchRequest(address.replace(/^0x/i, ""))
         : tokenBalanceBatchRequest(token.tokenAddress, address)
@@ -547,8 +531,7 @@ export class ZILClient {
 
   public getConfig(): ZilNetworkConfig {
     const networkConfig = this.getNetworkConfig();
-    const blockchain = this.blockchain as SupportedBlockchains;
-    return networkConfig[ZILClient.BLOCKCHAIN_KEY[blockchain] as SupportedBlockchains];
+    return networkConfig[ZILClient.blockchain as keyof PolynetworkConfig] as ZilNetworkConfig;
   }
 
   public getProviderUrl() {

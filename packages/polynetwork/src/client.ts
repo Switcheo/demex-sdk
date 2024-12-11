@@ -1,6 +1,6 @@
 import { Network, TokenClient } from "@demex-sdk/core";
 import { Blockchain, PolynetworkConfig, PolynetworkConfigs } from "./env";
-import { ETHClient, NEOClient, N3Client, ZILClient } from "./clients";
+import { ETHClient, N3Client, NEOClient, ZILClient } from "./helpers";
 
 export class PolynetworkClient {
   neo: NEOClient;
@@ -23,77 +23,74 @@ export class PolynetworkClient {
     this.neo = NEOClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Neo,
       network,
     });
 
     this.n3 = N3Client.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Neo3,
       network,
     });
 
     this.eth = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Ethereum,
+      blockchain: "Ethereum",
       network,
     });
 
     this.bsc = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.BinanceSmartChain,
+      blockchain: "Binance Smart Chain",
       network,
     });
 
     this.zil = ZILClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Zilliqa,
       network,
     });
 
     this.arbitrum = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Arbitrum,
+      blockchain: "Arbitrum",
       network,
     });
 
     this.polygon = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Polygon,
+      blockchain: "Polygon",
       network,
     });
 
     this.okc = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Okc,
+      blockchain: "OKC",
       network,
     });
 
     this.mantle = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Mantle,
+      blockchain: "Mantle",
       network,
     });
 
     this.op = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.OP,
+      blockchain: "OP",
       network,
     });
 
     this.base = ETHClient.instance({
       polynetworkConfig,
       tokenClient,
-      blockchain: Blockchain.Base,
+      blockchain: "Base",
       network,
     });
   };

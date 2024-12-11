@@ -1,14 +1,13 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { BN_ZERO, Network, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { BlockchainV2, BN_ZERO, Network, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import { Blockchain, EthNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
-import { blockchainForChainId } from "../../util";
+import { EVMChain, evmChains, EthNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
 import ABIs from "./abis";
 
 export interface ETHClientOpts {
   tokenClient: TokenClient;
-  blockchain: typeof ETHClient.SUPPORTED_BLOCKCHAINS[number];
+  blockchain: EVMChain;
   network: Network;
   polynetworkConfig: PolynetworkConfig;
 }
@@ -55,35 +54,10 @@ export interface EthersTransactionResponse extends ethers.Transaction {
 
 export const FEE_MULTIPLIER = BigInt(2);
 
-type SupportedBlockchains = Blockchain.BinanceSmartChain | Blockchain.Ethereum | Blockchain.Arbitrum | Blockchain.Polygon | Blockchain.Okc | Blockchain.Mantle | Blockchain.OP | Blockchain.Base;
-
 export class ETHClient {
-  static SUPPORTED_BLOCKCHAINS = [Blockchain.BinanceSmartChain, Blockchain.Ethereum, Blockchain.Arbitrum, Blockchain.Polygon, Blockchain.Okc, Blockchain.Mantle, Blockchain.OP, Blockchain.Base] as const;
-  static BLOCKCHAIN_KEY = {
-    [Blockchain.BinanceSmartChain]: "bsc",
-    [Blockchain.Ethereum]: "eth",
-    [Blockchain.Arbitrum]: "arbitrum",
-    [Blockchain.Polygon]: "polygon",
-    [Blockchain.Okc]: "okc",
-    [Blockchain.Mantle]: 'mantle',
-    [Blockchain.OP]: 'op',
-    [Blockchain.Base]: 'base',
-  };
-
-  static BLOCKCHAINV2_MAPPING = {
-    [Blockchain.BinanceSmartChain]: "Binance Smart Chain",
-    [Blockchain.Ethereum]: "Ethereum",
-    [Blockchain.Arbitrum]: "Arbitrum",
-    [Blockchain.Polygon]: "Polygon",
-    [Blockchain.Okc]: "OKC",
-    [Blockchain.Mantle]: 'Mantle',
-    [Blockchain.OP]: 'OP',
-    [Blockchain.Base]: 'Base',
-  };
-
   private constructor(
     public readonly polynetworkConfig: PolynetworkConfig,
-    public readonly blockchain: typeof ETHClient.SUPPORTED_BLOCKCHAINS[number],
+    public readonly blockchain: EVMChain,
     public readonly tokenClient: TokenClient,
     public readonly network: Network,
   ) { }
@@ -91,30 +65,23 @@ export class ETHClient {
   public static instance(opts: ETHClientOpts) {
     const { blockchain, tokenClient, network, polynetworkConfig } = opts;
 
-    if (!ETHClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
+    if (!evmChains.has(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
 
     return new ETHClient(polynetworkConfig, blockchain, tokenClient, network);
   }
 
-  public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
+  public async getExternalBalances(address: string, whitelistDenoms?: string[]): Promise<TokensWithExternalBalance[]> {
     const tokenQueryResults = await this.tokenClient.getAllTokens();
     const lockProxyAddress = this.getLockProxyAddress().toLowerCase();
-    const tokens = tokenQueryResults.filter(
-      (token) => {
-        const isCorrectBlockchain =
-          version === "V2"
-            ?
-            this.tokenClient.getBlockchainV2(token.denom) == ETHClient.BLOCKCHAINV2_MAPPING[this.blockchain]
-            :
-            blockchainForChainId(token.chainId.toNumber(), this.network) == this.blockchain
-        return isCorrectBlockchain &&
-          token.tokenAddress.length == 40 &&
-          token.bridgeAddress.toLowerCase() == stripHexPrefix(lockProxyAddress) &&
-          (!whitelistDenoms || whitelistDenoms.includes(token.denom)) &&
-          this.verifyChecksum(appendHexPrefix(token.tokenAddress))
-      }
-    );
-    const assetIds = tokens.map((token) => {
+    const tokens = tokenQueryResults.filter((token: Carbon.Coin.Token) => {
+      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) == this.blockchain;
+      return isCorrectBlockchain &&
+        token.tokenAddress.length == 40 &&
+        token.bridgeAddress.toLowerCase() == stripHexPrefix(lockProxyAddress) &&
+        (!whitelistDenoms || whitelistDenoms.includes(token.denom)) &&
+        this.verifyChecksum(appendHexPrefix(token.tokenAddress));
+    });
+    const assetIds = tokens.map((token: Carbon.Coin.Token) => {
       return this.verifyChecksum(appendHexPrefix(token.tokenAddress));
     });
 
@@ -142,12 +109,12 @@ export class ETHClient {
     const contractAddress = token.tokenAddress;
 
     const rpcProvider = this.getProvider();
-    const contract = new ethers.Contract(contractAddress, ABIs.erc20, rpcProvider);
+    const contract = new ethers.Contract(contractAddress, ABIs.erc20, signer);
 
     const approvalAmount = BigInt(amount?.toString(10) ?? ethers.MaxUint256)
 
     const nonce = await this.getTxNonce(ethAddress, params.nonce, rpcProvider);
-    const approveResultTx = await contract.connect(signer).approve(
+    const approveResultTx = await contract.approve(
       ethers.Typed.address(spenderAddress ?? token.bridgeAddress),
       approvalAmount, {
       nonce,
@@ -201,7 +168,7 @@ export class ETHClient {
     const toAssetHash = ethers.hexlify(ethers.toUtf8Bytes(toTokenDenom));
     const nonce = await this.getTxNonce(fromAddress, params.nonce, rpcProvider);
 
-    const contract = new ethers.Contract(this.getBridgeEntranceAddr(), ABIs.bridgeEntrance, rpcProvider);
+    const contract = new ethers.Contract(this.getBridgeEntranceAddr(), ABIs.bridgeEntrance, signer);
     const feeAddress = appendHexPrefix(networkConfig.feeAddress);
 
     const tokenCreator = fromToken.creator;
@@ -210,7 +177,7 @@ export class ETHClient {
     const targetProxyHash = ethers.hexlify(targetAddressBytes);
 
     const ethAmount = fromToken.tokenAddress === stripHexPrefix(ZeroAddress) ? amount : BN_ZERO;
-    const bridgeResultTx = await contract.connect(signer).lock(
+    const bridgeResultTx = await contract.lock(
       fromTokenAddress, // the asset to deposit (from) (0x00 if eth)
       [
         targetProxyHash, // _targetProxyHash
@@ -258,8 +225,8 @@ export class ETHClient {
     const rpcProvider = this.getProvider();
 
     const nonce: number = await this.getTxNonce(ethAddress, params.nonce, rpcProvider);
-    const contract = new ethers.Contract(contractAddress, ABIs.lockProxy, rpcProvider);
-    const lockResultTx = await contract.connect(signer).lock(
+    const contract = new ethers.Contract(contractAddress, ABIs.lockProxy, signer);
+    const lockResultTx = await contract.lock(
       assetId, // _assetHash
       targetProxyHash, // _targetProxyHash
       swthAddress, // _toAddress
@@ -310,12 +277,12 @@ export class ETHClient {
     swthAddress: string,
     ethAddress: string,
     getSignatureCallback: (msg: string) => Promise<{ address: string; signature: string }>,
-    overrideFee?: BigInt
+    overrideFee?: bigint
   ) {
     const depositAddress = await this.getDepositContractAddress(swthAddress, ethAddress);
 
     // TODO: Remove overrideFee when hydrogen feeQuote is deployed on production
-    let feeAmount: BigInt = await this.getDepositFeeAmount(tokenWithExternalBalances, depositAddress);
+    let feeAmount: bigint = await this.getDepositFeeAmount(tokenWithExternalBalances, depositAddress);
     if (overrideFee) {
       feeAmount = overrideFee;
     }
@@ -380,7 +347,7 @@ export class ETHClient {
     if (!feeInfo.deposit_fee) {
       throw new Error("unsupported token");
     }
-    if (blockchainForChainId(token.chainId.toNumber(), globalThis.network) !== this.blockchain) {
+    if (this.tokenClient.getBlockchain(token.denom) !== this.blockchain) {
       throw new Error("unsupported token");
     }
 
@@ -459,8 +426,7 @@ export class ETHClient {
 
   public getConfig(): EthNetworkConfig {
     const networkConfig = this.getNetworkConfig();
-    const blockchain = this.blockchain as SupportedBlockchains;
-    return networkConfig[ETHClient.BLOCKCHAIN_KEY[blockchain] as SupportedBlockchains];
+    return networkConfig[this.blockchain as EVMChain];
   }
 
   public getPayerUrl() {

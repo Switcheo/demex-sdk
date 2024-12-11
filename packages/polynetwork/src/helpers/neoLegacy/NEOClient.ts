@@ -1,7 +1,7 @@
 import * as Neon from "@cityofzion/neon-core";
 import { api } from "@cityofzion/neon-js";
 import { Carbon } from "@demex-sdk/codecs";
-import { NEOAddress, Network, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
+import { BlockchainV2, NEOAddress, Network, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { chunk } from "lodash";
@@ -29,24 +29,18 @@ interface ScriptResult {
 }
 
 export class NEOClient {
-  static SUPPORTED_BLOCKCHAINS = [Blockchain.Neo];
-  static BLOCKCHAIN_KEY = {
-    [Blockchain.Neo]: "Neo",
-  };
+  static blockchain: BlockchainV2 = "Neo";
 
   private constructor(
     public readonly polynetworkConfig: PolynetworkConfig,
     public readonly tokenClient: TokenClient,
-    public readonly blockchain: Blockchain,
     public readonly network: Network,
   ) { }
 
   public static instance(opts: NEOClientOpts) {
-    const { polynetworkConfig, tokenClient, blockchain = Blockchain.Neo, network } = opts;
+    const { polynetworkConfig, tokenClient, network } = opts;
 
-    if (!NEOClient.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
-
-    return new NEOClient(polynetworkConfig, tokenClient, blockchain, network);
+    return new NEOClient(polynetworkConfig, tokenClient, network);
   }
 
   public static parseHexNum(hex: string, exp: number = 0): string {
@@ -63,17 +57,10 @@ export class NEOClient {
   ): Promise<TokensWithExternalBalance[]> {
     const tokenQueryResults = await this.tokenClient.getAllTokens();
     const account = new Neon.wallet.Account(address);
-    const tokens = tokenQueryResults.filter(
-      (token) => {
-        const isCorrectBlockchain =
-          version === "V2"
-            ?
-            !!this.tokenClient.getBlockchainV2(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchainV2(token.denom)!] == this.blockchain)
-            :
-            blockchainForChainId(token.chainId.toNumber(), this.network) == this.blockchain
-        return (isCorrectBlockchain || token.denom === "swth") && token.tokenAddress.length == 40 && token.bridgeAddress.length == 40
-      }
-    );
+    const tokens = tokenQueryResults.filter((token: Carbon.Coin.Token) => {
+      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchain(token.denom)!] == NEOClient.blockchain);
+      return (isCorrectBlockchain || token.denom === "swth") && token.tokenAddress.length == 40 && token.bridgeAddress.length == 40;
+    });
 
     const client: Neon.rpc.RPCClient = new Neon.rpc.RPCClient(url, "2.5.2"); // TODO: should we change the RPC version??
 
@@ -289,7 +276,7 @@ export class NEOClient {
 
   public getConfig(): NeoNetworkConfig {
     const networkConfig = this.getNetworkConfig();
-    return networkConfig.neo;
+    return networkConfig.Neo;
   }
 
   public getProviderUrl() {

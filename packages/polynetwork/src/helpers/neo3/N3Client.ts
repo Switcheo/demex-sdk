@@ -1,14 +1,13 @@
 import { CONST, rpc, sc, tx, u, wallet } from "@cityofzion/neon-core-next";
 import { GetContractStateResult, InvokeResult } from "@cityofzion/neon-core-next/lib/rpc";
-import { N3Address, Network, SimpleMap, SWTHAddress, TokenClient } from "@demex-sdk/core";
+import { BlockchainV2, N3Address, Network, SimpleMap, SWTHAddress, TokenClient } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
-import { Blockchain, PolynetworkConfig, TokensWithExternalBalance } from "../../env";
+import { N3NetworkConfig, PolynetworkConfig, TokensWithExternalBalance } from "../../env";
 import { O3Types, O3Wallet } from "../../providers/o3Wallet";
 
 export interface N3ClientOpts {
   polynetworkConfig: PolynetworkConfig;
   tokenClient: TokenClient;
-  blockchain?: Blockchain;
   network: Network;
 }
 
@@ -43,20 +42,16 @@ export interface N3Signer {
 }
 
 export class N3Client {
-  static SUPPORTED_BLOCKCHAINS = [Blockchain.Neo3];
-  static BLOCKCHAIN_KEY = {
-    [Blockchain.Neo3]: "Neo3",
-  };
+  static blockchain: BlockchainV2 = "Neo3";
 
   private rpcClient: rpc.RPCClient;
 
   private constructor(
     public readonly polynetworkConfig: PolynetworkConfig,
     public readonly tokenClient: TokenClient,
-    public readonly blockchain: Blockchain,
     public readonly network: Network,
   ) {
-    const config = polynetworkConfig.n3;
+    const config = polynetworkConfig[N3Client.blockchain as keyof PolynetworkConfig] as N3NetworkConfig;
     const isValidNeoRpcUrl = config.rpcURL?.length > 0;
     this.rpcClient = isValidNeoRpcUrl ? new rpc.RPCClient(config.rpcURL) : null!;
   };
@@ -73,11 +68,9 @@ export class N3Client {
   };
 
   public static instance(opts: N3ClientOpts) {
-    const { polynetworkConfig, tokenClient, blockchain = Blockchain.Neo3, network } = opts;
+    const { polynetworkConfig, tokenClient, network } = opts;
 
-    if (!N3Client.SUPPORTED_BLOCKCHAINS.includes(blockchain)) throw new Error(`unsupported blockchain - ${blockchain}`);
-
-    return new N3Client(polynetworkConfig, tokenClient, blockchain, network);
+    return new N3Client(polynetworkConfig, tokenClient, network);
   };
 
   public async getExternalBalances(address: string, whitelistDenoms?: string[]): Promise<TokensWithExternalBalance[]> {
@@ -171,7 +164,7 @@ export class N3Client {
     }
 
     const config = this.getConfig();
-    await signer.sign(txn, config.n3.networkMagic);
+    await signer.sign(txn, config.Neo3.networkMagic);
 
     const txHash = await this.rpcClient.sendRawTransaction(u.HexString.fromHex(txn.serialize(true)));
 

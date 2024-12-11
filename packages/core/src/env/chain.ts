@@ -1,10 +1,11 @@
-import { Carbon } from "@demex-sdk/codecs";
+import Codecs from "@demex-sdk/codecs";
+import { TokenClient } from "../helpers";
 
-export interface PolyNetworkBridge extends Carbon.Coin.Bridge {
+export interface PolyNetworkBridge extends Codecs.Carbon.Coin.Bridge {
   isEvmChain: boolean;
 };
 
-export interface IbcBridge extends Carbon.Coin.Bridge {
+export interface IbcBridge extends Codecs.Carbon.Coin.Bridge {
   chain_id_name: string;
   channels: {
     src_channel: string;
@@ -13,7 +14,7 @@ export interface IbcBridge extends Carbon.Coin.Bridge {
   }
 };
 
-export interface AxelarBridge extends Carbon.Coin.Bridge {
+export interface AxelarBridge extends Codecs.Carbon.Coin.Bridge {
   chain_id_name: string;
   bridgeAddress: string;
 };

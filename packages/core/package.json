@@ -17,6 +17,7 @@
     "@cosmjs/stargate": "^0.32.4",
     "@cosmjs/tendermint-rpc": "^0.32.4",
     "@demex-sdk/codecs": "0.0.3",
+    "@demex-sdk/hydrogen": "0.0.3",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
     "base58check": "^2.0.0",

@@ -53,3 +53,23 @@ export const BLOCKCHAIN_V2_TO_V1_MAPPING: SimpleMap<Blockchain> = {
   "OP": Blockchain.OP,
   "Base": Blockchain.Base,
 };
+
+export type EVMChain = 
+  "Binance Smart Chain"
+  | "Ethereum"
+  | "Arbitrum"
+  | "Polygon"
+  | "OKC"
+  | "Mantle"
+  | "OP"
+  | "Base";
+export const evmChains: Set<EVMChain> = new Set([
+  "Binance Smart Chain",
+  "Ethereum",
+  "Arbitrum",
+  "Polygon",
+  "OKC",
+  "Mantle",
+  "OP",
+  "Base",
+]);

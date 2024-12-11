@@ -1,5 +1,6 @@
 import { CONST } from "@cityofzion/neon-core-next";
 import { Network } from "@demex-sdk/core";
+import { EVMChain } from "./blockchain";
 
 export interface BasicNetworkConfig {
   rpcURL: string
@@ -28,21 +29,17 @@ export interface ZilNetworkConfig extends BasicNetworkConfig {
   bridgeEntranceAddr: string;
 };
 
-export interface PolynetworkConfig {
+export type EVMConfig = {
+  [chain in EVMChain]: EthNetworkConfig;
+}
+
+export type PolynetworkConfig = EVMConfig & {
   feeAddress: string;
   bech32Prefix: string;
 
-  eth: EthNetworkConfig;
-  bsc: EthNetworkConfig;
-  arbitrum: EthNetworkConfig;
-  polygon: EthNetworkConfig;
-  okc: EthNetworkConfig;
-  neo: NeoNetworkConfig;
-  n3: N3NetworkConfig;
-  zil: ZilNetworkConfig;
-  mantle: EthNetworkConfig;
-  op: EthNetworkConfig;
-  base: EthNetworkConfig;
+  "Neo": NeoNetworkConfig;
+  "Neo3": N3NetworkConfig;
+  "Zilliqa": ZilNetworkConfig;
 };
 
 const EthNetworkConfigFallback: EthNetworkConfig = {
@@ -62,7 +59,7 @@ export const PolynetworkConfigs: {
     feeAddress: "08d8f59e475830d9a1bb97d74285c4d34c6dac08", // swth1prv0t8j8tqcdngdmjlt59pwy6dxxmtqgycy2h7
     bech32Prefix: "swth",
 
-    eth: {
+    "Ethereum": {
       rpcURL: "https://eth-mainnet.alchemyapi.io/v2/RWHcfoaBKzRpXnLONcEDnVqtUp7StNYl",
       wsURL: "wss://mainnet.dagger.matic.network",
       payerURL: "https://payer.carbon.network",
@@ -72,7 +69,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "0xc77e5709a69e94d310a6dfb700801758c4caed0385b25bdf82bbdf954e4dd0c3",
     },
 
-    bsc: {
+    "Binance Smart Chain": {
       rpcURL: "https://bsc-dataseed2.binance.org/",
       wsURL: "",
       payerURL: "https://payer.carbon.network",
@@ -82,7 +79,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "0x1b147c1cef546fcbcc1284df778073d65b90f80d5b649a69d5f8a01e186c0ec1",
     },
 
-    arbitrum: {
+    "Arbitrum": {
       rpcURL: "https://arb1.arbitrum.io/rpc",
       wsURL: "",
       payerURL: "https://payer.carbon.network",
@@ -92,7 +89,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "", // TODO: update when byteCodeHash is added
     },
 
-    polygon: {
+    "Polygon": {
       rpcURL: "https://polygon-rpc.com",
       wsURL: "",
       payerURL: "https://payer.carbon.network",
@@ -102,7 +99,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "", // TODO: update when byteCodeHash is added
     },
 
-    okc: {
+    "OKC": {
       rpcURL: "https://exchainrpc.okex.org",
       wsURL: "",
       payerURL: "https://payer.carbon.network",
@@ -112,34 +109,34 @@ export const PolynetworkConfigs: {
       byteCodeHash: "", // TODO: update when byteCodeHash is added
     },
 
-    neo: {
+    "Neo": {
       rpcURL: "https://mainnet2.neo2.coz.io:443",
       wrapperScriptHash: "f46719e2d16bf50cddcef9d4bbfece901f73cbb6",
     },
 
-    n3: {
+    "Neo3": {
       rpcURL: "https://n3-rpc.dem.exchange",
       networkMagic: CONST.MAGIC_NUMBER.MainNet,
     },
 
-    zil: {
+    "Zilliqa": {
       rpcURL: "https://api.zilliqa.com",
       lockProxyAddr: "0xd73c6b871b4d0e130d64581993b745fc938a5be7",
       bridgeEntranceAddr: "0x5d78b51a1ceae202a793f4e87478253f41a22956",
       chainId: 1,
     },
 
-    mantle: {
+    "Mantle": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://rpc.mantle.xyz",
     },
 
-    op: {
+    "OP": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://mainnet.optimism.io",
     },
 
-    base: {
+    "Base": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://base-rpc.publicnode.com",
     },
@@ -149,7 +146,7 @@ export const PolynetworkConfigs: {
     feeAddress: "989761fb0c0eb0c05605e849cae77d239f98ac7f", // swth1nztkr7cvp6cvq4s9apyu4emayw0e3trl9ezyzs
     bech32Prefix: "tswth",
 
-    eth: {
+    "Ethereum": {
       rpcURL: "https://eth-goerli.g.alchemy.com/v2/OTTRiEhTje49mmrrm4WbuPbZmuZMivEu",
       wsURL: "",
       payerURL: `https://dev-payer.carbon.network`,
@@ -159,7 +156,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "0xeb1f732f12a0448d8692018a6d6d381cc7afc84d7e0729007931d966c0c9dc6d",
     },
 
-    bsc: {
+    "Binance Smart Chain": {
       rpcURL: "https://data-seed-prebsc-1-s2.binance.org:8545/",
       wsURL: "",
       payerURL: `https://test-payer.carbon.network`,
@@ -169,7 +166,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "0x1b147c1cef546fcbcc1284df778073d65b90f80d5b649a69d5f8a01e186c0ec1",
     },
 
-    arbitrum: {
+    "Arbitrum": {
       rpcURL: "https://rinkeby.arbitrum.io/rpc",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -179,7 +176,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    polygon: {
+    "Polygon": {
       rpcURL: "https://rpc-mumbai.maticvigil.com",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -189,7 +186,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    okc: {
+    "OKC": {
       rpcURL: "https://exchaintestrpc.okex.org",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -199,34 +196,34 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    neo: {
+    "Neo": {
       rpcURL: "https://g30trj885e.execute-api.ap-southeast-1.amazonaws.com",
       wrapperScriptHash: "f46719e2d16bf50cddcef9d4bbfece901f73cbb6",
     },
 
-    n3: {
+    "Neo3": {
       rpcURL: "https://test-n3-rpc.dem.exchange",
       networkMagic: CONST.MAGIC_NUMBER.TestNet,
     },
 
-    zil: {
+    "Zilliqa": {
       rpcURL: "https://dev-api.zilliqa.com",
       lockProxyAddr: "0xe7bef341044f1b8d5ab1a25172e2678a1e75479a",
       bridgeEntranceAddr: "0xccf798e633d6fb6505b494fc010903f9be3bc99b",
       chainId: 111,
     },
 
-    mantle: {
+    "Mantle": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://rpc.sepolia.mantle.xyz",
     },
 
-    op: {
+    "OP": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://sepolia.optimism.io",
     },
 
-    base: {
+    "Base": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://base-sepolia-rpc.publicnode.com",
     },
@@ -236,7 +233,7 @@ export const PolynetworkConfigs: {
     feeAddress: "989761fb0c0eb0c05605e849cae77d239f98ac7f", // swth1nztkr7cvp6cvq4s9apyu4emayw0e3trl9ezyzs
     bech32Prefix: "swth",
 
-    eth: {
+    "Ethereum": {
       rpcURL: "https://eth-goerli.g.alchemy.com/v2/OTTRiEhTje49mmrrm4WbuPbZmuZMivEu",
       wsURL: "",
       payerURL: `https://dev-payer.carbon.network`,
@@ -246,7 +243,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "0xeb1f732f12a0448d8692018a6d6d381cc7afc84d7e0729007931d966c0c9dc6d",
     },
 
-    bsc: {
+    "Binance Smart Chain": {
       rpcURL: "https://data-seed-prebsc-1-s2.binance.org:8545/",
       wsURL: "",
       payerURL: `https://dev-payer.carbon.network`,
@@ -256,7 +253,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "0x1b147c1cef546fcbcc1284df778073d65b90f80d5b649a69d5f8a01e186c0ec1",
     },
 
-    arbitrum: {
+    "Arbitrum": {
       rpcURL: "https://rinkeby.arbitrum.io/rpc",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -266,7 +263,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    polygon: {
+    "Polygon": {
       rpcURL: "https://rpc-mumbai.maticvigil.com",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -276,7 +273,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    okc: {
+    "OKC": {
       rpcURL: "https://exchaintestrpc.okex.org",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -287,34 +284,34 @@ export const PolynetworkConfigs: {
     },
 
 
-    neo: {
+    "Neo": {
       rpcURL: "https://g30trj885e.execute-api.ap-southeast-1.amazonaws.com",
       wrapperScriptHash: "f46719e2d16bf50cddcef9d4bbfece901f73cbb6",
     },
 
-    n3: {
+    "Neo3": {
       rpcURL: "https://test-n3-rpc.dem.exchange",
       networkMagic: CONST.MAGIC_NUMBER.TestNet,
     },
 
-    zil: {
+    "Zilliqa": {
       rpcURL: "https://dev-api.zilliqa.com",
       lockProxyAddr: "0xa5a43eecd29534edf80792a9889f52c77455245d",
       bridgeEntranceAddr: "0xbbe98D54689c96D0278a1222594533e8C5fa551e",
       chainId: 333,
     },
 
-    mantle: {
+    "Mantle": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://rpc.sepolia.mantle.xyz",
     },
 
-    op: {
+    "OP": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://sepolia.optimism.io",
     },
 
-    base: {
+    "Base": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://base-sepolia-rpc.publicnode.com",
     },
@@ -324,7 +321,7 @@ export const PolynetworkConfigs: {
     feeAddress: "989761fb0c0eb0c05605e849cae77d239f98ac7f",
     bech32Prefix: "tswth",
 
-    eth: {
+    "Ethereum": {
       rpcURL: "https://eth-goerli.g.alchemy.com/v2/OTTRiEhTje49mmrrm4WbuPbZmuZMivEu",
       wsURL: "wss://ropsten.dagger.matic.network",
       payerURL: `http://localhost:8001`,
@@ -334,7 +331,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    bsc: {
+    "Binance Smart Chain": {
       rpcURL: "https://data-seed-prebsc-1-s2.binance.org:8545/",
       wsURL: "",
       payerURL: `http://localhost:8001`,
@@ -344,7 +341,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    arbitrum: {
+    "Arbitrum": {
       rpcURL: "https://rinkeby.arbitrum.io/rpc",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -354,7 +351,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    polygon: {
+    "Polygon": {
       rpcURL: "https://rpc-mumbai.maticvigil.com",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -364,7 +361,7 @@ export const PolynetworkConfigs: {
       byteCodeHash: "",
     },
 
-    okc: {
+    "OKC": {
       rpcURL: "https://exchaintestrpc.okex.org",
       wsURL: "",
       payerURL: "https://test-payer.carbon.network",
@@ -375,34 +372,34 @@ export const PolynetworkConfigs: {
     },
 
 
-    neo: {
+    "Neo": {
       rpcURL: "https://g30trj885e.execute-api.ap-southeast-1.amazonaws.com",
       wrapperScriptHash: "f46719e2d16bf50cddcef9d4bbfece901f73cbb6",
     },
 
-    n3: {
+    "Neo3": {
       rpcURL: "https://test-n3-rpc.dem.exchange",
       networkMagic: CONST.MAGIC_NUMBER.TestNet,
     },
 
-    zil: {
+    "Zilliqa": {
       rpcURL: "",
       lockProxyAddr: "",
       bridgeEntranceAddr: "",
       chainId: 1,
     },
 
-    mantle: {
+    "Mantle": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://rpc.sepolia.mantle.xyz",
     },
 
-    op: {
+    "OP": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://sepolia.optimism.io",
     },
 
-    base: {
+    "Base": {
       ...EthNetworkConfigFallback,
       rpcURL: "https://base-sepolia-rpc.publicnode.com",
     },

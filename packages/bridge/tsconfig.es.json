@@ -5,5 +5,5 @@
     "baseUrl": "."
   },
   "extends": "../../tsconfig.es.json",
-  "include": ["src/"]
+  "include": ["src/", "src/**/*.json"]
 }
