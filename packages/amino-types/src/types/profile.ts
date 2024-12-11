@@ -2,7 +2,12 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, AminoProcess, AminoValueMap, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+
+type ProfileTxTypes = 'UpdateProfile'
+
+const TxTypes: Record<ProfileTxTypes, string> = {
   UpdateProfile: "profile/UpdateProfile",
 };
 

@@ -3,7 +3,11 @@ import { AminoConverter } from "@cosmjs/stargate";
 import Long from "long";
 import { AminoInit, AminoProcess, AminoValueMap, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+type IbcTxTypes = 'Transfer'
+
+const TxTypes: Record<IbcTxTypes, string> = {
   Transfer: "cosmos-sdk/MsgTransfer",
 };
 

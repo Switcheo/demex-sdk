@@ -2,7 +2,39 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+type AdminTxTypes =
+  | 'CreateOracle'
+  | 'BindToken'
+  | 'CreateToken'
+  | 'LinkToken'
+  | 'SyncToken'
+  | 'CreateMarket'
+  | 'CreateVaultType'
+  | 'ChangeSwapFee'
+  | 'SetRewardsWeights'
+  | 'SetRewardCurve'
+  | 'SetCommitmentCurve'
+  | 'UpdatePool'
+  | 'SetTradingFlag'
+  | 'SetMsgGasCost'
+  | 'SetMinGasPrice'
+  | 'RemoveMsgGasCost'
+  | 'RemoveMinGasPrice'
+  | 'CreateValidator'
+  | 'EditValidator'
+  | 'AddRateStrategy'
+  | 'UpdateRateStrategy'
+  | 'RemoveRateStrategy'
+  | 'AddAsset'
+  | 'UpdateAsset'
+  | 'SetLiquidationFee'
+  | 'SetInterestFee'
+  | 'SetStablecoinInterestRate'
+  | 'SetCompleteLiquidationThreshold'
+  | 'SetMinimumCloseFactor'
+  | 'SetSmallLiquidationSize';
+
+const TxTypes: Record<AdminTxTypes, string> = {
   CreateOracle: "oracle/CreateOracle",
   BindToken: "carbon/MsgBindToken",
   CreateToken: "carbon/MsgCreateToken",

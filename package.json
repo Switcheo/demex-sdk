@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "turbo run build"
+    "build":  "for dir in packages/*; do (cd \"$dir\" && yarn); done && turbo run build"
   },
   "workspaces": {
     "packages": [

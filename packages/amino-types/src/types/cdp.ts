@@ -2,7 +2,30 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+type CdpTxTypes =
+  | 'SupplyAsset'
+  | 'WithdrawAsset'
+  | 'LockCollateral'
+  | 'UnlockCollateral'
+  | 'BorrowAsset'
+  | 'RepayAsset'
+  | 'SupplyAssetAndLockCollateral'
+  | 'UnlockCollateralAndWithdrawAsset'
+  | 'LiquidateCollateral'
+  | 'MintStablecoin'
+  | 'ReturnStablecoin'
+  | 'CreateRewardScheme'
+  | 'UpdateRewardScheme'
+  | 'SetStablecoinMintCap'
+  | 'SetStalePriceGracePeriod'
+  | 'SetCdpPaused'
+  | 'ClaimRewards'
+  | 'AddEModeCategory'
+  | 'UpdateEModeCategory'
+  | 'SetAccountEMode'
+  | 'RemoveAccountEMode';
+
+const TxTypes: Record<CdpTxTypes, string> = {
   SupplyAsset: "cdp/SupplyAsset",
   WithdrawAsset: "cdp/WithdrawAsset",
   LockCollateral: "cdp/LockCollateral",

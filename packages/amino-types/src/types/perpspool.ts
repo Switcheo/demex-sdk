@@ -2,7 +2,10 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+type PerpspoolTxTypes = 'CreatePool' | 'UpdatePool' | 'DepositToPool' | 'RegisterToPool' | 'DeregisterToPool' | 'WithdrawFromPool' | 'UpdateMarketConfig'
+
+const TxTypes: Record<PerpspoolTxTypes, string> = {
   CreatePool: "perpspool/CreatePool",
   UpdatePool: "perpspool/UpdatePool",
   DepositToPool: "perpspool/DepositToPool",

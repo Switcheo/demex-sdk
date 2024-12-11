@@ -2,7 +2,11 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+type EvmMergeTxTypes = 'MergeAccount'
+
+const TxTypes: Record<EvmMergeTxTypes, string> = {
   MergeAccount: "evmmerge/MsgMergeAccount",
 };
 

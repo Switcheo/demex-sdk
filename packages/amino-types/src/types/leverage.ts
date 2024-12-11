@@ -2,7 +2,11 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+type LeverageTxTypes = 'SetLeverage'
+
+const TxTypes: Record<LeverageTxTypes, string> = {
   SetLeverage: "leverage/SetLeverage",
 };
 

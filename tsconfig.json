@@ -13,6 +13,7 @@
     "removeComments": true,
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": false,
+    "noUncheckedIndexedAccess": true,
     "composite": true,
     "experimentalDecorators": true,
     "jsx": "react",

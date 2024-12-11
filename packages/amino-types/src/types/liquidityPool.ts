@@ -2,7 +2,17 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, AminoProcess, AminoValueMap, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+type LiquidityPoolTxTypes =
+  | 'CreatePool'
+  | 'CreatePoolWithLiquidity'
+  | 'AddLiquidity'
+  | 'RemoveLiquidity'
+  | 'StakePoolToken'
+  | 'UnstakePoolToken'
+  | 'ClaimPoolRewards'
+
+const TxTypes: Record<LiquidityPoolTxTypes, string> = {
   CreatePool: "liquiditypool/CreatePool",
   CreatePoolWithLiquidity: "liquiditypool/CreatePoolWithLiquidity",
   AddLiquidity: "liquiditypool/AddLiquidity",

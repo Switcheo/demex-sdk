@@ -51,7 +51,7 @@ export const snakeToCamel = (snakeStr: string): string => {
     if (index === 0) {
       return snakeItem;
     }
-    return snakeItem.length > 1 ? `${snakeItem[0].toUpperCase()}${snakeItem.substr(1)}` : snakeItem.toUpperCase();
+    return snakeItem.length > 1 ? `${snakeItem[0]!.toUpperCase()}${snakeItem.substr(1)}` : snakeItem.toUpperCase();
   });
   return camelArr.join("");
 };

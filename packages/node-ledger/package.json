@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/node-ledger",
-  "version": "0.0.3",
+  "version": "0.0.5",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",

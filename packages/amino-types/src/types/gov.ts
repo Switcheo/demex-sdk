@@ -5,7 +5,12 @@ import { MsgSubmitProposal } from "@demex-sdk/codecs/data/cosmos/gov/v1beta1/tx"
 import * as GovUtils from "../gov";
 import { AminoInit, AminoProcess, AminoValueMap, ConvertEncType, generateAminoType, mapEachIndiv } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+
+type GovTxTypes = 'SubmitProposal' | 'Deposit' | 'Vote'
+
+const TxTypes: Record<GovTxTypes, string> = {
   SubmitProposal: "cosmos-sdk/MsgSubmitProposal",
   Deposit: "cosmos-sdk/MsgDeposit",
   Vote: "cosmos-sdk/MsgVote",
@@ -187,7 +192,7 @@ const preProcessAmino = (value: Record<string, any>, valueMap: AminoValueMap): R
 const checkDecodeProposal = (content: any, amino: AminoValueMap): AminoProposalRes => {
   const decodedValue = GovUtils.decodeContent(content);
   const newContent = {
-    type: ContentTypes[content.typeUrl],
+    type: ContentTypes[content.typeUrl]!,
     value: decodedValue.value,
   };
   const newAmino = { ...amino };
@@ -253,7 +258,7 @@ const checkDecodeProposal = (content: any, amino: AminoValueMap): AminoProposalR
 const checkEncodeProposal = (content: any, amino: AminoValueMap): DirectProposalRes => {
   switch (content.type) {
     case ContentTypes[GovUtils.ProposalTypes.UpdatePool]: {
-      const updatePoolMsg = preProcessAmino(content.value.msg, UpdatePool.value.msg);
+      const updatePoolMsg = preProcessAmino(content.value.msg, UpdatePool.value!.msg!);
       const updatePoolProp = Carbon.Liquiditypool.UpdatePoolProposal.fromPartial({
         ...content.value,
         msg: updatePoolMsg,
@@ -269,7 +274,7 @@ const checkEncodeProposal = (content: any, amino: AminoValueMap): DirectProposal
       };
     }
     case ContentTypes[GovUtils.ProposalTypes.CreateToken]: {
-      const createTokenMsg = preProcessAmino(content.value.msg, CreateToken.value.msg);
+      const createTokenMsg = preProcessAmino(content.value.msg, CreateToken.value!.msg!);
       const createTokenProp = Carbon.Coin.CreateTokenProposal.fromPartial({
         ...content.value,
         msg: createTokenMsg,
@@ -352,7 +357,7 @@ const checkEncodeProposal = (content: any, amino: AminoValueMap): DirectProposal
     //   };
     // }
     case ContentTypes[GovUtils.ProposalTypes.SetCommitmentCurve]: {
-      const setCommitCurveMsg = preProcessAmino(content.value.msg, SetCommitmentCurve.value.msg);
+      const setCommitCurveMsg = preProcessAmino(content.value.msg, SetCommitmentCurve.value!.msg!);
       const commitCurveProp = Carbon.Liquiditypool.SetCommitmentCurveProposal.fromPartial({
         ...content.value,
         msg: setCommitCurveMsg,
@@ -368,7 +373,7 @@ const checkEncodeProposal = (content: any, amino: AminoValueMap): DirectProposal
       };
     }
     case ContentTypes[GovUtils.ProposalTypes.SetRewardCurve]: {
-      const setRewardCurveMsg = preProcessAmino(content.value.msg, SetRewardCurve.value.msg);
+      const setRewardCurveMsg = preProcessAmino(content.value.msg, SetRewardCurve.value!.msg!);
       const rewardCurveProp = Carbon.Liquiditypool.SetRewardCurveProposal.fromPartial({
         ...content.value,
         msg: setRewardCurveMsg,
@@ -384,7 +389,7 @@ const checkEncodeProposal = (content: any, amino: AminoValueMap): DirectProposal
       };
     }
     case ContentTypes[GovUtils.ProposalTypes.SetRewardsWeights]: {
-      const setRewardWeightsMsg = preProcessAmino(content.value.msg, SetRewardWeights.value.msg);
+      const setRewardWeightsMsg = preProcessAmino(content.value.msg, SetRewardWeights.value!.msg!);
       const rewardWeightsProp = Carbon.Liquiditypool.SetRewardsWeightsProposal.fromPartial({
         ...content.value,
         msg: setRewardWeightsMsg,
@@ -400,7 +405,7 @@ const checkEncodeProposal = (content: any, amino: AminoValueMap): DirectProposal
       };
     }
     case ContentTypes[GovUtils.ProposalTypes.UpdateMarket]: {
-      const updateMarketMsg = preProcessAmino(content.value.msg, UpdateMarket.value.msg);
+      const updateMarketMsg = preProcessAmino(content.value.msg, UpdateMarket.value!.msg!);
       const updateMarketProp = Carbon.Market.UpdateMarketProposal.fromPartial({
         ...content.value,
         msg: updateMarketMsg,
