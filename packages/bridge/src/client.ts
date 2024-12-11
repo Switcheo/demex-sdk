@@ -54,14 +54,14 @@ export class AxelarBridgeClient {
     };
 
     if (isNativeTokenDeposit) {
-      return await contract.deposit(
+      return await contract.deposit?.(
         senderAddress, // tokenSender
         receiverAddress, // carbonReceiver bech32Address
         txParams
       );
     }
 
-    return await contract.deposit(
+    return await contract.deposit?.(
       senderAddress, // tokenSender
       receiverAddress, // carbonReceiver bech32Address
       depositTokenExternalAddress, // asset
