@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/polynetwork",
-  "version": "0.0.4-beta.1",
+  "version": "0.0.4-beta.2",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
