@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/codecs",
-  "version": "0.0.4",
+  "version": "0.0.4-beta.1",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
