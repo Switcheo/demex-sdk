@@ -4,10 +4,10 @@ import { getEvmHexAddress } from "./address";
 
 
 export enum DemexSignerTypes {
-  Ledger,
-  PrivateKey,
-  PublicKey,
-  EIP712,
+  Ledger = 'Ledger',
+  PrivateKey = 'PrivateKey',
+  PublicKey = 'PublicKey',
+  EIP712 = 'EIP712',
 }
 
 export const getDefaultSignerAddress = async (signer: DemexSigner) => {
