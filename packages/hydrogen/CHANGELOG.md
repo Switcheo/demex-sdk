@@ -1,5 +1,13 @@
 # @demex-sdk/hydrogen
 
+## 0.0.7
+
+### Patch Changes
+
+- Added protobuf options to codecs
+- Updated dependencies
+  - @demex-sdk/core@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes
