@@ -17,7 +17,7 @@ const whitelistExports: { [name: string]: string } = {
 
 for (const exportName in whitelistExports) {
   const directoryPath = `Switcheo/carbon/${whitelistExports[exportName]}`;
-  const directory = path.join(pwd, 'src/data', directoryPath);
+  const directory = path.join(pwd!, 'src/data', directoryPath);
   const files = fs.readdirSync(directory);
 
   for (const file of files) {
@@ -33,5 +33,5 @@ for (const exportName in whitelistExports) {
   }
 
   const exportLine = `export * as ${exportName} from "./data/${directoryPath}/export"\n`;
-  fs.appendFileSync(modelsFile, exportLine);
+  fs.appendFileSync(modelsFile as string, exportLine);
 }

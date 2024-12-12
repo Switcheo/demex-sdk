@@ -8,7 +8,6 @@ export type TypeDefinition = {
 export type EIP712TypesDefinition = Record<string, Record<string, Array<TypeDefinition>>>
 
 
-
 export function generateEIP712types(): EIP712TypesDefinition {
     const eip712TypesDefinition: EIP712TypesDefinition = {}
 

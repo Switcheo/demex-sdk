@@ -31387,6 +31387,1691 @@ export const EIP712Types: { [index: string]: any } = {
   }
 };
 
+export const MsgsOptions: { [index: string]: any } = {
+  "MsgInitiateAdminTransfer": {
+    "[amino.name]": "admin/InitiateAdminTransfer",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAcceptAdminTransfer": {
+    "[amino.name]": "admin/AcceptAdminTransfer",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateParams": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgHaltCurrentVersion": {
+    "[amino.name]": "admin/HaltCurrentVersion",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgBlacklistAddress": {
+    "[amino.name]": "xbank/BlacklistAddress",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgUnblacklistAddress": {
+    "[amino.name]": "xbank/UnblacklistAddress",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgSetBridgeEnabled": {
+    "[amino.name]": "bridge/MsgSetBridgeEnabled",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateAxelarIbcChannel": {
+    "[amino.name]": "bridge/MsgUpdateAxelarIbcChannel",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateIbcTimeoutHeightOffset": {
+    "[amino.name]": "bridge/MsgUpdateIbcTimeoutHeightOffset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateMaxRelayExpiry": {
+    "[amino.name]": "bridge/UpdateRelayExpiry",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateRelayWhitelistDuration": {
+    "[amino.name]": "bridge/UpdateRelayWhitelistDuration",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateRefundAddress": {
+    "[amino.name]": "bridge/MsgUpdateRefundAddress",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAxelarSendToken": {
+    "[amino.name]": "bridge/MsgAxelarSendToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAxelarCallContract": {
+    "[amino.name]": "bridge/MsgAxelarCallContract",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAxelarCallContractWithToken": {
+    "[amino.name]": "bridge/MsgAxelarCallContractWithToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateConnection": {
+    "[amino.name]": "bridge/MsgCreateConnection",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateConnection": {
+    "[amino.name]": "bridge/MsgUpdateConnection",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveConnection": {
+    "[amino.name]": "bridge/MsgRemoveConnection",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAddControllersForConnection": {
+    "[amino.name]": "bridge/MsgAddControllersForConnection",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateControllersForConnection": {
+    "[amino.name]": "bridge/MsgUpdateControllersForConnection",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveControllersForConnection": {
+    "[amino.name]": "bridge/RemoveControllersForConnectionParams",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveNonceMapForConnection": {
+    "[amino.name]": "bridge/RemoveNonceMapForConnection",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRegisterExternalToken": {
+    "[amino.name]": "bridge/MsgRegisterExternalToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeregisterExternalToken": {
+    "[amino.name]": "bridge/MsgDeregisterExternalToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeployNativeToken": {
+    "[amino.name]": "bridge/MsgDeployNativeToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRegisterDeployedToken": {
+    "[amino.name]": "bridge/MsgRegisterDeployedToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgWithdrawToken": {
+    "[amino.name]": "bridge/MsgWithdrawToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateExternalToken": {
+    "[amino.name]": "bridge/MsgUpdateExternalToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeleteExternalToken": {
+    "[amino.name]": "bridge/MsgDeleteExternalToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgExecuteFromCarbon": {
+    "[amino.name]": "bridge/MsgExecuteFromCarbon",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgStartRelay": {
+    "[amino.name]": "bridge/MsgStartRelay",
+    "[cosmos.msg.v1.signer]": [
+      "relayer"
+    ]
+  },
+  "MsgPruneExpiredPendingActions": {
+    "[amino.name]": "bridge/MsgPruneExpiredPendingActions",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRevertPendingAction": {
+    "[amino.name]": "bridge/MsgRevertPendingAction",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgConfirmPendingAction": {
+    "[amino.name]": "bridge/MsgConfirmPendingAction",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgAddRelayer": {
+    "[amino.name]": "bridge/MsgAddRelayer",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgRemoveRelayer": {
+    "[amino.name]": "bridge/MsgRemoveRelayer",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgInitiateLiquidation": {
+    "[amino.name]": "broker/InitiateLiquidation",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreate": {
+    "[amino.name]": "lockproxy/Create",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgBind": {
+    "[amino.name]": "lockproxy/Bind",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgLock": {
+    "[amino.name]": "lockproxy/Lock",
+    "[cosmos.msg.v1.signer]": [
+      "from_address"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgProcessCrossChainTx": {
+    "[amino.name]": "ccm/ProcessCrossChainTx",
+    "[cosmos.msg.v1.signer]": [
+      "submitter"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgCreateEmitEvent": {
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAddRateStrategy": {
+    "[amino.name]": "cdp/AddRateStrategy",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateRateStrategy": {
+    "[amino.name]": "cdp/UpdateRateStrategy",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveRateStrategy": {
+    "[amino.name]": "cdp/RemoveRateStrategy",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAddAsset": {
+    "[amino.name]": "cdp/AddAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateAsset": {
+    "[amino.name]": "cdp/UpdateAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSupplyAsset": {
+    "[amino.name]": "cdp/SupplyAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgWithdrawAsset": {
+    "[amino.name]": "cdp/WithdrawAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgLockCollateral": {
+    "[amino.name]": "cdp/LockCollateral",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUnlockCollateral": {
+    "[amino.name]": "cdp/UnlockCollateral",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgBorrowAsset": {
+    "[amino.name]": "cdp/BorrowAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRepayAsset": {
+    "[amino.name]": "cdp/RepayAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSupplyAssetAndLockCollateral": {
+    "[amino.name]": "cdp/SupplyAssetAndLockCollateral",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUnlockCollateralAndWithdrawAsset": {
+    "[amino.name]": "cdp/UnlockCollateralAndWithdrawAsset",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgLiquidateCollateral": {
+    "[amino.name]": "cdp/LiquidateCollateral",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetLiquidationFee": {
+    "[amino.name]": "cdp/SetLiquidationFee",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetInterestFee": {
+    "[amino.name]": "cdp/SetInterestFee",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetStablecoinMintCap": {
+    "[amino.name]": "cdp/SetStablecoinMintCap",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetStablecoinInterestRate": {
+    "[amino.name]": "cdp/SetStablecoinInterestRate",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgMintStablecoin": {
+    "[amino.name]": "cdp/MintStablecoin",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgReturnStablecoin": {
+    "[amino.name]": "cdp/ReturnStablecoin",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetCompleteLiquidationThreshold": {
+    "[amino.name]": "cdp/SetCompleteLiquidationThreshold",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetMinimumCloseFactor": {
+    "[amino.name]": "cdp/SetMinimumCloseFactor",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetSmallLiquidationSize": {
+    "[amino.name]": "cdp/SetSmallLiquidationSize",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateRewardScheme": {
+    "[amino.name]": "cdp/CreateRewardScheme",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateRewardScheme": {
+    "[amino.name]": "cdp/UpdateRewardScheme",
+    "[cosmos.msg.v1.signer]": [
+      "updater"
+    ]
+  },
+  "MsgClaimRewards": {
+    "[amino.name]": "cdp/ClaimRewards",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetStalePriceGracePeriod": {
+    "[amino.name]": "cdp/SetStalePriceGracePeriod",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetCdpPaused": {
+    "[amino.name]": "cdp/SetCdpPaused",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgConvertTokenInCdpToGroupTokens": {
+    "[amino.name]": "cdp/ConvertTokenInCdpToGroupTokens",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAddEModeCategory": {
+    "[amino.name]": "cdp/AddEModeCategory",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateEModeCategory": {
+    "[amino.name]": "cdp/UpdateEModeCategory",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetAccountEMode": {
+    "[amino.name]": "cdp/SetAccountEMode",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveAccountEMode": {
+    "[amino.name]": "cdp/RemoveAccountEMode",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateToken": {
+    "[amino.name]": "carbon/MsgCreateToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSyncToken": {
+    "[amino.name]": "carbon/MsgSyncToken",
+    "[cosmos.msg.v1.signer]": [
+      "syncer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgMintToken": {
+    "[amino.name]": "carbon/MsgMintToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgBindToken": {
+    "[amino.name]": "carbon/MsgBindToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUnbindToken": {
+    "[amino.name]": "carbon/MsgUnbindToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgLinkToken": {
+    "[amino.name]": "carbon/MsgLinkToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgWithdraw": {
+    "[amino.name]": "carbon/MsgWithdraw",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgMigratePolyToken": {
+    "[amino.name]": "carbon/MsgMigratePolyToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAuthorizeBridge": {
+    "[amino.name]": "carbon/MsgAuthorizeBridge",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeauthorizeBridge": {
+    "[amino.name]": "carbon/MsgDeauthorizeBridge",
+    "[cosmos.msg.v1.signer]": [
+      "initiator"
+    ]
+  },
+  "MsgEditBridgeName": {
+    "[amino.name]": "carbon/MsgEditBridgeName",
+    "[cosmos.msg.v1.signer]": [
+      "initiator"
+    ]
+  },
+  "MsgRemoveBridge": {
+    "[amino.name]": "carbon/MsgRemoveBridge",
+    "[cosmos.msg.v1.signer]": [
+      "initiator"
+    ]
+  },
+  "MsgUpdateToken": {
+    "[amino.name]": "coin/UpdateToken",
+    "[cosmos.msg.v1.signer]": [
+      "updater"
+    ]
+  },
+  "MsgAddBridgeAddress": {
+    "[amino.name]": "carbon/MsgAddBridgeAddress",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveBridgeAddress": {
+    "[amino.name]": "carbon/MsgRemoveBridgeAddress",
+    "[cosmos.msg.v1.signer]": [
+      "initiator"
+    ]
+  },
+  "MsgCreateGroup": {
+    "[amino.name]": "cosmos-sdk/MsgCreateGroup",
+    "[cosmos.msg.v1.signer]": [
+      "admin"
+    ]
+  },
+  "MsgUpdateGroup": {
+    "[amino.name]": "coin/UpdateGroup",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRegisterToGroup": {
+    "[amino.name]": "coin/RegisterToGroup",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeregisterFromGroup": {
+    "[amino.name]": "coin/DeregisterFromGroup",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDepositToGroup": {
+    "[amino.name]": "coin/DepositToGroup",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgWithdrawFromGroup": {
+    "[amino.name]": "coin/WithdrawFromGroup",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateGroupedTokenConfig": {
+    "[amino.name]": "coin/UpdateGroupedTokenConfig",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "CreateTokenProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "MsgConvertCoin": {
+    "[amino.name]": "erc20/MsgConvertCoin",
+    "[cosmos.msg.v1.signer]": [
+      "sender"
+    ]
+  },
+  "MsgConvertERC20": {
+    "[amino.name]": "erc20/MsgConvertERC20",
+    "[cosmos.msg.v1.signer]": [
+      "sender"
+    ]
+  },
+  "MsgRegisterToken": {
+    "[amino.name]": "erc20/MsgRegisterToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRegisterERC20": {
+    "[amino.name]": "erc20/MsgRegisterERC20",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateERC20Enabled": {
+    "[amino.name]": "erc20/MsgUpdateERC20Enabled",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateEVMHookEnabled": {
+    "[amino.name]": "erc20/MsgUpdateEVMHookEnabled",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeactivateContract": {
+    "[amino.name]": "evmcontract/DeactivateContract",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgActivateContract": {
+    "[amino.name]": "evmcontract/ActivateContract",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgMergeAccount": {
+    "[amino.name]": "evmmerge/MsgMergeAccount",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSetGasCost": {
+    "[amino.name]": "fee/SetMsgGasCost",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSetMinGasPrice": {
+    "[amino.name]": "fee/SetMinGasPrice",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRemoveGasCost": {
+    "[amino.name]": "fee/RemoveMsgGasCost",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRemoveMinGasPrice": {
+    "[amino.name]": "fee/RemoveMinGasPrice",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSyncGenesis": {
+    "[amino.name]": "headersync/SyncGenesis",
+    "[cosmos.msg.v1.signer]": [
+      "syncer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSyncHeaders": {
+    "[amino.name]": "headersync/SyncHeaders",
+    "[cosmos.msg.v1.signer]": [
+      "syncer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTopUpInsurance": {
+    "[amino.name]": "insurance/TopUpInsurance",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetLeverage": {
+    "[amino.name]": "leverage/SetLeverage",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreatePool": {
+    "[amino.name]": "perpspool/CreatePool",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreatePoolWithLiquidity": {
+    "[amino.name]": "liquiditypool/CreatePoolWithLiquidity",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgAddLiquidity": {
+    "[amino.name]": "liquiditypool/AddLiquidity",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveLiquidity": {
+    "[amino.name]": "liquiditypool/RemoveLiquidity",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetRewardsWeights": {
+    "[amino.name]": "liquiditypool/SetRewardsWeights",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgStakePoolToken": {
+    "[amino.name]": "liquiditypool/StakePoolToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUnstakePoolToken": {
+    "[amino.name]": "liquiditypool/UnstakePoolToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgClaimPoolRewards": {
+    "[amino.name]": "liquiditypool/ClaimPoolRewards",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetRewardCurve": {
+    "[amino.name]": "liquiditypool/SetRewardCurve",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetCommitmentCurve": {
+    "[amino.name]": "liquiditypool/SetCommitmentCurve",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdatePool": {
+    "[amino.name]": "perpspool/UpdatePool",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreatePoolRoute": {
+    "[amino.name]": "liquiditypool/CreatePoolRoute",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemovePoolRoute": {
+    "[amino.name]": "liquiditypool/RemovePoolRoute",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdatePoolRoute": {
+    "[amino.name]": "liquiditypool/UpdatePoolRoute",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "LinkPoolProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "UnlinkPoolProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "SetRewardCurveProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "SetCommitmentCurveProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "SetRewardsWeightsProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "UpdatePoolProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "CreatePoolRouteProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "RemovePoolRouteProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "UpdatePoolRouteProposal": {
+    "[gogoproto.goproto_stringer]": false
+  },
+  "MsgSetWrapperMapping": {
+    "[amino.name]": "lockproxy/SetWrapperMapping",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgDeleteWrapperMapping": {
+    "[amino.name]": "lockproxy/DeleteWrapperMapping",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "CreateMarketProposal": {
+    "[amino.name]": "market/CreateMarketProposal"
+  },
+  "UpdateMarketProposal": {
+    "[amino.name]": "market/UpdateMarketProposal"
+  },
+  "UpdatePerpetualsFundingIntervalProposal": {
+    "[amino.name]": "market/UpdatePerpsFundingIntervalProp"
+  },
+  "MsgDisableSpotMarket": {
+    "[amino.name]": "market/DisableSpotMarket",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateMarket": {
+    "[amino.name]": "market/CreateMarket",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateMarket": {
+    "[amino.name]": "market/UpdateMarket",
+    "[cosmos.msg.v1.signer]": [
+      "updater"
+    ]
+  },
+  "MsgUpdatePerpetualsFundingInterval": {
+    "[amino.name]": "market/UpdatePerpetualsFundingInterval",
+    "[cosmos.msg.v1.signer]": [
+      "updater"
+    ]
+  },
+  "MsgAddFeeTier": {
+    "[amino.name]": "market/AddFeeTier",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateFeeTier": {
+    "[amino.name]": "market/UpdateFeeTier",
+    "[cosmos.msg.v1.signer]": [
+      "updater"
+    ]
+  },
+  "MsgRemoveFeeTier": {
+    "[amino.name]": "market/RemoveFeeTier",
+    "[cosmos.msg.v1.signer]": [
+      "remover"
+    ]
+  },
+  "MsgSetStakeEquivalence": {
+    "[amino.name]": "market/SetStakeEquivalence",
+    "[cosmos.msg.v1.signer]": [
+      "setter"
+    ]
+  },
+  "MsgUpdateAllPoolTradingFees": {
+    "[amino.name]": "market/UpdateAllPoolTradingFees",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateFeeStructure": {
+    "[amino.name]": "market/UpdateFeeStructure",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeleteFeeStructure": {
+    "[amino.name]": "market/DeleteFeeStructure",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateOracle": {
+    "[amino.name]": "oracle/CreateOracle",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateOracle": {
+    "[amino.name]": "oracle/UpdateOracle",
+    "[cosmos.msg.v1.signer]": [
+      "updater"
+    ]
+  },
+  "MsgRemoveOracle": {
+    "[amino.name]": "oracle/RemoveOracle",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetOracleSlashEnabled": {
+    "[amino.name]": "oracle/SetOracleSlashEnabled",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateOracleContract": {
+    "[amino.name]": "oracle/MsgUpdateOracleContract",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeployOracleContract": {
+    "[amino.name]": "oracle/MsgDeployOracleContract",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateResult": {
+    "[cosmos.msg.v1.signer]": [
+      "proposer"
+    ]
+  },
+  "MsgSetTradingFlag": {
+    "[amino.name]": "order/SetTradingFlag",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateOrder": {
+    "[amino.name]": "order/CreateOrder",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgEditOrder": {
+    "[amino.name]": "order/EditOrder",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCancelOrder": {
+    "[amino.name]": "order/CancelOrder",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCancelAll": {
+    "[amino.name]": "order/CancelAll",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateRfq": {
+    "[amino.name]": "otc/CreateRfq",
+    "[cosmos.msg.v1.signer]": [
+      "requester"
+    ]
+  },
+  "MsgCancelRfq": {
+    "[amino.name]": "otc/CancelRfq",
+    "[cosmos.msg.v1.signer]": [
+      "requester"
+    ]
+  },
+  "MsgCreateQuote": {
+    "[amino.name]": "otc/CreateQuote",
+    "[cosmos.msg.v1.signer]": [
+      "quoter"
+    ]
+  },
+  "MsgAcceptQuote": {
+    "[amino.name]": "otc/AcceptQuote",
+    "[cosmos.msg.v1.signer]": [
+      "requester"
+    ]
+  },
+  "MsgRegisterToPool": {
+    "[amino.name]": "perpspool/RegisterToPool",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDeregisterFromPool": {
+    "[amino.name]": "perpspool/DeregisterToPool",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDepositToPool": {
+    "[amino.name]": "perpspool/DepositToPool",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgWithdrawFromPool": {
+    "[amino.name]": "perpspool/WithdrawToPool",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateMarketConfig": {
+    "[amino.name]": "perpspool/UpdateMarketConfig",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetMargin": {
+    "[amino.name]": "position/SetMargin",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetBackfillTimeInterval": {
+    "[amino.name]": "pricing/SetBackfillTimeInterval",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetSmoothenBand": {
+    "[amino.name]": "pricing/SetSmoothenBand",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetImpactBand": {
+    "[amino.name]": "pricing/SetImpactBand",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetStaleIndexAllowance": {
+    "[amino.name]": "pricing/SetStaleIndexAllowance",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateTokenPriceOracle": {
+    "[amino.name]": "pricing/UpdateTokenPriceOracle",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgUpdateSettlementPrice": {
+    "[amino.name]": "pricing/MsgUpdateSettlementPrice",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgRemoveTokenPrice": {
+    "[amino.name]": "pricing/MsgRemoveTokenPrice",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgUpdateProfile": {
+    "[amino.name]": "profile/UpdateProfile",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgSetSequence": {
+    "[amino.name]": "sequence/SetSequence",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgCreateSubAccount": {
+    "[amino.name]": "subaccount/CreateSubAccount",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgActivateSubAccount": {
+    "[amino.name]": "subaccount/ActivateSubAccount",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgRemoveSubAccount": {
+    "[amino.name]": "subaccount/RemoveSubAccount",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ]
+  },
+  "MsgDelegate": {
+    "[amino.name]": "cosmos-sdk/MsgDelegate",
+    "[cosmos.msg.v1.signer]": [
+      "delegator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgUndelegate": {
+    "[amino.name]": "cosmos-sdk/MsgUndelegate",
+    "[cosmos.msg.v1.signer]": [
+      "delegator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgGrant": {
+    "[amino.name]": "cosmos-sdk/MsgGrant",
+    "[cosmos.msg.v1.signer]": [
+      "granter"
+    ]
+  },
+  "MsgExec": {
+    "[amino.name]": "cosmos-sdk/group/MsgExec",
+    "[cosmos.msg.v1.signer]": [
+      "executor"
+    ]
+  },
+  "MsgRevoke": {
+    "[amino.name]": "cosmos-sdk/MsgRevoke",
+    "[cosmos.msg.v1.signer]": [
+      "granter"
+    ]
+  },
+  "MsgSend": {
+    "[cosmos.msg.v1.signer]": [
+      "sender"
+    ]
+  },
+  "MsgMultiSend": {
+    "[amino.name]": "cosmos-sdk/MsgMultiSend",
+    "[cosmos.msg.v1.signer]": [
+      "inputs"
+    ],
+    "[gogoproto.equal]": false
+  },
+  "MsgSetSendEnabled": {
+    "[amino.name]": "cosmos-sdk/MsgSetSendEnabled",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgAuthorizeCircuitBreaker": {
+    "[cosmos.msg.v1.signer]": [
+      "granter"
+    ]
+  },
+  "MsgTripCircuitBreaker": {
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgResetCircuitBreaker": {
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgVerifyInvariant": {
+    "[amino.name]": "cosmos-sdk/MsgVerifyInvariant",
+    "[cosmos.msg.v1.signer]": [
+      "sender"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "CommunityPoolSpendProposal": {
+    "deprecated": true,
+    "[cosmos_proto.implements_interface]": [
+      "cosmos.gov.v1beta1.Content"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSetWithdrawAddress": {
+    "[amino.name]": "cosmos-sdk/MsgModifyWithdrawAddress",
+    "[cosmos.msg.v1.signer]": [
+      "delegator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgWithdrawDelegatorReward": {
+    "[amino.name]": "cosmos-sdk/MsgWithdrawDelegationReward",
+    "[cosmos.msg.v1.signer]": [
+      "delegator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgWithdrawValidatorCommission": {
+    "[amino.name]": "cosmos-sdk/MsgWithdrawValCommission",
+    "[cosmos.msg.v1.signer]": [
+      "validator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgFundCommunityPool": {
+    "[amino.name]": "cosmos-sdk/MsgFundCommunityPool",
+    "[cosmos.msg.v1.signer]": [
+      "depositor"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgCommunityPoolSpend": {
+    "[amino.name]": "cosmos-sdk/distr/MsgCommunityPoolSpend",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgDepositValidatorRewardsPool": {
+    "[amino.name]": "cosmos-sdk/distr/MsgDepositValRewards",
+    "[cosmos.msg.v1.signer]": [
+      "depositor"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSubmitEvidence": {
+    "[amino.name]": "cosmos-sdk/MsgSubmitEvidence",
+    "[cosmos.msg.v1.signer]": [
+      "submitter"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgGrantAllowance": {
+    "[amino.name]": "cosmos-sdk/MsgGrantAllowance",
+    "[cosmos.msg.v1.signer]": [
+      "granter"
+    ]
+  },
+  "MsgRevokeAllowance": {
+    "[amino.name]": "cosmos-sdk/MsgRevokeAllowance",
+    "[cosmos.msg.v1.signer]": [
+      "granter"
+    ]
+  },
+  "MsgPruneAllowances": {
+    "[cosmos.msg.v1.signer]": [
+      "pruner"
+    ]
+  },
+  "MsgSubmitProposal": {
+    "[amino.name]": "cosmos-sdk/group/MsgSubmitProposal",
+    "[cosmos.msg.v1.signer]": [
+      "proposers"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgVote": {
+    "[amino.name]": "cosmos-sdk/group/MsgVote",
+    "[cosmos.msg.v1.signer]": [
+      "voter"
+    ]
+  },
+  "MsgVoteWeighted": {
+    "[amino.name]": "cosmos-sdk/MsgVoteWeighted",
+    "[cosmos.msg.v1.signer]": [
+      "voter"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgDeposit": {
+    "[amino.name]": "cosmos-sdk/MsgDeposit",
+    "[cosmos.msg.v1.signer]": [
+      "depositor"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false,
+    "[gogoproto.stringer]": false
+  },
+  "Proposal": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "ParameterChangeProposal": {
+    "[amino.name]": "cosmos-sdk/ParameterChangeProposal",
+    "[cosmos_proto.implements_interface]": [
+      "cosmos.gov.v1beta1.Content"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgUnjail": {
+    "[amino.name]": "cosmos-sdk/MsgUnjail",
+    "[cosmos.msg.v1.signer]": [
+      "validator_addr"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgCreateValidator": {
+    "[amino.name]": "cosmos-sdk/MsgCreateValidator",
+    "[cosmos.msg.v1.signer]": [
+      "validator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgEditValidator": {
+    "[amino.name]": "cosmos-sdk/MsgEditValidator",
+    "[cosmos.msg.v1.signer]": [
+      "validator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgBeginRedelegate": {
+    "[amino.name]": "cosmos-sdk/MsgBeginRedelegate",
+    "[cosmos.msg.v1.signer]": [
+      "delegator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgCancelUnbondingDelegation": {
+    "[amino.name]": "cosmos-sdk/MsgCancelUnbondingDelegation",
+    "[cosmos.msg.v1.signer]": [
+      "delegator_address"
+    ],
+    "[gogoproto.equal]": false,
+    "[gogoproto.goproto_getters]": false
+  },
+  "SoftwareUpgradeProposal": {
+    "deprecated": true,
+    "[amino.name]": "cosmos-sdk/SoftwareUpgradeProposal",
+    "[cosmos_proto.implements_interface]": [
+      "cosmos.gov.v1beta1.Content"
+    ],
+    "[gogoproto.equal]": true
+  },
+  "CancelSoftwareUpgradeProposal": {
+    "deprecated": true,
+    "[amino.name]": "cosmos-sdk/CancelSoftwareUpgradeProposal",
+    "[cosmos_proto.implements_interface]": [
+      "cosmos.gov.v1beta1.Content"
+    ],
+    "[gogoproto.equal]": true
+  },
+  "MsgSoftwareUpgrade": {
+    "[amino.name]": "cosmos-sdk/MsgSoftwareUpgrade",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgCancelUpgrade": {
+    "[amino.name]": "cosmos-sdk/MsgCancelUpgrade",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
+    ]
+  },
+  "MsgCreateVestingAccount": {
+    "[amino.name]": "cosmos-sdk/MsgCreateVestingAccount",
+    "[cosmos.msg.v1.signer]": [
+      "from_address"
+    ],
+    "[gogoproto.equal]": true
+  },
+  "MsgCreatePermanentLockedAccount": {
+    "[amino.name]": "cosmos-sdk/MsgCreatePermLockedAccount",
+    "[cosmos.msg.v1.signer]": [
+      "from_address"
+    ],
+    "[gogoproto.equal]": true
+  },
+  "MsgCreatePeriodicVestingAccount": {
+    "[amino.name]": "cosmos-sdk/MsgCreatePeriodVestAccount",
+    "[cosmos.msg.v1.signer]": [
+      "from_address"
+    ],
+    "[gogoproto.equal]": false
+  },
+  "MsgEthereumTx": {
+    "[amino.name]": "ethermint/MsgEthereumTx",
+    "[cosmos.msg.v1.signer]": [
+      "from"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgEthereumTxResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "ClientUpdateProposal": {
+    "deprecated": true,
+    "[cosmos_proto.implements_interface]": [
+      "cosmos.gov.v1beta1.Content"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "UpgradeProposal": {
+    "deprecated": true,
+    "[cosmos_proto.implements_interface]": [
+      "cosmos.gov.v1beta1.Content"
+    ],
+    "[gogoproto.equal]": true,
+    "[gogoproto.goproto_getters]": false,
+    "[gogoproto.goproto_stringer]": false
+  },
+  "MsgRegisterPayee": {
+    "[amino.name]": "cosmos-sdk/MsgRegisterPayee",
+    "[cosmos.msg.v1.signer]": [
+      "relayer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRegisterCounterpartyPayee": {
+    "[amino.name]": "cosmos-sdk/MsgRegisterCounterpartyPayee",
+    "[cosmos.msg.v1.signer]": [
+      "relayer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgPayPacketFee": {
+    "[amino.name]": "cosmos-sdk/MsgPayPacketFee",
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgPayPacketFeeAsync": {
+    "[amino.name]": "cosmos-sdk/MsgPayPacketFeeAsync",
+    "[cosmos.msg.v1.signer]": [
+      "packet_fee"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRegisterInterchainAccount": {
+    "[cosmos.msg.v1.signer]": [
+      "owner"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRegisterInterchainAccountResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSendTx": {
+    "[cosmos.msg.v1.signer]": [
+      "owner"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSendTxResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTransfer": {
+    "[amino.name]": "cosmos-sdk/MsgTransfer",
+    "[cosmos.msg.v1.signer]": [
+      "sender"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTransferResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelOpenInit": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelOpenInitResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelOpenTry": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelOpenTryResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelOpenAck": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelOpenConfirm": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelCloseInit": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelCloseConfirm": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRecvPacket": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRecvPacketResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTimeout": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTimeoutResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTimeoutOnClose": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgTimeoutOnCloseResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgAcknowledgement": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgAcknowledgementResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeInit": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeInitResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeTry": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeTryResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeAck": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeAckResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeConfirm": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeConfirmResponse": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeOpen": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeTimeout": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgChannelUpgradeCancel": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgPruneAcknowledgements": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgCreateClient": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgUpdateClient": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgUpgradeClient": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgSubmitMisbehaviour": {
+    "deprecated": true,
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRecoverClient": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgIBCSoftwareUpgrade": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ]
+  },
+  "MsgConnectionOpenInit": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgConnectionOpenTry": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgConnectionOpenAck": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgConnectionOpenConfirm": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "Header": {
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgStoreCode": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ]
+  },
+  "MsgRemoveChecksum": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ]
+  },
+  "MsgMigrateContract": {
+    "[cosmos.msg.v1.signer]": [
+      "signer"
+    ]
+  }
+};
+
 
 // Query Clients
 

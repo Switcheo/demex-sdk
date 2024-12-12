@@ -10,7 +10,7 @@ const MODEL_BLACKLIST = ['MsgClientImpl', 'protobufPackage', 'GenesisState', 'Qu
 
 for (const exportName in whitelistCosmosExports) {
   const directoryPath = whitelistCosmosExports[exportName];
-  const directory = path.join(pwd, 'src/data', directoryPath);
+  const directory = path.join(pwd!, 'src/data', directoryPath!);
   const files = fs.readdirSync(directory);
 
   for (const file of files) {
@@ -26,5 +26,5 @@ for (const exportName in whitelistCosmosExports) {
   }
 
   const exportLine = `export * as ${exportName} from "./data/${directoryPath}/export"\n`;
-  fs.appendFileSync(modelsFile, exportLine);
+  fs.appendFileSync(modelsFile as string, exportLine);
 }
