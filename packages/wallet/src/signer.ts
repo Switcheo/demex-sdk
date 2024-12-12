@@ -31,7 +31,8 @@ export abstract class DemexEIP712Signer implements DemexDirectSigner, DemexAmino
     const walletChainId = await this.getEvmChainId()
     const pubkey = await this.getPublicKey(address)
     const hexAddress = getEvmHexAddress(pubkey)
-    const evmChainId = evmChainIds[signDoc.chain_id]!
+    const evmChainId = evmChainIds[signDoc.chain_id]
+    if (!evmChainId) throw new WalletError("unable to obtain evm chain id from signDoc")
     const updatedMemo = await this.updateMemo(signDoc.memo, evmChainId, walletChainId)
     const updatedSignDoc: StdSignDoc = { ...signDoc, memo: updatedMemo, chain_id: evmChainId }
     const eip712Tx = constructEIP712Tx(updatedSignDoc, walletChainId)
