@@ -25,6 +25,7 @@
       "dependsOn": ["^build:types"]
     },
     "build:clean": {
+      "cache": false,
       "dependsOn": ["^build:clean"]
     },
     "clean": {

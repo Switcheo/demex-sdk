@@ -2,7 +2,11 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+type SubaccountTxTypes = 'CreateSubAccount' | 'ActivateSubAccount' | 'RemoveSubAccount'
+
+const TxTypes: Record<SubaccountTxTypes, string> = {
   CreateSubAccount: "subaccount/CreateSubAccount",
   ActivateSubAccount: "subaccount/ActivateSubAccount",
   RemoveSubAccount: "subaccount/RemoveSubAccount",

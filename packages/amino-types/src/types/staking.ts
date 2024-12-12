@@ -2,7 +2,11 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+type StakingTxTypes = 'Delegate' | 'Undelegate' | 'BeginRedelegate' | 'WithdrawDelegationReward'
+
+const TxTypes: Record<StakingTxTypes, string> = {
   Delegate: "cosmos-sdk/MsgDelegate",
   Undelegate: "cosmos-sdk/MsgUndelegate",
   BeginRedelegate: "cosmos-sdk/MsgBeginRedelegate",
