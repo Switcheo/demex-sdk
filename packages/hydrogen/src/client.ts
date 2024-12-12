@@ -1,6 +1,6 @@
 import qs from "query-string";
 import { GetFeeQuoteResponse, GetRelaysRequest, GetRelaysResponse, GetTransfersRequest, GetTransfersResponse, PaginatedResult } from "./types";
-import { createFetchClient, baseTransformResponse } from "@demex-sdk/core/src";
+import { createFetchClient, baseTransformResponse } from "@demex-sdk/core";
 
 const transformDate = (result: any, key: string) => {
   if (!(key in result) || !result[key] || typeof result[key] !== "string") return result;
