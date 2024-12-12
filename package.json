@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "yarn install && turbo run build"
+    "build": "yarn install && npx turbo run build:clean && turbo run build"
   },
   "workspaces": {
     "packages": [
