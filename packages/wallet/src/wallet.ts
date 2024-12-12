@@ -540,7 +540,11 @@ export class DemexWallet {
       const { msgGasCosts } = await queryClient.fee.MsgGasCostAll({ pagination: PGN_1K });
       this.txGasCosts = Object.fromEntries(msgGasCosts.map(cost => [cost.msgType, bnOrZero(cost.gasCost)]));
     }
-    return this.txGasCosts[msgTypeUrl] ?? this.txGasCosts[TxGasCostTypeDefaultKey] ?? BN_ZERO;
+    const gasCost = this.txGasCosts[msgTypeUrl] ?? this.txGasCosts[TxGasCostTypeDefaultKey];
+    if (!gasCost) {
+      throw new WalletError(`unable to obtain gas cost for message type: ${msgTypeUrl} and default key: ${TxGasCostTypeDefaultKey}`);
+    }
+    return gasCost;
   }
   public async getGasPrice(denom: string): Promise<BigNumber | null> {
     if (!this.txGasPrices) {
