@@ -10,12 +10,12 @@ const [pwd, modelsFile] = files.splice(files.length - 2, 2);
 const MODEL_BLACKLIST = ['MsgClientImpl', 'protobufPackage', 'GenesisState', 'QueryClientImpl']
 
 for (const exportName in whitelistIbcExports) {
-  const directoryArr: string[] = whitelistIbcExports[exportName];
+  const directoryArr = whitelistIbcExports[exportName];
   // Get common path (e.g. ibc/applications/transfer for Transfer)
-  const commonPath = directoryArr[0].split('/').slice(0, 4).join('/');
-  const commonDir = path.join(pwd, 'src/data', commonPath);
+  const commonPath = directoryArr![0]!.split('/').slice(0, 4).join('/') ?? '';
+  const commonDir = path.join(pwd!, 'src/data', commonPath);
   for (const subExportId in directoryArr) {
-    const directory = path.join(pwd, 'src/data', directoryArr[subExportId]);
+    const directory = path.join(pwd!, 'src/data', directoryArr[Number(subExportId)]!);
     // Get file names in directory
     const files = fs.readdirSync(directory);
 
@@ -27,12 +27,12 @@ for (const exportName in whitelistIbcExports) {
         !MODEL_BLACKLIST.includes(key)
       );
       if (!modelNames.length) continue;
-  
-      const relativeFilePath = directoryArr[subExportId].replace(commonPath, '');
+
+      const relativeFilePath = directoryArr[Number(subExportId)]!.replace(commonPath, '');
       const exportLine = `export { ${modelNames.join(", ")} } from ".${relativeFilePath}/${file.replace('.ts', '')}";\n`;
       fs.appendFileSync(path.join(commonDir, 'export.ts'), exportLine);
     }
   }
   const majorExportLine = `export * as ${exportName} from "./data/${commonPath}/export";\n`;
-  fs.appendFileSync(modelsFile, majorExportLine);
+  fs.appendFileSync(modelsFile as string, majorExportLine);
 }
