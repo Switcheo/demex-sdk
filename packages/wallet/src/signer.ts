@@ -102,11 +102,18 @@ export abstract class DemexEIP712Signer implements DemexDirectSigner, DemexAmino
   }
 
   private updateMemo(currentMemo: string = "", signDocEvmChainId: string, walletChainId: string): string {
-    const evmChainId = parseChainId(signDocEvmChainId)
-    const updatedMemo = evmChainId === walletChainId ? currentMemo : `${currentMemo}|CROSSCHAIN-SIGNING|signed-chain-id:carbon_${walletChainId}-1;carbon-chain-id:${signDocEvmChainId}`
-    return updatedMemo
+    const evmChainId = parseChainId(signDocEvmChainId);
+    if (evmChainId === walletChainId) return currentMemo;
+    const params: Record<string, string> = { 
+      "signed-chain-id": `carbon_${walletChainId}-1`,
+      "carbon-chain-id": signDocEvmChainId,
+    };
+    return [
+      currentMemo,
+      "CROSSCHAIN-SIGNING",
+      Object.entries(params).map((kv) => kv.join(":")).join(";"),
+    ].join("|");
   }
-
 }
 
 export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigner {
