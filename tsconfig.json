@@ -14,7 +14,7 @@
     "resolveJsonModule": true,
     "useUnknownInCatchVariables": false,
     "noUncheckedIndexedAccess": true,
-    "composite": true,
+    "composite": false,
     "experimentalDecorators": true,
     "jsx": "react",
     "jsxFactory": "JSX.createElement",
