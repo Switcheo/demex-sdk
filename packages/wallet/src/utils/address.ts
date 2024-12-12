@@ -14,7 +14,7 @@ const getUncompressedPublicKey = (compressedPublicKey: Uint8Array) => {
 }
 
 const checksumAddress = (unchecksummedAddress: string) => {
-  const lowercaseAddress = unchecksummedAddress.toLowerCase().replace("0x", "");
+  const lowercaseAddress = unchecksummedAddress.toLowerCase().replace(/^0x/i, "");
   const hashedAddress = Buffer.from(keccak256(Buffer.from(lowercaseAddress))).toString("hex");
   let checksumAddress = "0x";
 
