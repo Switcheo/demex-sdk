@@ -31,7 +31,8 @@ export abstract class DemexEIP712Signer implements DemexDirectSigner, DemexAmino
     const walletChainId = await this.getEvmChainId()
     const pubkey = await this.getPublicKey(address)
     const hexAddress = getEvmHexAddress(pubkey)
-    const evmChainId = evmChainIds[signDoc.chain_id]!
+    const evmChainId = evmChainIds[signDoc.chain_id]
+    if (!evmChainId) throw new WalletError("unable to obtain evm chain id from signDoc")
     const updatedMemo = await this.updateMemo(signDoc.memo, evmChainId, walletChainId)
     const updatedSignDoc: StdSignDoc = { ...signDoc, memo: updatedMemo, chain_id: evmChainId }
     const eip712Tx = constructEIP712Tx(updatedSignDoc, walletChainId)
@@ -102,11 +103,18 @@ export abstract class DemexEIP712Signer implements DemexDirectSigner, DemexAmino
   }
 
   private updateMemo(currentMemo: string = "", signDocEvmChainId: string, walletChainId: string): string {
-    const evmChainId = parseChainId(signDocEvmChainId)
-    const updatedMemo = evmChainId === walletChainId ? currentMemo : `${currentMemo}|CROSSCHAIN-SIGNING|signed-chain-id:carbon_${walletChainId}-1;carbon-chain-id:${signDocEvmChainId}`
-    return updatedMemo
+    const evmChainId = parseChainId(signDocEvmChainId);
+    if (evmChainId === walletChainId) return currentMemo;
+    const params: Record<string, string> = { 
+      "signed-chain-id": `carbon_${walletChainId}-1`,
+      "carbon-chain-id": signDocEvmChainId,
+    };
+    return [
+      currentMemo,
+      "CROSSCHAIN-SIGNING",
+      Object.entries(params).map((kv) => kv.join(":")).join(";"),
+    ].join("|");
   }
-
 }
 
 export class DemexPrivateKeySigner implements DemexDirectSigner, DemexAminoSigner {

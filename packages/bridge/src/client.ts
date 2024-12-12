@@ -24,7 +24,7 @@ export interface EthersTransactionResponse extends ethers.Transaction {
 }
 
 export class AxelarBridgeClient {
-  private constructor() {}
+  private constructor() { }
 
   public static instance(opts: AxelarBridgeClientOpts) {
     return new AxelarBridgeClient();
@@ -45,7 +45,7 @@ export class AxelarBridgeClient {
     } = params;
     const abi = isNativeTokenDeposit ? ABIs.nativeDepositer : ABIs.axelarBridge;
     const contract = new ethers.Contract(contractAddress, abi, signer);
-    
+
     const txParams = {
       nonce,
       ...(gasPriceGwei && { gasPrice: gasPriceGwei.shiftedBy(9).toString(10) }),
@@ -54,14 +54,14 @@ export class AxelarBridgeClient {
     };
 
     if (isNativeTokenDeposit) {
-      return await contract.deposit?.(
+      return await contract.deposit!(
         senderAddress, // tokenSender
         receiverAddress, // carbonReceiver bech32Address
         txParams
       );
     }
 
-    return await contract.deposit?.(
+    return await contract.deposit!(
       senderAddress, // tokenSender
       receiverAddress, // carbonReceiver bech32Address
       depositTokenExternalAddress, // asset

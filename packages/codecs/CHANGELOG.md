@@ -1,5 +1,11 @@
 # @demex-sdk/codecs
 
+## 0.0.6
+
+### Patch Changes
+
+- Added EIP-712 signing functionality
+
 ## 0.0.3
 
 ### Patch Changes
