@@ -354,6 +354,7 @@ export class DemexWallet {
       }),
     }
     await this.queueTx([message]);
+    this.reloadAccount(this.signer, true);
     this.updateMergeAccountStatus(walletAddress, true);
   }
 
