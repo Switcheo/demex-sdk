@@ -349,7 +349,8 @@ export class DemexWallet {
     const message: EncodeObject = {
       typeUrl: TxTypes.MsgMergeAccount,
       value: MsgMergeAccount.fromPartial({
-        creator: walletAddress,
+        // get address via mapping as account may exist only as evm bech32
+        creator: this.walletAccounts[walletAddress]?.address,
         pubKey: hexPublicKey,
       }),
     }
