@@ -217,7 +217,7 @@ export class DemexWallet {
     return await this.getDefaultSigningData(txRequest);
   }
 
-  private async initSignerDefaultAccountState(signer: DemexSigner, checkMergeStatus: boolean) {
+  private async initWalletAccountState(signer: DemexSigner, checkMergeStatus: boolean) {
     const address = await getDefaultSignerAddress(signer);
     const walletAccount = this.walletAccounts?.[address]
     if (!walletAccount) return await this.reloadAccount(signer, checkMergeStatus);
@@ -325,8 +325,8 @@ export class DemexWallet {
   ): Promise<BroadcastTxResult> {
     try {
       const checkAccMergedStatus = this.checkAccountMergedStatus(signOpts?.triggerMerge);
-      await this.initSignerDefaultAccountState(this.signer, checkAccMergedStatus);
-      await this.triggerInitialMergeAccountTx(messages, checkAccMergedStatus);
+      await this.initWalletAccountState(this.signer, checkAccMergedStatus);
+      await this.triggerWalletInitialMergeAccountTx(messages, checkAccMergedStatus);
       return await this.queueTx(messages, signOpts, broadcastOpts);
     } catch (e) {
       throw new WalletError(`sign and broadcast tx fail: ${e}`);
@@ -338,7 +338,7 @@ export class DemexWallet {
   }
 
 
-  private async triggerInitialMergeAccountTx(messages: EncodeObject[], checkAccountMergedStatus: boolean) {
+  private async triggerWalletInitialMergeAccountTx(messages: EncodeObject[], checkAccountMergedStatus: boolean) {
     if (!checkAccountMergedStatus) return;
     const walletAddress = this.bech32Address;
     const hexPublicKey = this.publicKey.toString("hex");
