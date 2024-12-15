@@ -17,7 +17,6 @@ export interface PromiseHandler<T> {
 
 export interface WalletAccount extends Account {
   isMerged?: boolean
-  stateInvalidated: boolean
 }
 
 export interface SigningData extends SignTxRequest {
