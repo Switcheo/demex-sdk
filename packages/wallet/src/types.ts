@@ -16,7 +16,8 @@ export interface PromiseHandler<T> {
 }
 
 export interface WalletAccount extends Account {
-  sequenceInvalidated: boolean
+  isMerged?: boolean
+  stateInvalidated: boolean
 }
 
 export interface SigningData extends SignTxRequest {
@@ -37,7 +38,6 @@ export interface BroadcastTxRequest extends SignTxRequest {
   signedTx: Tx.TxRaw;
 }
 
-
 export interface TxOverrides {
   fee?: StdFee;
   feeDenom?: string;
@@ -49,6 +49,7 @@ export interface SignTxOpts {
   tx?: TxOverrides;
   signer?: Partial<SignerData>;
   bypassGrantee?: boolean;
+  triggerMerge?: boolean;
 }
 
 export interface BroadcastTxOpts {

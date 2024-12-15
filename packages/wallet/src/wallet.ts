@@ -8,6 +8,7 @@ import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tenderm
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { registry, Tx, TxTypes } from "@demex-sdk/codecs";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
+import { MsgMergeAccount } from "@demex-sdk/codecs/data/Switcheo/carbon/evmmerge/tx";
 import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
@@ -17,7 +18,7 @@ import { Grantee } from "./grantee";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
 import { DemexEIP712SigningClient } from "./signingClient/eip712";
 import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest, WalletAccount } from "./types";
-import { getDefaultSignerAddress, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
+import { findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -64,6 +65,8 @@ export interface BaseDemexWalletInitOpts {
   disableRetryOnSequenceError?: boolean
   defaultTimeoutBlocks?: number
 
+  triggerMerge?: boolean
+
   /** Optional callback that will be called before signing is requested/executed. */
   onRequestSign?: OnRequestSignCallback;
   /** Optional callback that will be called when signing is complete. */
@@ -93,6 +96,7 @@ export class DemexWallet {
 
   public readonly signer: DemexSigner
   public grantee: Grantee | null = null;
+  public triggerMerge: boolean | null = null;
 
   public txDefaultBroadCastMode?: BroadcastTxMode
   public disableRetryOnSequenceError: boolean = false
@@ -113,7 +117,6 @@ export class DemexWallet {
   private _queryClient?: DemexQueryClient
   private _signingClient?: SigningStargateClient
 
-
   private onRequestSign?: OnRequestSignCallback;
   private onSignComplete?: OnSignCompleteCallback;
   private onBroadcastTxSuccess?: OnBroadcastTxSuccessCallback;
@@ -130,6 +133,7 @@ export class DemexWallet {
     this._tmClient = opts.tmClient;
     this._queryClient = opts.queryClient;
     this.walletAccounts = {};
+    this.triggerMerge = opts.triggerMerge ?? null
 
     this.onRequestSign = opts.onRequestSign;
     this.onSignComplete = opts.onSignComplete;
@@ -137,7 +141,7 @@ export class DemexWallet {
     this.onBroadcastTxFail = opts.onBroadcastTxFail;
 
     this.txDispatchManager = new QueueManager(this.dispatchTx.bind(this));
-    this.txSignManager = new QueueManager(this.signAndBroadcastTx.bind(this));
+    this.txSignManager = new QueueManager(this.signTx.bind(this));
 
     const bech32Prefix = this.networkConfig.bech32Prefix;
 
@@ -213,10 +217,10 @@ export class DemexWallet {
     return await this.getDefaultSigningData(txRequest);
   }
 
-  private async checkReloadAccountState(signer: DemexSigner) {
+  private async checkReloadAccountState(signer: DemexSigner, checkMergeStatus: boolean) {
     const address = await getDefaultSignerAddress(signer);
-    const state = this.walletAccounts?.[address]
-    if (!state || state.sequenceInvalidated) return await this.reloadAccount(signer)
+    const walletAccount = this.walletAccounts?.[address]
+    if (!walletAccount || walletAccount.stateInvalidated) return await this.reloadAccount(signer, checkMergeStatus);
   }
 
   /**
@@ -224,11 +228,12 @@ export class DemexWallet {
   * Only tries to reload secondary account state if primary account state is not found 
   * and signer implements interface to get secondary account address
   */
-  public async reloadAccount(signer: DemexSigner) {
+  public async reloadAccount(signer: DemexSigner, checkMergeStatus: boolean) {
     const info = await this.reloadAccountInfo(signer);
-    const address = await getDefaultSignerAddress(signer);
     if (!info) return;
-    this.walletAccounts[address] = { ...info, sequenceInvalidated: false };
+    const address = info.address;
+    const isMerged = checkMergeStatus ? await this.getMergedAccountStatus(address) : undefined;
+    this.walletAccounts[address] = { ...info, isMerged, stateInvalidated: false };
   }
 
   private async reloadAccountInfo(signer: DemexSigner) {
@@ -245,27 +250,44 @@ export class DemexWallet {
     }
   }
 
+  private async getMergedAccountStatus(address: string): Promise<boolean> {
+    if (this.walletAccounts[address]?.isMerged) return true
+    return await this.reloadAccountMergeStatus(address)
+  }
+
+  private async reloadAccountMergeStatus(address: string): Promise<boolean> {
+    const queryClient = await this.getQueryClient();
+    const response = await queryClient.evmmerge.MappedAddress({ address });
+    return !!response?.mappedAddress;
+  }
+
 
   private determineTimeoutHeight(signer: DemexSigner) {
     return isDemexEIP712Signer(signer) ? undefined : this.getTimeoutHeight();
   }
 
-  private updateAccountSequence(address: string, sequence: number) {
+  private updateWalletAccount(address: string, update: Partial<WalletAccount>) {
     if (this.walletAccounts[address]) {
       this.walletAccounts[address] = {
         ...this.walletAccounts[address]!,
-        sequence,
+        ...update,
       };
     }
   }
 
-  private async signAndConstructBroadcastTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
+  private updateMergeAccountStatus(address: string, isMerged: boolean) {
+    this.updateWalletAccount(address, { isMerged });
+  }
+
+  private invalidateWalletAccountState(address: string) {
+    this.updateWalletAccount(address, { stateInvalidated: true });
+  }
+
+  private async signTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
     const signingData = await this.getSigningData(txRequest);
     const { messages, signer, signingClient, signOpts, handler } = signingData;
 
     const address = await getDefaultSignerAddress(signer);
-
-    await this.checkReloadAccountState(signer);
 
     const accountState: WalletAccount | undefined = this.walletAccounts[address];
 
@@ -278,18 +300,19 @@ export class DemexWallet {
     const _signOpts: SignTxOpts = {
       ...signOpts,
       tx: {
-        timeoutHeight: signOpts?.tx?.timeoutHeight ?? timeoutHeight,
         ...signOpts?.tx,
+        timeoutHeight: signOpts?.tx?.timeoutHeight ?? timeoutHeight,
       },
       signer: {
+        ...signOpts?.signer,
         accountNumber: signOpts?.signer?.accountNumber ?? accountNumber,
         sequence: signOpts?.signer?.sequence ?? sequence,
-        ...signOpts?.signer,
       }
     };
 
     const signedTx = await this.getSignedTx(address, messages, signingClient, _signOpts);
-    this.updateAccountSequence(address, sequence + 1);
+
+    this.updateWalletAccount(address, { sequence: _signOpts.signer?.sequence! + 1 });
 
     return {
       ...signingData,
@@ -305,6 +328,55 @@ export class DemexWallet {
     signOpts?: SignTxOpts,
     broadcastOpts?: BroadcastTxOpts
   ): Promise<BroadcastTxResult> {
+    try {
+      const checkAccountMergedStatus = !!this.triggerMerge || !!signOpts?.triggerMerge;
+      await this.checkReloadAccountState(this.signer, checkAccountMergedStatus);
+      await this.triggerInitialMergeAccountTx(messages, checkAccountMergedStatus);
+      return await this.queueTx(messages, signOpts, broadcastOpts);
+    } catch (e) {
+      throw new WalletError(`sign and broadcast tx fail: ${e}`);
+    }
+  }
+
+
+  private async triggerInitialMergeAccountTx(messages: EncodeObject[], checkAccountMergedStatus: boolean) {
+    if (!checkAccountMergedStatus) return
+    const walletAddress = this.bech32Address;
+    const hexPublicKey = this.publicKey.toString("hex");
+    const mergeOwnAccountMessage = this.containsMergeOwnAccountMessage(messages);
+    if (mergeOwnAccountMessage) return;
+    const isAccountMerged = this.walletAccounts[walletAddress]?.isMerged;
+    if (isAccountMerged) return
+    const message: EncodeObject = {
+      typeUrl: TxTypes.MsgMergeAccount,
+      value: MsgMergeAccount.fromPartial({
+        creator: walletAddress,
+        pubKey: hexPublicKey,
+      }),
+    }
+    await this.queueTx([message]);
+    this.updateMergeAccountStatus(walletAddress, true);
+  }
+
+  private containsMergeOwnAccountMessage(messages: readonly EncodeObject[]) {
+    const mergeAccountMessage = findMessageByTypeUrl(messages, TxTypes.MsgMergeAccount);
+    if (mergeAccountMessage) {
+      const { value } = mergeAccountMessage;
+      const msg = value as MsgMergeAccount
+      const mergeOwnAccountMessage =
+        (msg.creator === this.bech32Address
+          || msg.creator === this.evmBech32Address)
+        && this.publicKey.toString("hex") === msg.pubKey;
+      if (mergeOwnAccountMessage) return true;
+    }
+    return false;
+  }
+
+  private queueTx(
+    messages: EncodeObject[],
+    signOpts?: SignTxOpts,
+    broadcastOpts?: BroadcastTxOpts
+  ): Promise<BroadcastTxResult> {
     const promise = new Promise<BroadcastTxResult>((resolve, reject) => {
       this.txSignManager.enqueue({
         messages,
@@ -313,18 +385,19 @@ export class DemexWallet {
         handler: { resolve, reject },
       });
     });
-
     return promise;
   }
 
-  private async signAndBroadcastTx(txRequest: SignTxRequest) {
+
+  private async signTx(txRequest: SignTxRequest) {
     try {
-      const broadcastTx = await this.signAndConstructBroadcastTxRequest(txRequest);
+      const broadcastTx = await this.signTxRequest(txRequest);
       this.txDispatchManager.enqueue(broadcastTx);
     } catch (error) {
       txRequest.handler.reject(error);
     }
   }
+
 
   public async getSignedTx(
     signerAddress: string,
@@ -439,6 +512,7 @@ export class DemexWallet {
 
   private async dispatchTx(txRequest: BroadcastTxRequest) {
     const {
+      messages,
       broadcastOpts,
       signedTx,
       signerAddress,
@@ -448,16 +522,16 @@ export class DemexWallet {
     const broadcastFunc = this.getBroadcastFunc(broadcastMode);
     try {
       const result = await broadcastFunc(signedTx, broadcastOpts);
+      await callIgnoreError(() => this.onBroadcastTxSuccess?.(messages));
+      if (this.containsMergeOwnAccountMessage(messages)) this.updateMergeAccountStatus(this.bech32Address, true);
       resolve(result);
     } catch (error) {
       const reattempts = txRequest.reattempts ?? 0;
+      if (this.walletAccounts?.[signerAddress]) {
+        this.invalidateWalletAccountState(signerAddress);
+      }
       // retry sendTx if nonce error once.
       if (!this.disableRetryOnSequenceError && reattempts < 1 && isNonceMismatchError(error)) {
-        // invalidate account sequence for reload on next signTx call
-        if (this.walletAccounts?.[signerAddress]) {
-          this.walletAccounts[signerAddress].sequenceInvalidated = true;
-        }
-
         // requeue transaction for signTx
         this.txSignManager.enqueue({
           reattempts: reattempts + 1,
@@ -467,6 +541,7 @@ export class DemexWallet {
           handler: { resolve, reject },
         });
       } else {
+        await callIgnoreError(() => this.onBroadcastTxFail?.(messages));
         reject(error);
       }
     }
