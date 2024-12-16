@@ -328,14 +328,10 @@ export class DemexWallet {
     signOpts?: SignTxOpts,
     broadcastOpts?: BroadcastTxOpts
   ): Promise<BroadcastTxResult> {
-    try {
-      await this.initWalletAccountState(this.signer);
-      const checkAccMergedStatus = !!this.triggerMerge || !!signOpts?.triggerMerge;
-      if (checkAccMergedStatus) await this.triggerWalletAccMergeIfRequired(messages);
-      return await this.queueTx(messages, signOpts, broadcastOpts);
-    } catch (e) {
-      throw new WalletError(`sign and broadcast tx fail: ${e}`);
-    }
+    await this.initWalletAccountState(this.signer);
+    const checkAccMergedStatus = !!this.triggerMerge || !!signOpts?.triggerMerge;
+    if (checkAccMergedStatus) await this.triggerWalletAccMergeIfRequired(messages);
+    return await this.queueTx(messages, signOpts, broadcastOpts);
   }
 
 
