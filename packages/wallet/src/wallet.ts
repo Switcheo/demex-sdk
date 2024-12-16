@@ -219,7 +219,7 @@ export class DemexWallet {
 
   private async initWalletAccountState(signer: DemexSigner, checkMergeStatus: boolean) {
     const address = await getDefaultSignerAddress(signer);
-    const walletAccount = this.walletAccounts?.[address]
+    const walletAccount = this.walletAccounts?.[address];
     if (!walletAccount) return await this.reloadAccount(signer, checkMergeStatus);
   }
 
@@ -231,8 +231,12 @@ export class DemexWallet {
     const info = await this.reloadAccountInfo(signer);
     if (!info) return;
     const address = await getDefaultSignerAddress(signer);
-    const isMerged = checkMergeStatus ? await this.getMergedAccountStatus(address) : undefined;
-    this.walletAccounts[address] = { ...info, isMerged };
+    this.initWalletAccountInfo(info);
+    if(checkMergeStatus) await this.updateMergeAccountStatus(address);
+  }
+
+  private initWalletAccountInfo(info: Account) {
+    this.walletAccounts[info.address] = info;
   }
 
   private async reloadAccountInfo(signer: DemexSigner) {
@@ -241,19 +245,24 @@ export class DemexWallet {
     if (account) return account;
     const evmHexAddress = await getDefaultSignerEvmAddress(signer);
     if (evmHexAddress) {
-      const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), 'hex');
+      const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), "hex");
       const evmBech32Address = toBech32(this.networkConfig.bech32Prefix, evmAddressBytes);
       const evmAccount: Account | undefined = await this.getAccount(evmBech32Address);
       if (evmAccount) return evmAccount;
     }
   }
 
-  private async getMergedAccountStatus(address: string): Promise<boolean> {
-    if (this.walletAccounts[address]?.isMerged) return true
-    return await this.reloadAccountMergeStatus(address)
+  private async updateMergeAccountStatus(address: string) {
+    const isMerged = await this.getMergedAccountStatus(address);
+    this.updateWalletAccount(address, { isMerged });
   }
 
-  private async reloadAccountMergeStatus(address: string): Promise<boolean> {
+  private async getMergedAccountStatus(address: string): Promise<boolean> {
+    if (this.walletAccounts[address]?.isMerged) return true
+    return await this.queryAccountMergeStatus(address)
+  }
+
+  private async queryAccountMergeStatus(address: string): Promise<boolean> {
     const queryClient = await this.getQueryClient();
     const response = await queryClient.evmmerge.MappedAddress({ address });
     return !!response?.mappedAddress;
@@ -264,6 +273,7 @@ export class DemexWallet {
     return isDemexEIP712Signer(signer) ? undefined : this.getTimeoutHeight();
   }
 
+
   private updateWalletAccount(address: string, update: Partial<WalletAccount>) {
     if (this.walletAccounts[address]) {
       this.walletAccounts[address] = {
@@ -272,11 +282,6 @@ export class DemexWallet {
       };
     }
   }
-
-  private updateMergeAccountStatus(address: string, isMerged: boolean) {
-    this.updateWalletAccount(address, { isMerged });
-  }
-
 
   private async signTxRequest(txRequest: SignTxRequest): Promise<BroadcastTxRequest> {
     const signingData = await this.getSigningData(txRequest);
@@ -326,7 +331,7 @@ export class DemexWallet {
     try {
       const checkAccMergedStatus = this.checkAccountMergedStatus(signOpts?.triggerMerge);
       await this.initWalletAccountState(this.signer, checkAccMergedStatus);
-      await this.triggerWalletInitialMergeAccountTx(messages, checkAccMergedStatus);
+      if (checkAccMergedStatus) await this.triggerWalletInitialMergeAccountTx(messages);
       return await this.queueTx(messages, signOpts, broadcastOpts);
     } catch (e) {
       throw new WalletError(`sign and broadcast tx fail: ${e}`);
@@ -338,8 +343,7 @@ export class DemexWallet {
   }
 
 
-  private async triggerWalletInitialMergeAccountTx(messages: EncodeObject[], checkAccountMergedStatus: boolean) {
-    if (!checkAccountMergedStatus) return;
+  private async triggerWalletInitialMergeAccountTx(messages: EncodeObject[]) {
     const walletAddress = this.bech32Address;
     const hexPublicKey = this.publicKey.toString("hex");
     const mergeOwnAccountMessage = this.containsMergeOwnAccountMessage(messages);
@@ -356,14 +360,14 @@ export class DemexWallet {
     }
     await this.queueTx([message]);
     this.reloadAccount(this.signer, true);
-    this.updateMergeAccountStatus(walletAddress, true);
+    this.updateWalletAccount(walletAddress, { isMerged: true });
   }
 
   private containsMergeOwnAccountMessage(messages: readonly EncodeObject[]) {
     const mergeAccountMessage = findMessageByTypeUrl(messages, TxTypes.MsgMergeAccount);
     if (mergeAccountMessage) {
       const { value } = mergeAccountMessage;
-      const msg = value as MsgMergeAccount
+      const msg = value as MsgMergeAccount;
       const mergeOwnAccountMessage =
         (msg.creator === this.bech32Address
           || msg.creator === this.evmBech32Address)
@@ -517,7 +521,6 @@ export class DemexWallet {
       broadcastOpts,
       signedTx,
       signOpts,
-      signerAddress,
       handler: { resolve, reject },
     } = txRequest;
     const broadcastMode = broadcastOpts?.mode ?? this.txDefaultBroadCastMode;
@@ -525,7 +528,7 @@ export class DemexWallet {
     try {
       const result = await broadcastFunc(signedTx, broadcastOpts);
       await callIgnoreError(() => this.onBroadcastTxSuccess?.(messages));
-      if (this.containsMergeOwnAccountMessage(messages)) this.updateMergeAccountStatus(this.bech32Address, true);
+      if (this.containsMergeOwnAccountMessage(messages)) this.updateWalletAccount(this.bech32Address, { isMerged: true });
       resolve(result);
     } catch (error) {
       const reattempts = txRequest.reattempts ?? 0;
