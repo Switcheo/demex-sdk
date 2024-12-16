@@ -173,8 +173,9 @@ export class DemexWallet {
 
     this.hexAddress = "0x".concat(toHex(fromBech32(this.bech32Address).data));
     if (this.publicKey.length) {
-      const evmAddressBytes = keccak256(this.publicKey).slice(-20);
-      this.evmHexAddress = getEvmHexAddress(this.publicKey);
+      const evmHexAddress = getEvmHexAddress(this.publicKey);
+      this.evmHexAddress = evmHexAddress;
+      const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), "hex");
       this.evmBech32Address = toBech32(bech32Prefix, evmAddressBytes);
     } else {
       this.evmHexAddress = "";
