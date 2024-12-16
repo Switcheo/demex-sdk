@@ -18,7 +18,7 @@ import { Grantee } from "./grantee";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
 import { DemexEIP712SigningClient } from "./signingClient/eip712";
 import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest, WalletAccount } from "./types";
-import { findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerAddresses, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
+import { findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerAddresses, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
