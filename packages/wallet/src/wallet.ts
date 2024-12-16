@@ -18,7 +18,7 @@ import { Grantee } from "./grantee";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
 import { DemexEIP712SigningClient } from "./signingClient/eip712";
 import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest, WalletAccount } from "./types";
-import { findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
+import { findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerAddresses, getDefaultSignerEvmAddress, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -220,33 +220,35 @@ export class DemexWallet {
   private async initWalletAccountState(signer: DemexSigner) {
     const address = await getDefaultSignerAddress(signer);
     const walletAccount = this.walletAccounts?.[address];
-    if (!walletAccount) return await this.reloadAccount(signer);
+    if (!walletAccount) return await this.reloadAccountFromSigner(signer);
+  }
+
+  private async reloadAccountFromSigner(signer: DemexSigner) {
+    const { bech32Address, evmBech32Address } = await getDefaultSignerAddresses(signer, this.networkConfig.bech32Prefix);
+    await this.reloadAccount(bech32Address, evmBech32Address);
   }
 
   /**
   * Reloads primary account state as priority
   * Only tries to reload secondary account state if primary account state is not found 
+  * Returns the updated wallet account info
   */
-  public async reloadAccount(signer: DemexSigner) {
-    const info = await this.reloadAccountInfo(signer);
+  public async reloadAccount(bech32Address: string, evmBech32Address?: string) {
+    const info = await this.reloadAccountInfo(bech32Address, evmBech32Address);
     if (!info) return;
-    const address = await getDefaultSignerAddress(signer);
     this.initWalletAccountInfo(info);
-    await this.updateMergeAccountStatus(address);
+    await this.updateMergeAccountStatus(bech32Address);
+    return this.walletAccounts[bech32Address];
   }
 
   private initWalletAccountInfo(info: Account) {
     this.walletAccounts[info.address] = info;
   }
 
-  private async reloadAccountInfo(signer: DemexSigner) {
-    const address = await getDefaultSignerAddress(signer);
-    const account: Account | undefined = await this.getAccount(address);
+  private async reloadAccountInfo(bech32Address: string, evmBech32Address?: string) {
+    const account: Account | undefined = await this.getAccount(bech32Address);
     if (account) return account;
-    const evmHexAddress = await getDefaultSignerEvmAddress(signer);
-    if (evmHexAddress) {
-      const evmAddressBytes = Buffer.from(evmHexAddress.slice(2), "hex");
-      const evmBech32Address = toBech32(this.networkConfig.bech32Prefix, evmAddressBytes);
+    if (evmBech32Address) {
       const evmAccount: Account | undefined = await this.getAccount(evmBech32Address);
       if (evmAccount) return evmAccount;
     }
@@ -355,7 +357,7 @@ export class DemexWallet {
       }),
     }
     await this.queueTx([message]);
-    await this.reloadAccount(this.signer);
+    await this.reloadAccountFromSigner(this.signer);
     this.updateWalletAccount(walletAddress, { isMerged: true });
   }
 
@@ -529,7 +531,7 @@ export class DemexWallet {
       const reattempts = txRequest.reattempts ?? 0;
       // retry sendTx if nonce error once.
       if (!this.disableRetryOnSequenceError && reattempts < 1 && isNonceMismatchError(error)) {
-        await this.reloadAccount(signer);
+        await this.reloadAccountFromSigner(signer);
         // requeue transaction for signTx
         this.txSignManager.enqueue({
           reattempts: reattempts + 1,
