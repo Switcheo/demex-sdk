@@ -16,12 +16,7 @@ export interface PromiseHandler<T> {
 }
 
 export interface WalletAccount extends Account {
-  sequenceInvalidated: boolean
-}
-
-export interface SigningData extends SignTxRequest {
-  signer: DemexSigner
-  signingClient: SigningStargateClient,
+  isMerged?: boolean
 }
 
 export interface SignTxRequest {
@@ -32,11 +27,15 @@ export interface SignTxRequest {
   handler: PromiseHandler<BroadcastTxResult>;
 }
 
-export interface BroadcastTxRequest extends SignTxRequest {
+export interface SigningData extends SignTxRequest {
+  signer: DemexSigner
+  signingClient: SigningStargateClient,
+}
+
+export interface BroadcastTxRequest extends SigningData {
   signerAddress: string;
   signedTx: Tx.TxRaw;
 }
-
 
 export interface TxOverrides {
   fee?: StdFee;
@@ -49,6 +48,7 @@ export interface SignTxOpts {
   tx?: TxOverrides;
   signer?: Partial<SignerData>;
   bypassGrantee?: boolean;
+  triggerMerge?: boolean;
 }
 
 export interface BroadcastTxOpts {
