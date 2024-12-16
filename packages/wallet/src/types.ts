@@ -19,11 +19,6 @@ export interface WalletAccount extends Account {
   isMerged?: boolean
 }
 
-export interface SigningData extends SignTxRequest {
-  signer: DemexSigner
-  signingClient: SigningStargateClient,
-}
-
 export interface SignTxRequest {
   reattempts?: number;
   messages: readonly EncodeObject[];
@@ -32,7 +27,12 @@ export interface SignTxRequest {
   handler: PromiseHandler<BroadcastTxResult>;
 }
 
-export interface BroadcastTxRequest extends SignTxRequest {
+export interface SigningData extends SignTxRequest {
+  signer: DemexSigner
+  signingClient: SigningStargateClient,
+}
+
+export interface BroadcastTxRequest extends SigningData {
   signerAddress: string;
   signedTx: Tx.TxRaw;
 }
