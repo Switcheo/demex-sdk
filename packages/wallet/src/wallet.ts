@@ -236,14 +236,11 @@ export class DemexWallet {
   public async reloadAccount(bech32Address: string, evmBech32Address?: string) {
     const info = await this.reloadAccountInfo(bech32Address, evmBech32Address);
     if (!info) return;
-    this.initWalletAccountInfo(info);
+    this.walletAccounts[bech32Address] = info;
     await this.updateMergeAccountStatus(bech32Address);
     return this.walletAccounts[bech32Address];
   }
 
-  private initWalletAccountInfo(info: Account) {
-    this.walletAccounts[info.address] = info;
-  }
 
   private async reloadAccountInfo(bech32Address: string, evmBech32Address?: string) {
     const account: Account | undefined = await this.getAccount(bech32Address);
