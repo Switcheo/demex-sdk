@@ -291,7 +291,7 @@ export class DemexWallet {
 
     const accountState: WalletAccount | undefined = this.walletAccounts[address];
 
-    if (!accountState) throw new WalletError(`on chain account not found: ${address}`)
+    if (!accountState) throw new WalletError(`on chain account not found: ${address}`);
 
     const timeoutHeight = await this.determineTimeoutHeight(signer);
 
@@ -342,7 +342,7 @@ export class DemexWallet {
   private async triggerWalletAccMergeIfRequired(messages: EncodeObject[]) {
     const walletAddress = this.bech32Address;
     const hexPublicKey = this.publicKey.toString("hex");
-    const mergeOwnAccountMessage = this.containsMergeOwnAccountMessage(messages);
+    const mergeOwnAccountMessage = this.containsMergeWalletAccountMessage(messages);
     if (mergeOwnAccountMessage) return;
     const isAccountMerged = this.walletAccounts[walletAddress]?.isMerged;
     if (isAccountMerged) return
@@ -355,11 +355,10 @@ export class DemexWallet {
       }),
     }
     await this.queueTx([message]);
-    await this.reloadAccountFromSigner(this.signer);
-    this.updateWalletAccount(walletAddress, { isMerged: true });
+    await this.reloadWalletAccountPostSuccessMerge();
   }
 
-  private containsMergeOwnAccountMessage(messages: readonly EncodeObject[]) {
+  private containsMergeWalletAccountMessage(messages: readonly EncodeObject[]) {
     const mergeAccountMessage = findMessageByTypeUrl(messages, TxTypes.MsgMergeAccount);
     if (mergeAccountMessage) {
       const { value } = mergeAccountMessage;
@@ -371,6 +370,12 @@ export class DemexWallet {
       if (mergeOwnAccountMessage) return true;
     }
     return false;
+  }
+
+  private async reloadWalletAccountPostSuccessMerge() {
+    await this.reloadAccountFromSigner(this.signer);
+    const address = await getDefaultSignerAddress(this.signer);
+    this.updateWalletAccount(address, { isMerged: true });
   }
 
   private queueTx(
@@ -524,6 +529,7 @@ export class DemexWallet {
     try {
       const result = await broadcastFunc(signedTx, broadcastOpts);
       await callIgnoreError(() => this.onBroadcastTxSuccess?.(messages));
+      if (this.containsMergeWalletAccountMessage(messages)) await this.reloadWalletAccountPostSuccessMerge();
       resolve(result);
     } catch (error) {
       const reattempts = txRequest.reattempts ?? 0;
