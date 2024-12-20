@@ -1,7 +1,7 @@
 import { Carbon } from "@demex-sdk/codecs";
 import { GetFeeQuoteResponse } from "@demex-sdk/hydrogen";
 import Long from "long";
-import { AxelarBridge, BlockchainV2, BRIDGE_IDS, BridgeMap, IbcBridge, ibcTokenRegex, Network, NetworkConfig, PolyNetworkBridge, regexCdpDenom, regexLPDenom } from "../env";
+import { AxelarBridge, Blockchain, BRIDGE_IDS, BridgeMap, IbcBridge, ibcTokenRegex, Network, NetworkConfig, PolyNetworkBridge, regexCdpDenom, regexLPDenom } from "../env";
 import { DemexQueryClient } from "../query";
 import { OptionalNetworkMap, SimpleMap } from "../util";
 
@@ -39,7 +39,7 @@ export class TokenClient {
     return result.tokens.filter((token: Carbon.Coin.Token) => !tokenBlacklist.includes(token.denom));
   };
 
-  public getBlockchain(denom: string | undefined): BlockchainV2 | undefined {
+  public getBlockchain(denom: string | undefined): Blockchain | undefined {
     if (!denom) return undefined
     const token = this.tokens[denom]
     if (this.isNativeToken(denom) || this.isNativeStablecoin(denom) || TokenClient.isPoolToken(denom) || TokenClient.isCdpToken(denom) || this.isGroupedToken(denom)) {

@@ -1,12 +1,12 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { appendHexPrefix, BlockchainV2, Network, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
+import { appendHexPrefix, Blockchain, Network, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
 import { Transaction, Wallet } from "@zilliqa-js/account";
 import { CallParams, Contract, Value } from "@zilliqa-js/contract";
 import { BN, bytes, Long } from "@zilliqa-js/util";
 import { fromBech32Address, Zilliqa } from "@zilliqa-js/zilliqa";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
-import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, PolynetworkConfig, TokensWithExternalBalance, ZilNetworkConfig } from "../../env";
+import { PolynetworkConfig, TokensWithExternalBalance, ZilNetworkConfig } from "../../env";
 
 const uint128Max = "340282366920938463463374607431768211356";
 const zeroAddress = stripHexPrefix(ZeroAddress);
@@ -41,20 +41,6 @@ export interface ZILLockParams extends ZILTxParams {
   address: Uint8Array;
   amount: BigNumber;
   token: Carbon.Coin.Token;
-  signCompleteCallback?: () => void;
-}
-
-export interface ZilBridgeParams {
-  fromToken: Carbon.Coin.Token;
-  toToken: Carbon.Coin.Token;
-  amount: BigNumber;
-  fromAddress: string;
-  recoveryAddress: string;
-  toAddress: string;
-  feeAmount: BigNumber;
-  gasPrice: BigNumber;
-  gasLimit: BigNumber;
-  signer: WalletProvider | string;
   signCompleteCallback?: () => void;
 }
 
@@ -114,10 +100,8 @@ export const balanceBatchRequest = (address: string): BatchRequest => {
   };
 };
 
-type SupportedBlockchains = Blockchain.Zilliqa;
-
 export class ZILClient {
-  static blockchain: BlockchainV2 = "Zilliqa";
+  static blockchain: Blockchain = "Zilliqa";
 
   private walletProvider?: WalletProvider; // zilpay
 
@@ -136,7 +120,7 @@ export class ZILClient {
   public async getExternalBalances(address: string, whitelistDenoms?: string[], version = "V1"): Promise<TokensWithExternalBalance[]> {
     const tokenQueryResults = await this.tokenClient.getAllTokens();
     const tokens = tokenQueryResults.filter((token: Carbon.Coin.Token) => {
-      const isCorrectBlockchain = !!this.tokenClient.getBlockchain(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchain(token.denom)!] === ZILClient.blockchain);
+      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) === ZILClient.blockchain;
       return isCorrectBlockchain && token.tokenAddress.length == 40 && (!whitelistDenoms || whitelistDenoms.includes(token.denom))
     });
 
@@ -152,22 +136,24 @@ export class ZILClient {
     });
     const results = await response.json() as BatchResponse;
 
-    const TokensWithExternalBalance: TokensWithExternalBalance[] = [];
+    const TokensWithExternalBalanceArr: TokensWithExternalBalance[] = [];
     if (!Array.isArray(results)) {
-      return TokensWithExternalBalance;
+      return TokensWithExternalBalanceArr;
     }
 
     results.forEach((result: any, i: number) => {
       const token = tokens[i];
-      TokensWithExternalBalance.push({
-        ...token,
-        externalBalance: result.result?.balance ?? result.result.balances?.[address],
-        // result.result?.balance - zil balance query result
-        // result.result.balances?.[address] - zrc2 balance query result
-      });
+      if (token) {
+        TokensWithExternalBalanceArr.push({
+          ...token,
+          externalBalance: result.result?.balance ?? result.result.balances?.[address] ?? '0',
+          // result.result?.balance - zil balance query result
+          // result.result.balances?.[address] - zrc2 balance query result
+        });
+      }
     });
 
-    return TokensWithExternalBalance;
+    return TokensWithExternalBalanceArr;
   }
 
   public async formatWithdrawalAddress(bech32Address: string): Promise<string> {
@@ -275,135 +261,6 @@ export class ZILClient {
     }
 
     return new BigNumber(resp.result.allowances[owner][spender]);
-  }
-
-  public async bridgeTokens(params: ZilBridgeParams) {
-    const {
-      fromToken,
-      toToken,
-      amount,
-      fromAddress,
-      recoveryAddress,
-      toAddress,
-      signer,
-      gasPrice,
-      gasLimit,
-      feeAmount,
-      signCompleteCallback,
-    } = params;
-    const networkConfig = this.getNetworkConfig();
-
-    const recoveryAddrRegex = new RegExp(`^${networkConfig.bech32Prefix}[a-z0-9]{39}$`)
-    if (!recoveryAddress.match(recoveryAddrRegex)) {
-      throw new Error("Invalid recovery address");
-    }
-
-    const carbonNetwork = this.network;
-
-    const fromTokenId = fromToken.id;
-    const fromTokenAddr = appendHexPrefix(fromToken.tokenAddress);
-    const toTokenDenom = toToken.denom;
-    const targetProxyHash = appendHexPrefix(this.getTargetProxyHash(fromToken));
-
-    const recoveryAddressHex = ethers.hexlify(SWTHAddress.getAddressBytes(recoveryAddress, carbonNetwork));
-
-    const fromAssetHash = ethers.hexlify(ethers.toUtf8Bytes(fromTokenId));
-    const toAssetHash = ethers.hexlify(ethers.toUtf8Bytes(toTokenDenom));
-    const feeAddress = appendHexPrefix(networkConfig.feeAddress);
-
-    const contractAddress = this.getBridgeEntranceAddr();
-
-    let zilliqa;
-    if (typeof signer === "string") {
-      zilliqa = new Zilliqa(this.getProviderUrl());
-      zilliqa.wallet.addByPrivateKey(signer);
-    } else if (signer) {
-      zilliqa = new Zilliqa(this.getProviderUrl(), signer.provider);
-      this.walletProvider = signer;
-    } else {
-      zilliqa = new Zilliqa(this.getProviderUrl());
-    }
-
-    const deployedContract = (this.walletProvider || zilliqa).contracts.at(contractAddress);
-    const balanceAndNonceResp = await zilliqa.blockchain.getBalance(stripHexPrefix(fromAddress));
-    if (balanceAndNonceResp.error !== undefined) {
-      throw new Error(balanceAndNonceResp.error.message);
-    }
-
-    const nonce = balanceAndNonceResp.result.nonce + 1;
-    const version = bytes.pack(this.getConfig().chainId, Number(1));
-
-    let nativeAmt = new BN(0);
-    if (fromToken.tokenAddress == zeroAddress) {
-      nativeAmt = new BN(amount.toString());
-    }
-
-    const callParams = {
-      version: version,
-      nonce: nonce,
-      amount: nativeAmt,
-      gasPrice: new BN(gasPrice.toString()),
-      gasLimit: Long.fromString(gasLimit.toString()),
-    };
-
-    const transitionParams = [
-      {
-        vname: "tokenAddr",
-        type: "ByStr20",
-        value: fromTokenAddr,
-      },
-      {
-        vname: "targetProxyHash",
-        type: "ByStr",
-        value: targetProxyHash,
-      },
-      {
-        vname: "recoveryAddress",
-        type: "ByStr",
-        value: recoveryAddressHex,
-      },
-      {
-        vname: "fromAssetDenom",
-        type: "ByStr",
-        value: fromAssetHash,
-      },
-      {
-        vname: "withdrawFeeAddress",
-        type: "ByStr",
-        value: feeAddress,
-      },
-      {
-        vname: "toAddress",
-        type: "ByStr",
-        value: toAddress,
-      },
-      {
-        vname: "toAssetDenom",
-        type: "ByStr",
-        value: toAssetHash,
-      },
-      {
-        vname: "amount",
-        type: "Uint256",
-        value: amount.toString(10),
-      },
-      {
-        vname: "withdrawFeeAmount",
-        type: "Uint256",
-        value: feeAmount.toString(10),
-      },
-    ];
-
-    const data = {
-      _tag: "Lock",
-      params: [...transitionParams],
-    };
-
-    const callTx = await this.callContract(deployedContract, data._tag, data.params, callParams, true);
-
-    signCompleteCallback?.();
-
-    return callTx;
   }
 
   public async lockDeposit(params: ZILLockParams) {
@@ -536,14 +393,6 @@ export class ZILClient {
 
   public getProviderUrl() {
     return this.getConfig().rpcURL;
-  }
-
-  public getLockProxyAddress() {
-    return this.getConfig().lockProxyAddr;
-  }
-
-  public getBridgeEntranceAddr() {
-    return this.getConfig().bridgeEntranceAddr;
   }
 }
 

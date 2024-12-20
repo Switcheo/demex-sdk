@@ -1,5 +1,5 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { BlockchainV2, BN_ZERO, Network, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { Network, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { EVMChain, evmChains, EthNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
@@ -20,21 +20,6 @@ interface ETHTxParams {
   nonce?: number
 }
 
-export interface BridgeParams {
-  fromToken: Carbon.Coin.Token;
-  toToken: Carbon.Coin.Token;
-  amount: BigNumber;
-  fromAddress: string;
-  recoveryAddress: string;
-  toAddress: string;
-  feeAmount: BigNumber;
-  gasPriceGwei?: BigNumber;
-  gasLimit?: BigNumber;
-  signer: ethers.Signer;
-  signCompleteCallback?: () => void;
-  nonce?: number;
-}
-
 export interface LockParams extends ETHTxParams {
   address: Uint8Array;
   amount: BigNumber;
@@ -51,8 +36,6 @@ export interface ApproveERC20Params extends ETHTxParams {
 export interface EthersTransactionResponse extends ethers.Transaction {
   wait: () => Promise<ethers.Transaction>;
 }
-
-export const FEE_MULTIPLIER = BigInt(2);
 
 export class ETHClient {
   private constructor(
@@ -74,7 +57,7 @@ export class ETHClient {
     const tokenQueryResults = await this.tokenClient.getAllTokens();
     const lockProxyAddress = this.getLockProxyAddress().toLowerCase();
     const tokens = tokenQueryResults.filter((token: Carbon.Coin.Token) => {
-      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) == this.blockchain;
+      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) === this.blockchain;
       return isCorrectBlockchain &&
         token.tokenAddress.length == 40 &&
         token.bridgeAddress.toLowerCase() == stripHexPrefix(lockProxyAddress) &&
@@ -91,17 +74,17 @@ export class ETHClient {
 
     const checkSumAddr = ethers.getAddress(address);
     const balances = await contract.getBalances(checkSumAddr, assetIds);
-    const TokensWithExternalBalance: TokensWithExternalBalance[] = [];
+    const TokensWithExternalBalanceArr: TokensWithExternalBalance[] = [];
     for (let i = 0; i < assetIds.length; i++) {
       if (!tokens[i]) continue;
 
-      TokensWithExternalBalance.push({
+      TokensWithExternalBalanceArr.push({
         ...tokens[i],
         externalBalance: balances[i].toString(),
       });
     }
 
-    return TokensWithExternalBalance;
+    return TokensWithExternalBalanceArr;
   }
 
   public async approveERC20(params: ApproveERC20Params): Promise<EthersTransactionResponse> {
@@ -131,78 +114,6 @@ export class ETHClient {
     const contract = new ethers.Contract(contractAddress, ABIs.erc20, rpcProvider);
     const allowance = await contract.allowance(owner, spender);
     return new BigNumber(allowance.toString());
-  }
-
-  public async bridgeTokens(params: BridgeParams): Promise<EthersTransactionResponse> {
-    const {
-      fromToken,
-      toToken,
-      amount,
-      toAddress,
-      fromAddress,
-      recoveryAddress,
-      signer,
-      gasPriceGwei,
-      gasLimit,
-      feeAmount,
-      signCompleteCallback,
-    } = params;
-
-    const networkConfig = this.getNetworkConfig();
-    const rpcProvider = this.getProvider();
-
-    const recoveryAddrRegex = new RegExp(`^${networkConfig.bech32Prefix}[a-z0-9]{39}$`)
-    if (!recoveryAddress.match(recoveryAddrRegex)) {
-      throw new Error("Invalid recovery address");
-    }
-
-    const carbonNetwork = this.network;
-
-    const fromTokenId = fromToken.id;
-    const fromTokenAddress = appendHexPrefix(fromToken.tokenAddress);
-    const toTokenDenom = toToken.denom;
-
-    const recoveryAddressHex = ethers.hexlify(SWTHAddress.getAddressBytes(recoveryAddress, carbonNetwork));
-
-    const fromAssetHash = ethers.hexlify(ethers.toUtf8Bytes(fromTokenId));
-    const toAssetHash = ethers.hexlify(ethers.toUtf8Bytes(toTokenDenom));
-    const nonce = await this.getTxNonce(fromAddress, params.nonce, rpcProvider);
-
-    const contract = new ethers.Contract(this.getBridgeEntranceAddr(), ABIs.bridgeEntrance, signer);
-    const feeAddress = appendHexPrefix(networkConfig.feeAddress);
-
-    const tokenCreator = fromToken.creator;
-
-    const targetAddressBytes = SWTHAddress.getAddressBytes(tokenCreator, carbonNetwork);
-    const targetProxyHash = ethers.hexlify(targetAddressBytes);
-
-    const ethAmount = fromToken.tokenAddress === stripHexPrefix(ZeroAddress) ? amount : BN_ZERO;
-    const bridgeResultTx = await contract.lock(
-      fromTokenAddress, // the asset to deposit (from) (0x00 if eth)
-      [
-        targetProxyHash, // _targetProxyHash
-        recoveryAddressHex, // _recoveryAddress
-        fromAssetHash, // _fromAssetHash
-        feeAddress, // _feeAddress
-        toAddress, // _toAddress the L1 address to bridge to
-        toAssetHash, // _toAssetHash
-      ],
-      [
-        amount.toString(10), // amount
-        feeAmount.toString(10), // fee amount
-        amount.toString(10),
-      ], // callAmount
-      {
-        ...gasPriceGwei && ({ gasPrice: gasPriceGwei.shiftedBy(9).toString(10) }),
-        ...gasLimit && ({ gasLimit: gasLimit.toString(10) }),
-        nonce,
-        value: ethAmount.toString(10),
-      }
-    );
-
-    signCompleteCallback?.();
-
-    return bridgeResultTx;
   }
 
   public async lockDeposit(params: LockParams): Promise<EthersTransactionResponse> {
@@ -254,110 +165,6 @@ export class ETHClient {
     signCompleteCallback?.();
 
     return lockResultTx;
-  }
-
-  public async getDepositContractAddress(swthBech32Address: string, ownerEthAddress: string): Promise<string> {
-    const network = this.network;
-    const addressBytes = SWTHAddress.getAddressBytes(swthBech32Address, network);
-    const swthAddress = ethers.hexlify(addressBytes);
-
-    const provider = this.getProvider();
-    const contractAddress = this.getLockProxyAddress();
-    // logger("getDepositContractAddress lock proxy", contractAddress)
-    const contract = new ethers.Contract(contractAddress, ABIs.lockProxy, provider);
-    const walletAddress = await contract.getWalletAddress(ownerEthAddress, swthAddress, this.getWalletBytecodeHash());
-
-    // logger("getDepositContractAddress", swthBech32Address, ownerEthAddress, walletAddress)
-
-    return walletAddress;
-  }
-
-  public async sendDeposit(
-    tokenWithExternalBalances: TokensWithExternalBalance,
-    swthAddress: string,
-    ethAddress: string,
-    getSignatureCallback: (msg: string) => Promise<{ address: string; signature: string }>,
-    overrideFee?: bigint
-  ) {
-    const depositAddress = await this.getDepositContractAddress(swthAddress, ethAddress);
-
-    // TODO: Remove overrideFee when hydrogen feeQuote is deployed on production
-    let feeAmount: bigint = await this.getDepositFeeAmount(tokenWithExternalBalances, depositAddress);
-    if (overrideFee) {
-      feeAmount = overrideFee;
-    }
-
-    const amount = BigInt(tokenWithExternalBalances.externalBalance);
-    if (ethers.FixedNumber.fromValue(amount).lt(ethers.FixedNumber.fromValue(feeAmount))) {
-      return "insufficient balance";
-    }
-
-    const networkConfig = this.getNetworkConfig();
-
-    const assetId = appendHexPrefix(tokenWithExternalBalances.tokenAddress);
-    const targetProxyHash = appendHexPrefix(this.getTargetProxyHash(tokenWithExternalBalances));
-    const feeAddress = appendHexPrefix(networkConfig.feeAddress);
-    const toAssetHash = ethers.hexlify(ethers.toUtf8Bytes(tokenWithExternalBalances.id));
-    const nonce = Math.floor(Math.random() * 1000000000); // random nonce to prevent replay attacks
-    const message = ethers.solidityPackedKeccak256(
-      ["string", "address", "bytes", "bytes", "bytes", "uint256", "uint256", "uint256"],
-      ["sendTokens", assetId, targetProxyHash, toAssetHash, feeAddress, amount, feeAmount, nonce]
-    );
-    // logger("sendDeposit message", message)
-
-    const { address, signature } = await getSignatureCallback(message);
-    const rsv = ethers.Signature.from(appendHexPrefix(signature));
-
-    // logger("sign result", address, signature)
-
-    const signatureResult = {
-      owner: address,
-      v: rsv.v.toString(),
-      r: rsv.r,
-      s: rsv.s,
-    };
-
-    const network = this.network;
-    const addressBytes = SWTHAddress.getAddressBytes(swthAddress, network);
-    const swthAddressHex = ethers.hexlify(addressBytes);
-    const body = {
-      owner_address: signatureResult.owner,
-      swth_address: swthAddressHex,
-      token_address: assetId,
-      token_creator: targetProxyHash,
-      token_denom: tokenWithExternalBalances.denom,
-      token_id: tokenWithExternalBalances.id,
-      amount: amount.toString(),
-      fee_amount: feeAmount.toString(),
-      fee_address: feeAddress,
-      nonce: nonce.toString(),
-      v: signatureResult.v,
-      r: signatureResult.r,
-      s: signatureResult.s,
-      blockchain: this.blockchain,
-    };
-
-    const result = await fetch(this.getPayerUrl() + "/deposit", { method: "POST", body: JSON.stringify(body) });
-    // logger("fetch result", result)
-    return result;
-  }
-
-  public async getDepositFeeAmount(token: Carbon.Coin.Token, depositAddress: string) {
-    const feeInfo = await this.tokenClient.getFeeInfo(token.denom);
-    if (!feeInfo.deposit_fee) {
-      throw new Error("unsupported token");
-    }
-    if (this.tokenClient.getBlockchain(token.denom) !== this.blockchain) {
-      throw new Error("unsupported token");
-    }
-
-    let feeAmount = BigInt(feeInfo.deposit_fee);
-    const walletContractDeployed = await this.isContract(depositAddress);
-    if (!walletContractDeployed) {
-      feeAmount = ethers.FixedNumber.fromValue(feeAmount).add(ethers.FixedNumber.fromValue(feeInfo.create_wallet_fee)).value;
-    }
-
-    return feeAmount;
   }
 
   public async isContract(address: string) {
@@ -429,10 +236,6 @@ export class ETHClient {
     return networkConfig[this.blockchain as EVMChain];
   }
 
-  public getPayerUrl() {
-    return this.getConfig().payerURL;
-  }
-
   public getProviderUrl() {
     return this.getConfig().rpcURL;
   }
@@ -445,13 +248,6 @@ export class ETHClient {
     return this.getConfig().balanceReader;
   }
 
-  public getWalletBytecodeHash() {
-    return this.getConfig().byteCodeHash;
-  }
-
-  public getBridgeEntranceAddr() {
-    return this.getConfig().bridgeEntranceAddr as string;
-  }
   /**
    * verify that address is a valid checksum.
    * Returns checksum address if valid, returns undefined if invalid

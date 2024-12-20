@@ -1,17 +1,15 @@
 import * as Neon from "@cityofzion/neon-core";
-import { api } from "@cityofzion/neon-js";
 import { Carbon } from "@demex-sdk/codecs";
-import { BlockchainV2, NEOAddress, Network, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient, ZeroAddress } from "@demex-sdk/core";
+import { Blockchain, NEOAddress, Network, SimpleMap, stripHexPrefix, SWTHAddress, TokenClient } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { chunk } from "lodash";
-import { Blockchain, BLOCKCHAIN_V2_TO_V1_MAPPING, NeoNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
+import { NeoNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
 import { O3Types, O3Wallet } from "../../providers/o3Wallet";
 
 export interface NEOClientOpts {
   polynetworkConfig: PolynetworkConfig;
   tokenClient: TokenClient;
-  blockchain?: Blockchain;
   network: Network;
 }
 
@@ -29,7 +27,7 @@ interface ScriptResult {
 }
 
 export class NEOClient {
-  static blockchain: BlockchainV2 = "Neo";
+  static blockchain: Blockchain = "Neo";
 
   private constructor(
     public readonly polynetworkConfig: PolynetworkConfig,
@@ -53,12 +51,11 @@ export class NEOClient {
     address: string,
     url: string,
     whitelistDenoms?: string[],
-    version = "V1",
   ): Promise<TokensWithExternalBalance[]> {
     const tokenQueryResults = await this.tokenClient.getAllTokens();
     const account = new Neon.wallet.Account(address);
     const tokens = tokenQueryResults.filter((token: Carbon.Coin.Token) => {
-      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) && (BLOCKCHAIN_V2_TO_V1_MAPPING[this.tokenClient.getBlockchain(token.denom)!] == NEOClient.blockchain);
+      const isCorrectBlockchain = this.tokenClient.getBlockchain(token.denom) === NEOClient.blockchain;
       return (isCorrectBlockchain || token.denom === "swth") && token.tokenAddress.length == 40 && token.bridgeAddress.length == 40;
     });
 
@@ -92,64 +89,15 @@ export class NEOClient {
       return results.reduce((acc: object, res: object) => ({ ...acc, ...res }), {});
     });
 
-    const TokensWithExternalBalance: TokensWithExternalBalance[] = [];
+    const TokensWithExternalBalanceArr: TokensWithExternalBalance[] = [];
     for (const token of tokens) {
-      TokensWithExternalBalance.push({
+      TokensWithExternalBalanceArr.push({
         ...token,
-        externalBalance: result[token.denom.toUpperCase()],
+        externalBalance: result[token.denom.toUpperCase()] ?? '0',
       });
     }
 
-    return TokensWithExternalBalance;
-  }
-
-  public async lockDeposit(token: TokensWithExternalBalance, feeAmountInput: string, swthAddress: string, neoPrivateKey: string) {
-    const account = new Neon.wallet.Account(neoPrivateKey);
-
-    const networkConfig = this.getNetworkConfig();
-    const scriptHash = Neon.u.reverseHex(token.bridgeAddress);
-
-    const fromAssetHash = token.tokenAddress;
-    const fromAddress = Neon.u.reverseHex(account.scriptHash);
-    const targetProxyHash = this.getTargetProxyHash(token);
-    const toAssetHash = Neon.u.str2hexstring(token.id);
-    const addressBytes = SWTHAddress.getAddressBytes(swthAddress, this.network);
-    const toAddress = stripHexPrefix(ethers.hexlify(addressBytes));
-    const zeroAddressHex = stripHexPrefix(ethers.hexlify(ZeroAddress));
-
-    const amount = BigInt(token.externalBalance);
-    const feeAmount = BigInt(feeAmountInput ?? "100000000");
-    const feeAmountFixedNumber = ethers.FixedNumber.fromValue(feeAmount);
-    const feeAddress = feeAmountFixedNumber.isZero() ? zeroAddressHex : networkConfig.feeAddress;
-    const nonce = Math.floor(Math.random() * 1000000);
-
-    if (ethers.FixedNumber.fromValue(amount).lt(feeAmountFixedNumber)) {
-      return false;
-    }
-
-    const sb = new Neon.sc.ScriptBuilder();
-    sb.emitAppCall(scriptHash, "lock", [
-      fromAssetHash,
-      fromAddress,
-      targetProxyHash,
-      toAssetHash,
-      toAddress,
-      parseFloat(amount.toString()),
-      parseFloat(feeAmount.toString()),
-      feeAddress,
-      nonce,
-    ]);
-
-    const rpcUrl = await this.getProviderUrl();
-    const apiProvider = new api.neoCli.instance(rpcUrl)
-    return api.doInvoke({
-      api: apiProvider,
-      url: rpcUrl,
-      account,
-      script: sb.str,
-      gas: 0,
-      fees: 0,
-    });
+    return TokensWithExternalBalanceArr;
   }
 
   public async lockO3Deposit(params: LockO3DepositParams) {
@@ -213,39 +161,6 @@ export class NEOClient {
     const decimals = parseInt(response.result.stack?.[2].value ?? "0", 10);
 
     return { address: scriptHash, decimals, name, symbol };
-  }
-
-  public async wrapNeoToNneo(neoAmount: BigNumber, neoPrivateKey: string) {
-    const account = new Neon.wallet.Account(neoPrivateKey);
-    const rpcUrl = await this.getProviderUrl();
-
-    const wrapperContractScriptHash = this.getConfig().wrapperScriptHash;
-    const wrapperContractAddress = Neon.wallet.getAddressFromScriptHash(wrapperContractScriptHash);
-
-    // Build config
-    const intent = api.makeIntent({ NEO: neoAmount.toNumber() }, wrapperContractAddress);
-
-    const props = {
-      scriptHash: wrapperContractScriptHash,
-      operation: "mintTokens",
-      args: [],
-    };
-
-    const script = Neon.sc.createScript(props);
-    const apiProvider = new api.neoCli.instance(rpcUrl)
-
-    const config = {
-      api: apiProvider, // Network
-      url: rpcUrl,
-      account, // Sender's Account
-      intents: intent,
-      script: script,
-    };
-
-    // Neon API
-    const response = await api.doInvoke(config);
-
-    return response;
   }
 
   public async formatWithdrawalAddress(address: string): Promise<string> {

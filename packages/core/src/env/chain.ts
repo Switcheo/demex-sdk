@@ -25,7 +25,7 @@ export interface BridgeMap {
   axelar: AxelarBridge[]
 };
 
-export type BlockchainV2 = ReturnType<TokenClient['getAllBlockchainNames']>[number] | "Native" | "Carbon" | "Tradehub" | "Ibc" | "Polynetwork";
+export type Blockchain = ReturnType<TokenClient['getAllBlockchainNames']>[number] | "Native" | "Carbon" | "Tradehub" | "Ibc" | "Polynetwork";
 
 export const BRIDGE_IDS = {
   polynetwork: 1,

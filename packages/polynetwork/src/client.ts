@@ -1,5 +1,5 @@
 import { Network, TokenClient } from "@demex-sdk/core";
-import { Blockchain, PolynetworkConfig, PolynetworkConfigs } from "./env";
+import { PolynetworkConfig, PolynetworkConfigs } from "./env";
 import { ETHClient, N3Client, NEOClient, ZILClient } from "./helpers";
 
 export class PolynetworkClient {

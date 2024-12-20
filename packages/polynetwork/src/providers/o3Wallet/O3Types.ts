@@ -68,11 +68,6 @@ export interface Signers {
   scopes: number;
 };
 
-export interface InvokeOutput {
-  txid: string;
-  nodeUrl: string;
-};;
-
 // Get Balance Query Types
 export interface BalanceRequest {
   address: string; // Address to check balance(s)
