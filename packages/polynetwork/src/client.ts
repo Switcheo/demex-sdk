@@ -99,4 +99,13 @@ export class PolynetworkClient {
     const polynetworkConfig = PolynetworkConfigs[network];
     return new PolynetworkClient(tokenClient, polynetworkConfig, network);
   };
+
+  public async initialize(): Promise<void> {
+    try {
+      await this.tokenClient.initialize();
+    } catch (err) {
+      const errorTyped = err as Error;
+      console.error("failed to initialize tokenClient:", errorTyped.message);
+    }
+  };
 };

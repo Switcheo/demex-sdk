@@ -1,7 +1,6 @@
-import { Carbon } from "@demex-sdk/codecs";
-import { GetFeeQuoteResponse } from "@demex-sdk/hydrogen";
+import Codecs from "@demex-sdk/codecs";
 import Long from "long";
-import { AxelarBridge, Blockchain, BRIDGE_IDS, BridgeMap, IbcBridge, ibcTokenRegex, Network, NetworkConfig, PolyNetworkBridge, regexCdpDenom, regexLPDenom } from "../env";
+import { AxelarBridge, Blockchain, BRIDGE_IDS, BridgeMap, ibcTokenRegex, Network, NetworkConfig, PolyNetworkBridge, regexCdpDenom, regexLPDenom } from "../env";
 import { DemexQueryClient } from "../query";
 import { OptionalNetworkMap, SimpleMap } from "../util";
 
@@ -15,8 +14,8 @@ export const TokenBlacklist: OptionalNetworkMap<string[]> = {
 // This class is just created as a stand-in class for polynetwork bridge helpers (i.e. packages/polynetwork/src/clients/...), this is not final
 // Pls make any changes if required
 export class TokenClient {
-  public readonly tokens: SimpleMap<Carbon.Coin.Token> = {};
-  public readonly bridges: BridgeMap = { polynetwork: [], ibc: [], axelar: [] };
+  private tokens: SimpleMap<Codecs.Carbon.Coin.Token> = {};
+  private bridges: BridgeMap = { polynetwork: [], axelar: [] };
 
   private constructor(public readonly query: DemexQueryClient, public readonly networkConfig: NetworkConfig) { }
 
@@ -24,24 +23,106 @@ export class TokenClient {
     return new TokenClient(query, networkConfig);
   }
 
-  public async getAllTokens(): Promise<Carbon.Coin.Token[]> {
-    const result = await this.query.coin.TokenAll({
+  public async initialize(): Promise<void> {
+    try {
+      await Promise.all([
+        this.getAllTokens(),
+        this.getBridges(),
+      ]);
+    } catch (err) {
+      const errorTyped = err as Error;
+      console.error("failed to query token and bridge info:", errorTyped.message);
+    }
+  }
+
+  public async getAllTokens(): Promise<Codecs.Carbon.Coin.Token[]> {
+    if (!this.tokens) {
+      const result = await this.query.coin.TokenAll({
+        pagination: {
+          limit: new Long(10000),
+          offset: Long.UZERO,
+          key: new Uint8Array(),
+          countTotal: false,
+          reverse: false,
+        },
+      });
+      const tokenBlacklist = TokenBlacklist[this.networkConfig.network] ?? [];
+      result.tokens.forEach((token: Codecs.Carbon.Coin.Token) => {
+        if (tokenBlacklist.includes(token.denom)) return;
+        this.tokens[token.denom] = token;
+      });
+    }
+    return Object.values(this.tokens) ?? [];
+  };
+
+  public async getBridges(): Promise<BridgeMap> {
+    const allBridges = await this.query.coin.BridgeAll({
       pagination: {
+        key: new Uint8Array(),
         limit: new Long(10000),
         offset: Long.UZERO,
-        key: new Uint8Array(),
-        countTotal: false,
+        countTotal: true,
         reverse: false,
       },
     });
+    const axelarBridges = await this.mapBridgesFromConnections()
 
-    const tokenBlacklist = TokenBlacklist[this.networkConfig.network] ?? [];
-    return result.tokens.filter((token: Carbon.Coin.Token) => !tokenBlacklist.includes(token.denom));
+    const polynetworkBridges = allBridges.bridges.reduce((prev: PolyNetworkBridge[], bridge: Codecs.Carbon.Coin.Bridge) => {
+      if (bridge.bridgeId.toNumber() !== BRIDGE_IDS.polynetwork) return prev;
+      prev.push({ ...bridge } as PolyNetworkBridge);
+      return prev;
+    }, [])
+
+    Object.assign(this.bridges, {
+      polynetwork: polynetworkBridges,
+      axelar: axelarBridges,
+    })
+    return this.bridges
+  }
+
+  async mapBridgesFromConnections(): Promise<AxelarBridge[]> {
+    const newBridges: AxelarBridge[] = []
+    try {
+      const results: Codecs.Carbon.Bridge.QueryAllConnectionsResponse = await this.query.bridge.ConnectionAll({
+        bridgeId: new Long(0),
+        pagination: Codecs.Query.PageRequest.fromPartial({
+          limit: new Long(10000),
+        }),
+      });
+      const connections = results.connections
+      connections.forEach((connection: Codecs.Carbon.Bridge.Connection) => {
+        newBridges.push({
+          name: `${connection.chainDisplayName} via Axelar`,
+          bridgeId: new Long(BRIDGE_IDS.axelar),
+          chainId: new Long(BRIDGE_IDS.axelar),
+          bridgeAddress: connection.connectionId,
+          chain_id_name: connection.chainId,
+          chainName: connection.chainDisplayName,
+          bridgeName: 'Axelar',
+          bridgeAddresses: [],
+          enabled: connection.isEnabled,
+        });
+      });
+    } catch (err) {
+      console.error(err)
+    } finally {
+      const chainMap: SimpleMap<string> = {};
+
+      newBridges.forEach((bridge) => {
+        const chainId = bridge.chain_id_name;
+        if (chainMap[chainId]) {
+          bridge.chainName = chainMap[chainId];
+        } else {
+          chainMap[chainId] = bridge.chainName;
+        }
+      });
+    }
+    return newBridges;
   };
 
   public getBlockchain(denom: string | undefined): Blockchain | undefined {
     if (!denom) return undefined
-    const token = this.tokens[denom]
+    const token = this.tokens?.[denom];
     if (this.isNativeToken(denom) || this.isNativeStablecoin(denom) || TokenClient.isPoolToken(denom) || TokenClient.isCdpToken(denom) || this.isGroupedToken(denom)) {
       // native denoms "swth" and "usc" should be native.
       // pool and cdp tokens are on the Native blockchain, hence 0
@@ -59,54 +140,34 @@ export class TokenClient {
     return bridge?.chainName;
   };
 
-  public getBridgesFromBridgeId(bridgeId: number): Carbon.Coin.Bridge[] | IbcBridge[] | AxelarBridge[] {
+  public getBridgesFromBridgeId(bridgeId: number): Codecs.Carbon.Coin.Bridge[] | AxelarBridge[] | undefined {
     switch (bridgeId) {
       case BRIDGE_IDS.polynetwork:
         return this.bridges.polynetwork
-      case BRIDGE_IDS.ibc:
-        return this.bridges.ibc
       case BRIDGE_IDS.axelar:
         return this.bridges.axelar
       default:
-        return this.bridges.polynetwork
+        return undefined
     }
   };
 
-  public getBridgeFromToken(token: Carbon.Coin.Token | null): Carbon.Coin.Bridge | IbcBridge | undefined {
+  public getBridgeFromToken(token: Codecs.Carbon.Coin.Token | null): Codecs.Carbon.Coin.Bridge | undefined {
     if (!token || !token.bridgeId) return undefined
     const bridgeList = this.getBridgesFromBridgeId(token.bridgeId.toNumber())
-    return bridgeList.find(bridge => token.chainId.equals(bridge.chainId))
-  };
-
-  public async getFeeInfo(denom: string): Promise<GetFeeQuoteResponse> {
-    const url = `${this.networkConfig.hydrogenUrl}/fee_quote?token_denom=${denom}`;
-    const requestOptions = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({}),
-    }
-    const result = await fetch(url, requestOptions).then((res) => res.json());
-
-    return result as GetFeeQuoteResponse;
+    return bridgeList?.find(bridge => token.chainId.equals(bridge.chainId))
   };
 
   public getPolynetworkBlockchainNames(): string[] {
     return this.bridges.polynetwork.map((bridge: PolyNetworkBridge) => bridge.chainName);
   };
 
-  public getIbcBlockchainNames(): string[] {
-    return this.bridges.ibc.map((bridge: IbcBridge) => bridge.chainName)
-  }
-
   public getAxelarBlockchainNames(): string[] {
-    return this.bridges.axelar.map((bridge: AxelarBridge) => bridge.chainName)
-  }
+    return this.bridges.axelar.map((bridge: AxelarBridge) => bridge.chainName);
+  };
 
   public getAllBlockchainNames(): string[] {
-    return this.getIbcBlockchainNames().concat(this.getPolynetworkBlockchainNames()).concat(this.getAxelarBlockchainNames())
-  }
+    return this.getPolynetworkBlockchainNames().concat(this.getAxelarBlockchainNames());
+  };
 
   public isNativeToken(denom: string): boolean {
     return denom === "swth";
