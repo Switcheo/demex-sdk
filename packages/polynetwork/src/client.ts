@@ -1,4 +1,4 @@
-import { Network, TokenClient } from "@demex-sdk/core";
+import { DemexQueryClient, Network, NetworkConfig as CoreNetworkConfig, TokenClient, defaultNetworkConfig } from "@demex-sdk/core";
 import { PolynetworkConfig, PolynetworkConfigs } from "./env";
 import { ETHClient, N3Client, NEOClient, ZILClient } from "./helpers";
 
@@ -95,8 +95,10 @@ export class PolynetworkClient {
     });
   };
 
-  public static instance(tokenClient: TokenClient, network: Network) {
+  public static instance(queryClient: DemexQueryClient, network: Network) {
+    const coreNetworkConfig = defaultNetworkConfig[network];
     const polynetworkConfig = PolynetworkConfigs[network];
+    const tokenClient = TokenClient.instance(queryClient, coreNetworkConfig);
     return new PolynetworkClient(tokenClient, polynetworkConfig, network);
   };
 

@@ -1,5 +1,6 @@
 import Codecs from "@demex-sdk/codecs";
 import Long from "long";
+import { PGN_10K } from "../constant";
 import { AxelarBridge, Blockchain, BRIDGE_IDS, BridgeMap, ibcTokenRegex, Network, NetworkConfig, PolyNetworkBridge, regexCdpDenom, regexLPDenom } from "../env";
 import { DemexQueryClient } from "../query";
 import { OptionalNetworkMap, SimpleMap } from "../util";
@@ -11,11 +12,9 @@ export const TokenBlacklist: OptionalNetworkMap<string[]> = {
   ],
 };
 
-// This class is just created as a stand-in class for polynetwork bridge helpers (i.e. packages/polynetwork/src/clients/...), this is not final
-// Pls make any changes if required
 export class TokenClient {
-  private tokens: SimpleMap<Codecs.Carbon.Coin.Token> = {};
-  private bridges: BridgeMap = { polynetwork: [], axelar: [] };
+  private tokens: SimpleMap<Codecs.Carbon.Coin.Token> | null = null;
+  private bridges: BridgeMap | null = null;
 
   private constructor(public readonly query: DemexQueryClient, public readonly networkConfig: NetworkConfig) { }
 
@@ -37,47 +36,34 @@ export class TokenClient {
 
   public async getAllTokens(): Promise<Codecs.Carbon.Coin.Token[]> {
     if (!this.tokens) {
-      const result = await this.query.coin.TokenAll({
-        pagination: {
-          limit: new Long(10000),
-          offset: Long.UZERO,
-          key: new Uint8Array(),
-          countTotal: false,
-          reverse: false,
-        },
-      });
+      this.tokens = {};
+      const result = await this.query.coin.TokenAll({ pagination: PGN_10K });
       const tokenBlacklist = TokenBlacklist[this.networkConfig.network] ?? [];
       result.tokens.forEach((token: Codecs.Carbon.Coin.Token) => {
         if (tokenBlacklist.includes(token.denom)) return;
-        this.tokens[token.denom] = token;
+        this.tokens![token.denom] = token;
       });
     }
     return Object.values(this.tokens) ?? [];
   };
 
   public async getBridges(): Promise<BridgeMap> {
-    const allBridges = await this.query.coin.BridgeAll({
-      pagination: {
-        key: new Uint8Array(),
-        limit: new Long(10000),
-        offset: Long.UZERO,
-        countTotal: true,
-        reverse: false,
-      },
-    });
-    const axelarBridges = await this.mapBridgesFromConnections()
+    if (!this.bridges) {
+      const allBridges = await this.query.coin.BridgeAll({ pagination: PGN_10K });
+      const axelarBridges = await this.mapBridgesFromConnections()
 
-    const polynetworkBridges = allBridges.bridges.reduce((prev: PolyNetworkBridge[], bridge: Codecs.Carbon.Coin.Bridge) => {
-      if (bridge.bridgeId.toNumber() !== BRIDGE_IDS.polynetwork) return prev;
-      prev.push({ ...bridge } as PolyNetworkBridge);
-      return prev;
-    }, [])
+      const polynetworkBridges = allBridges.bridges.reduce((prev: PolyNetworkBridge[], bridge: Codecs.Carbon.Coin.Bridge) => {
+        if (bridge.bridgeId.toNumber() !== BRIDGE_IDS.polynetwork) return prev;
+        prev.push({ ...bridge } as PolyNetworkBridge);
+        return prev;
+      }, [])
 
-    Object.assign(this.bridges, {
-      polynetwork: polynetworkBridges,
-      axelar: axelarBridges,
-    })
-    return this.bridges
+      this.bridges = {
+        polynetwork: polynetworkBridges,
+        axelar: axelarBridges,
+      };
+    }
+    return this.bridges!;
   }
 
   async mapBridgesFromConnections(): Promise<AxelarBridge[]> {
@@ -85,9 +71,7 @@ export class TokenClient {
     try {
       const results: Codecs.Carbon.Bridge.QueryAllConnectionsResponse = await this.query.bridge.ConnectionAll({
         bridgeId: new Long(0),
-        pagination: Codecs.Query.PageRequest.fromPartial({
-          limit: new Long(10000),
-        }),
+        pagination: PGN_10K,
       });
       const connections = results.connections
       connections.forEach((connection: Codecs.Carbon.Bridge.Connection) => {
@@ -121,8 +105,8 @@ export class TokenClient {
   };
 
   public getBlockchain(denom: string | undefined): Blockchain | undefined {
-    if (!denom) return undefined
-    const token = this.tokens?.[denom];
+    if (!denom || !this.tokens?.[denom]) return undefined
+    const token = this.tokens[denom];
     if (this.isNativeToken(denom) || this.isNativeStablecoin(denom) || TokenClient.isPoolToken(denom) || TokenClient.isCdpToken(denom) || this.isGroupedToken(denom)) {
       // native denoms "swth" and "usc" should be native.
       // pool and cdp tokens are on the Native blockchain, hence 0
@@ -132,8 +116,7 @@ export class TokenClient {
     if (this.isBridgedToken(denom)) {
       // brdg tokens will all be chain_id 0 which will also be deprecated in future
       // hence for brdg tokens cannot use chain_id to differentiate between blockchains
-      const bridgeList = this.bridges.axelar
-      const chainName = bridgeList.find((bridge: AxelarBridge) => bridge.bridgeAddress === token.bridgeAddress)?.chainName
+      const chainName = this.bridges?.axelar.find((bridge: AxelarBridge) => bridge.bridgeAddress === token.bridgeAddress)?.chainName
       return chainName
     }
     const bridge = this.getBridgeFromToken(token)
@@ -143,9 +126,9 @@ export class TokenClient {
   public getBridgesFromBridgeId(bridgeId: number): Codecs.Carbon.Coin.Bridge[] | AxelarBridge[] | undefined {
     switch (bridgeId) {
       case BRIDGE_IDS.polynetwork:
-        return this.bridges.polynetwork
+        return this.bridges?.polynetwork
       case BRIDGE_IDS.axelar:
-        return this.bridges.axelar
+        return this.bridges?.axelar
       default:
         return undefined
     }
@@ -158,11 +141,11 @@ export class TokenClient {
   };
 
   public getPolynetworkBlockchainNames(): string[] {
-    return this.bridges.polynetwork.map((bridge: PolyNetworkBridge) => bridge.chainName);
+    return (this.bridges?.polynetwork ?? []).map((bridge: PolyNetworkBridge) => bridge.chainName);
   };
 
   public getAxelarBlockchainNames(): string[] {
-    return this.bridges.axelar.map((bridge: AxelarBridge) => bridge.chainName);
+    return (this.bridges?.axelar ?? []).map((bridge: AxelarBridge) => bridge.chainName);
   };
 
   public getAllBlockchainNames(): string[] {
