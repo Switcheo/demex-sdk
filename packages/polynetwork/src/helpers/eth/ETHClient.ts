@@ -1,5 +1,5 @@
 import { Carbon } from "@demex-sdk/codecs";
-import { Network, SWTHAddress, TokenClient, ZeroAddress, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
+import { Network, SWTHAddress, TokenClient, appendHexPrefix, stripHexPrefix } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
 import { EVMChain, evmChains, EthNetworkConfig, PolynetworkConfig, TokenInitInfo, TokensWithExternalBalance } from "../../env";
