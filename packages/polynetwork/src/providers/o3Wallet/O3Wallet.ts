@@ -17,7 +17,7 @@ export class O3Wallet {
 
   private constructor(public readonly network: Network) {
     const polynetworkConfig = PolynetworkConfigs[network];
-    this.networkConfig = polynetworkConfig;
+    this.networkConfig = polynetworkConfig!;
 
     this.neo2Dapi = neoDapi;
     this.neo3Dapi = neo3Dapi;
@@ -139,7 +139,7 @@ export class O3Wallet {
       const response = (await dapi.getBalance(argsBalance)) as O3Types.BalanceResults;
 
       const balanceMap: SimpleMap<TokensWithExternalBalance> = {};
-      const balances: O3Types.Balance[] = response[this.address];
+      const balances: O3Types.Balance[] = response[this.address] ?? [];
       balances.forEach((balance: O3Types.Balance) => {
         const assetId = balance.assetID?.replace("0x", "") ?? balance.contract.replace("0x", "");
         const tokenContract = Neon.u.reverseHex(assetId);

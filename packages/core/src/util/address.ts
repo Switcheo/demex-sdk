@@ -210,7 +210,7 @@ export const NEOAddress: NEOAddressType = {
     }
 
     const pointXHex = unencPubKeyBuf.slice(1, 33);
-    const pointYEven = unencPubKeyBuf[unencPubKeyBuf.length - 1] % 2 === 0;
+    const pointYEven = Boolean(unencPubKeyBuf?.[unencPubKeyBuf.length - 1] && unencPubKeyBuf[unencPubKeyBuf.length - 1]! % 2 === 0);
     const compressedPublicKey = Buffer.concat([Buffer.from([pointYEven ? 0x02 : 0x03]), pointXHex]);
     return compressedPublicKey;
   },
@@ -311,8 +311,8 @@ export const ETHAddress: ETHAddressType = {
   },
 
   publicKeyToBech32Address: (publicKey: string | Buffer, opts?: SWTHAddressOptions): string => {
-    const hexAddress = ETHAddress.publicKeyToAddress(publicKey)
-    return ETHAddress.encode(hexAddress.split('0x')[1], opts)
+    const hexAddress = ETHAddress.publicKeyToAddress(publicKey);
+    return ETHAddress.encode(stripHexPrefix(hexAddress), opts);
   },
 
   encodePublicKey: (unencodedPublicKey: string | Buffer): Buffer => {

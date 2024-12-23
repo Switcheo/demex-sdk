@@ -73,13 +73,14 @@ export class ETHClient {
     const contract = new ethers.Contract(contractAddress, ABIs.balanceReader, provider);
 
     const checkSumAddr = ethers.getAddress(address);
-    const balances = await contract.getBalances(checkSumAddr, assetIds);
+    const balances = await contract.getBalances!(checkSumAddr, assetIds);
     const TokensWithExternalBalanceArr: TokensWithExternalBalance[] = [];
     for (let i = 0; i < assetIds.length; i++) {
       if (!tokens[i]) continue;
 
+      const indivToken = tokens[i] as Carbon.Coin.Token;
       TokensWithExternalBalanceArr.push({
-        ...tokens[i],
+        ...indivToken,
         externalBalance: balances[i].toString(),
       });
     }
@@ -97,7 +98,7 @@ export class ETHClient {
     const approvalAmount = BigInt(amount?.toString(10) ?? ethers.MaxUint256)
 
     const nonce = await this.getTxNonce(ethAddress, params.nonce, rpcProvider);
-    const approveResultTx = await contract.approve(
+    const approveResultTx = await contract.approve!(
       ethers.Typed.address(spenderAddress ?? token.bridgeAddress),
       approvalAmount, {
       nonce,
@@ -112,7 +113,7 @@ export class ETHClient {
     const contractAddress = token.tokenAddress;
     const rpcProvider = this.getProvider();
     const contract = new ethers.Contract(contractAddress, ABIs.erc20, rpcProvider);
-    const allowance = await contract.allowance(owner, spender);
+    const allowance = await contract.allowance!(owner, spender);
     return new BigNumber(allowance.toString());
   }
 
@@ -137,7 +138,7 @@ export class ETHClient {
 
     const nonce: number = await this.getTxNonce(ethAddress, params.nonce, rpcProvider);
     const contract = new ethers.Contract(contractAddress, ABIs.lockProxy, signer);
-    const lockResultTx = await contract.lock(
+    const lockResultTx = await contract.lock!(
       assetId, // _assetHash
       targetProxyHash, // _targetProxyHash
       swthAddress, // _toAddress
@@ -177,9 +178,9 @@ export class ETHClient {
   public async retrieveERC20Info(address: string): Promise<TokenInitInfo> {
     const provider = this.getProvider();
     const contract = new ethers.Contract(address, ABIs.erc20, provider);
-    const decimals = await contract.decimals();
-    const name = await contract.name();
-    const symbol = await contract.symbol();
+    const decimals = await contract.decimals!();
+    const name = await contract.name!();
+    const symbol = await contract.symbol!();
 
     return { address, decimals, name, symbol };
   }

@@ -1,5 +1,6 @@
 import { rpc, tx, u, wallet } from "@cityofzion/neon-core-next";
 import { GetContractStateResult, InvokeResult } from "@cityofzion/neon-core-next/lib/rpc";
+import { Carbon } from "@demex-sdk/codecs";
 import { Blockchain, N3Address, Network, SimpleMap, TokenClient } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import { N3NetworkConfig, PolynetworkConfig, TokensWithExternalBalance } from "../../env";
@@ -62,8 +63,8 @@ export class N3Client {
       if (!balances[tokenScriptHash]) continue;
 
       tokensWithBalance.push({
-        ...token,
-        externalBalance: balances[tokenScriptHash],
+        ...(token as Carbon.Coin.Token),
+        externalBalance: balances[tokenScriptHash]!,
       });
     }
 
@@ -158,10 +159,10 @@ export class N3Client {
     let decimals: number = 0;
     let symbol: string = "";
     let name: string = "";
-    if (typeof decimalRaw.stack[0].value === "string") {
+    if (typeof decimalRaw?.stack?.[0]?.value === "string") {
       decimals = Number(decimalRaw.stack[0].value);
     }
-    if (typeof symbolRaw.stack[0].value === "string") {
+    if (typeof symbolRaw?.stack?.[0]?.value === "string") {
       symbol = Buffer.from(symbolRaw.stack[0].value, "base64").toString("ascii");
     }
     if (typeof nameRaw.manifest.name === "string") {

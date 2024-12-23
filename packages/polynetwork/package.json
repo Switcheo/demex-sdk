@@ -17,6 +17,7 @@
     "@cityofzion/neon-core": "^4.9.0",
     "@cityofzion/neon-core-next": "npm:@cityofzion/neon-core@^5.0.0",
     "@cityofzion/neon-js": "^4.9.0",
+    "@demex-sdk/core": "0.0.7",
     "@zilliqa-js/zilliqa": "^2.2.0",
     "neo-dapi": "^2.0.4",
     "neo3-dapi": "^1.0.1",

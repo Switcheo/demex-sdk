@@ -1,5 +1,5 @@
 import { CONST } from "@cityofzion/neon-core-next";
-import { Network } from "@demex-sdk/core";
+import { Network, NetworkMap } from "@demex-sdk/core";
 import { EVMChain } from "./blockchain";
 
 export interface BasicNetworkConfig {
@@ -45,9 +45,7 @@ const EthNetworkConfigFallback: EthNetworkConfig = {
   balanceReader: "",
 }
 
-export const PolynetworkConfigs: {
-  [key in Network]: PolynetworkConfig;
-} = {
+export const PolynetworkConfigs: NetworkMap<PolynetworkConfig> = {
   [Network.MainNet]: {
     feeAddress: "08d8f59e475830d9a1bb97d74285c4d34c6dac08", // swth1prv0t8j8tqcdngdmjlt59pwy6dxxmtqgycy2h7
     bech32Prefix: "swth",
