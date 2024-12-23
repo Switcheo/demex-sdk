@@ -18,8 +18,6 @@ interface Rpc {
 }
 
 const extendQueryClient = (tmClient: Tendermint37Client, rpcClient: Rpc) => QueryClient.withExtensions(tmClient, () => ({
-  chain: BlockchainClient.connectWithTm(tmClient),
-
   adl: new AdlQueryClient(rpcClient),
   alliance: new AllianceQueryClient(rpcClient),
   book: new BookQueryClient(rpcClient),
@@ -78,13 +76,20 @@ const extendQueryClient = (tmClient: Tendermint37Client, rpcClient: Rpc) => Quer
     evm: new EvmQueryClient(rpcClient),
     feeMarket: new FeemarketQueryClient(rpcClient),
   },
-}))
+}));
 
-type DemexQueryClient = ReturnType<typeof extendQueryClient>;
+type DemexQueryClient = ReturnType<typeof extendQueryClient> & {
+  chain: BlockchainClient
+};
 namespace DemexQueryClient {
-  export const instance = (opts: DemexQueryClientOpts) => {
+  export const instance = (opts: DemexQueryClientOpts): DemexQueryClient => {
     const rpcClient = opts.grpcClient ?? createProtobufRpcClient(new QueryClient(opts.tmClient));
-    return extendQueryClient(opts.tmClient, rpcClient);
+    const result = extendQueryClient(opts.tmClient, rpcClient) as DemexQueryClient;
+    // cannot pass chain: BlockchainClient as an extension because 
+    // of spread operators in withExtensions handler
+    // see https://github.com/cosmos/cosmjs/blob/e819a1fc0e99a3e5320d8d6667a08d3b92e5e836/packages/stargate/src/queryclient/queryclient.ts#L502
+    result.chain = BlockchainClient.connectWithTm(opts.tmClient);
+    return result
   }
 }
 

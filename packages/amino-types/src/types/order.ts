@@ -2,7 +2,11 @@ import { AminoConverter } from "@cosmjs/stargate";
 import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoInit, AminoProcess, AminoValueMap, BN_ZERO, bnOrZero, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+type OrderTxTypes = 'CreateOrder' | 'CancelOrder' | 'EditOrder' | 'CancelAll'
+
+const TxTypes: Record<OrderTxTypes, string> = {
   CreateOrder: "order/CreateOrder",
   CancelOrder: "order/CancelOrder",
   EditOrder: "order/EditOrder",

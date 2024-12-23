@@ -2,6 +2,7 @@ import { capitalize } from "lodash";
 import path from "path";
 import { whitelistCosmosExports, whitelistIbcExports } from "./config";
 import { generateEIP712types } from "./generate-eip712-types";
+import { generateMessagesOptions } from "./generate-messages-options";
 
 const files = process.argv;
 
@@ -36,7 +37,7 @@ for (const moduleFile of codecFiles) {
     continue
   }
 
-  const codecModule = require(path.join(pwd, moduleFile));
+  const codecModule = require(path.join(pwd!, moduleFile));
   const messages = Object.keys(codecModule).filter((key) => {
     return (key.startsWith("Msg") && key !== "MsgClientImpl") || key.startsWith("Header") || key.endsWith("Proposal")
   });
@@ -44,11 +45,11 @@ for (const moduleFile of codecFiles) {
   if (!codecModule.protobufPackage) continue;
   if (messages.length) {
     if (modules[codecModule.protobufPackage]) {
-      modules[codecModule.protobufPackage] = [...modules[codecModule.protobufPackage], ...messages];
+      modules[codecModule.protobufPackage] = [...modules[codecModule.protobufPackage]!, ...messages];
     } else {
       modules[codecModule.protobufPackage] = messages;
     }
-    const relativePath = path.relative(registryFile, moduleFile)
+    const relativePath = path.relative(registryFile as string, moduleFile)
       .replace(/^\.\.\//, "./")
       .replace(/\.ts$/, "");
     if (!(
@@ -67,42 +68,42 @@ for (const moduleFile of codecFiles) {
 }
 
 // List of proposal files (for cosmos and ibc)
-const proposalWhitelist: string[] = [`${whitelistCosmosExports.Gov}/gov.ts`, `${whitelistIbcExports.Client[0]}/client.ts`]
+const proposalWhitelist: string[] = [`${whitelistCosmosExports.Gov}/gov.ts`, `${whitelistIbcExports.Client![0]}/client.ts`]
 
 proposalWhitelist.forEach((file: string) => {
-  const moduleFile = path.join(pwd, 'src/data', file);
+  const moduleFile = path.join(pwd!, 'src/data', file);
   const codecModule = require(moduleFile);
   const modelNames = Object.keys(codecModule).filter((key) => key.endsWith("Proposal"));
   const directoryArr = file.split('/');
   directoryArr.pop();
   const directoryLabel = directoryArr.join('.').replace('.ts', '');
   if (modules[directoryLabel]) {
-    modules[directoryLabel] = [...modules[directoryLabel], ...modelNames];
+    modules[directoryLabel] = [...modules[directoryLabel]!, ...modelNames];
   } else {
     modules[directoryLabel] = modelNames;
   }
-  const relativePath = path.relative(registryFile, moduleFile)
+  const relativePath = path.relative(registryFile as string, moduleFile)
     .replace(/^\.\.\//, "./")
     .replace(/\.ts$/, "");
   console.log(`import { ${modelNames.join(", ")} } from "${relativePath}";`);
 });
 
 console.log("");
-const cosmosModelsImportPath = path.relative(registryFile, cosmosModelsFile);
+const cosmosModelsImportPath = path.relative(registryFile as string, cosmosModelsFile as string);
 console.log(`export * from '${cosmosModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
 
 console.log("");
 console.log("");
-const ibcModelsImportPath = path.relative(registryFile, ibcModelsFile);
+const ibcModelsImportPath = path.relative(registryFile as string, ibcModelsFile as string);
 console.log(`export * as IBC from '${ibcModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
 
 console.log("");
-const polynetworkModelsImportPath = path.relative(registryFile, polynetworkModelsFile);
+const polynetworkModelsImportPath = path.relative(registryFile as string, polynetworkModelsFile as string);
 console.log(`import * as PolyNetwork from '${polynetworkModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
 console.log(`export * as PolyNetwork from '${polynetworkModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
 
 console.log("");
-const carbonModelsImportPath = path.relative(registryFile, carbonModelsFile);
+const carbonModelsImportPath = path.relative(registryFile as string, carbonModelsFile as string);
 console.log(`import * as Carbon from '${carbonModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
 console.log(`export * as Carbon from '${carbonModelsImportPath.replace(/^\.\./i, '.').replace(/\.ts$/i, '')}';`);
 
@@ -112,9 +113,9 @@ console.log("export const registry = new Registry();");
 const typeMap: { [msg: string]: string } = {};
 for (const packageName in modules) {
   console.log("");
-  for (const key of modules[packageName]) {
+  for (const key of modules[packageName]!) {
     const messageAlias = key.split(" ")[2] // "XXX as XXXXX"
-    const typeUrl = messageAlias ? `/${packageName}.${key.split(" ")[0].trim()}` : `/${packageName}.${key}`;
+    const typeUrl = messageAlias ? `/${packageName}.${key.split(" ")[0]!.trim()}` : `/${packageName}.${key}`;
     const match = typeUrl.match(/^\/Switcheo.carbon.([a-z0-9]+).([A-Za-z0-9]+)$/i);
     const matchAlliance = typeUrl.match(/^\/alliance.alliance.([A-Za-z]+)$/i); // for /alliance.alliance module
     const messageType = messageAlias ? messageAlias.trim() : key
@@ -169,7 +170,7 @@ for (const moduleFile of codecFiles) {
   if (!moduleFile.endsWith(".ts")) {
     continue
   }
-  const relativePath = path.relative(registryFile, moduleFile)
+  const relativePath = path.relative(registryFile as string, moduleFile)
     .replace(/^\.\.\//, "./")
     .replace(/\.ts$/, "");
 
@@ -178,7 +179,7 @@ for (const moduleFile of codecFiles) {
   const firstDirectory = file[2]
 
   // skip next steps if module has been namespaced
-  if (directoryBlacklist.includes(firstDirectory) || carbonFolders.includes(firstDirectory) || fileNameBlacklist.includes(fileName)) continue
+  if (directoryBlacklist.includes(firstDirectory!) || carbonFolders.includes(firstDirectory!) || fileNameBlacklist.includes(fileName!)) continue
 
   const codecModule = require(`${pwd}/${moduleFile.replace(/\.ts$/i, '')}`);
 
@@ -213,6 +214,7 @@ console.log(
 EIP712Types mapping generated here should only be used for sending EIP-712 msgs.
 */`);
 console.log(`export const EIP712Types: { [index: string]: any } = ${JSON.stringify(generateEIP712types(), null, 2)};\n`);
+console.log(`export const MsgsOptions: { [index: string]: any } = ${JSON.stringify(generateMessagesOptions(typeMap), null, 2)};\n`);
 
 function updateImportsAlias(messages: string[], protobufPackage: string) {
   const modulePath = getModulePathFromProtobufPackage(protobufPackage)

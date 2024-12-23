@@ -1,41 +1,54 @@
 import { EncodeObject } from "@cosmjs/proto-signing";
-import { DeliverTxResponse, SignerData, StdFee } from "@cosmjs/stargate";
+import { Account, DeliverTxResponse, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, BroadcastTxSyncResponse, Method } from "@cosmjs/tendermint-rpc";
 import { Tx } from "@demex-sdk/codecs";
+import { DemexSigner } from "./signer";
+import { WalletError } from "./constant";
 
 export type BroadcastTxMode = Method.BroadcastTxAsync | Method.BroadcastTxSync | Method.BroadcastTxCommit;
+
+export type BroadcastTxResult = DeliverTxResponse | BroadcastTxSyncResponse | BroadcastTxAsyncResponse;
 
 export interface PromiseHandler<T> {
   requestId?: string;
   resolve: (result: T) => void;
   reject: (reason?: any) => void;
 }
+
+export interface WalletAccount extends Account {
+  sequenceInvalidated: boolean
+}
+
+export interface SigningData extends SignTxRequest {
+  signer: DemexSigner
+  signingClient: SigningStargateClient,
+}
+
 export interface SignTxRequest {
-  signerAddress: string;
   reattempts?: number;
   messages: readonly EncodeObject[];
   broadcastOpts?: BroadcastTxOpts;
   signOpts?: SignTxOpts;
-  handler: PromiseHandler<DeliverTxResponse | BroadcastTxSyncResponse | BroadcastTxAsyncResponse>;
+  handler: PromiseHandler<BroadcastTxResult>;
 }
 
 export interface BroadcastTxRequest extends SignTxRequest {
+  signerAddress: string;
   signedTx: Tx.TxRaw;
 }
 
-export interface DemexSignerData extends SignerData {
-  timeoutHeight?: number;
-  evmChainId?: string;
-}
 
-export interface SignTxOpts {
+export interface TxOverrides {
   fee?: StdFee;
   feeDenom?: string;
+  feeGranter?: string;
+  timeoutHeight?: number;
   memo?: string;
-  sequence?: number;
-  accountNumber?: number;
-  explicitSignerData?: Partial<DemexSignerData>;
-  triggerMerge?: boolean; // stack merge account tx if user account is unmerged
+}
+export interface SignTxOpts {
+  tx?: TxOverrides;
+  signer?: Partial<SignerData>;
+  bypassGrantee?: boolean;
 }
 
 export interface BroadcastTxOpts {
@@ -51,7 +64,7 @@ export enum ErrorType {
   BroadcastFail = "broadcast_fail",
   BlockFail = "block_fail",
 }
-export class DemexBroadcastError extends Error {
+export class DemexBroadcastError extends WalletError {
   readonly type?: ErrorType
   readonly data?: any
   constructor(msg: string, type?: ErrorType, data?: any) {

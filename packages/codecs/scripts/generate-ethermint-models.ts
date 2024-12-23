@@ -9,8 +9,8 @@ const [pwd, modelsFile] = files.splice(files.length - 2, 2);
 const MODEL_BLACKLIST = ['MsgClientImpl', 'protobufPackage', 'GenesisState', 'QueryClientImpl']
 
 for (const exportName in whitelistEthermintExports) {
-  const directoryPath = whitelistEthermintExports[exportName];
-  const directory = path.join(pwd, 'src/data', directoryPath);
+  const directoryPath = whitelistEthermintExports[exportName]!;
+  const directory = path.join(pwd!, 'src/data', directoryPath);
   const files = fs.readdirSync(directory);
 
   for (const file of files) {
@@ -26,5 +26,5 @@ for (const exportName in whitelistEthermintExports) {
   }
 
   const exportLine = `export * as ${exportName} from "./data/${directoryPath}/export"\n`;
-  fs.appendFileSync(modelsFile, exportLine);
+  fs.appendFileSync(modelsFile as string, exportLine);
 }

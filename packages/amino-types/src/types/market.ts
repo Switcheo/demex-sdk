@@ -2,7 +2,12 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, ConvertEncType, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+
+
+type MarketTxTypes = 'UpdateMarket' | 'DisableSpotMarket' | 'AddFeeTier' | 'RemoveFeeTier' | 'UpdateFeeTier' | 'SetStakeEquivalence'
+
+const TxTypes: Record<MarketTxTypes, string> = {
   UpdateMarket: "market/UpdateMarket",
   DisableSpotMarket: "market/DisableSpotMarket",
   AddFeeTier: "market/AddFeeTier",

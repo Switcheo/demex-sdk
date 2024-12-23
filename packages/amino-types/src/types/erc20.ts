@@ -2,7 +2,10 @@ import { TxTypes as CarbonTxTypes } from "@demex-sdk/codecs";
 import { AminoConverter } from "@cosmjs/stargate";
 import { AminoInit, generateAminoType } from "../utils";
 
-const TxTypes: Record<string, string> = {
+
+type ERC20TxTypes = 'ConvertERC20' | 'ConvertCoin'
+
+const TxTypes: Record<ERC20TxTypes, string> = {
   ConvertERC20: "erc20/MsgConvertERC20",
   ConvertCoin: "erc20/MsgConvertCoin",
 };

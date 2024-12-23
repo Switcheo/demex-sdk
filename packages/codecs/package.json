@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/codecs",
-  "version": "0.0.3",
+  "version": "0.0.7",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
@@ -36,12 +36,10 @@
       "import": "./package.json",
       "require": "./package.json"
     },
-    "./*": {
-      "module": "./dist-es/data/*",
-      "node": "./dist-cjs/data/*",
-      "import": "./dist-es/data/*",
-      "require": "./dist-cjs/data/*",
-      "types": "./dist-types/data/*"
+    "./data/*": {
+      "types": "./dist-types/data/*.d.ts",
+      "import": "./dist-es/data/*.js",
+      "require": "./dist-cjs/data/*.js"
     }
   },
   "typesVersions": {
@@ -49,32 +47,8 @@
       ".": [
         "./dist-types/index.d.ts"
       ],
-      "Switcheo/*": [
-        "./dist-types/data/Switcheo/*"
-      ],
-      "alliance/*": [
-        "./dist-types/data/alliance/*"
-      ],
-      "amino/*": [
-        "./dist-types/data/amino/*"
-      ],
-      "cosmos/*": [
-        "./dist-types/data/cosmos/*"
-      ],
-      "ethermint/*": [
-        "./dist-types/data/ethermint/*"
-      ],
-      "google/*": [
-        "./dist-types/data/google/*"
-      ],
-      "ibc/*": [
-        "./dist-types/data/ibc/*"
-      ],
-      "oraclesvc/*": [
-        "./dist-types/data/oraclesvc/*"
-      ],
-      "tendermint/*": [
-        "./dist-types/data/tendermint/*"
+      "data/*": [
+        "./dist-types/data/*"
       ]
     }
   },

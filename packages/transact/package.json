@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/transact",
-  "version": "0.0.3",
+  "version": "0.0.7",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",

@@ -21,5 +21,6 @@ ts-node ./scripts/generate-carbon-models.ts $PWD $CARBON_MODELS_FILE
 ts-node ./scripts/generate-registry.ts $TX_FILES $PWD $REGISTRY_FILE $POLYNETWORK_MODELS_FILE $CARBON_MODELS_FILE $COSMOS_MODELS_FILE $IBC_MODELS_FILE $ETHERMINT_MODELS_FILE >> $REGISTRY_FILE
 ts-node ./scripts/generate-query-clients.ts $QUERY_FILES $REGISTRY_FILE
 
-# Updates package.json typesVersions
-ts-node ./scripts/update-types-versions.ts
+rm -rf ./scripts/protobuf-def.json
+rm -rf proto-ts.tar.gz
+
