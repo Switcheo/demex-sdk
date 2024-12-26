@@ -1,5 +1,11 @@
 # @demex-sdk/ledger
 
+## 0.0.8
+
+### Patch Changes
+
+- Update v2.60 codecs
+
 ## 0.0.7
 
 ### Patch Changes

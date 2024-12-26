@@ -1,5 +1,13 @@
 # @demex-sdk/core
 
+## 0.0.8
+
+### Patch Changes
+
+- Update v2.60 codecs
+- Updated dependencies
+  - @demex-sdk/codecs@0.0.8
+
 ## 0.0.7
 
 ### Patch Changes
