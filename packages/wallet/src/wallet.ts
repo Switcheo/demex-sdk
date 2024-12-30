@@ -356,15 +356,14 @@ export class DemexWallet {
 
   private containsMergeWalletAccountMessage(messages: readonly EncodeObject[]) {
     const mergeAccountMessage = findMessageByTypeUrl(messages, TxTypes.MsgMergeAccount);
-    if (mergeAccountMessage) {
-      const { value } = mergeAccountMessage;
-      const msg = value as MsgMergeAccount;
-      const mergeOwnAccountMessage =
-        (msg.creator === this.bech32Address
-          || msg.creator === this.evmBech32Address)
-        && this.publicKey.toString("hex") === msg.pubKey;
-      if (mergeOwnAccountMessage) return true;
-    }
+    if (!mergeAccountMessage) return false;
+    const { value } = mergeAccountMessage;
+    const msg = value as MsgMergeAccount;
+    const mergeOwnAccountMessage =
+      (msg.creator === this.bech32Address
+        || msg.creator === this.evmBech32Address)
+      && this.publicKey.toString("hex") === msg.pubKey;
+    if (mergeOwnAccountMessage) return true;
     return false;
   }
 
