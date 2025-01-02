@@ -1,3 +1,4 @@
+import { toBech32 } from "@cosmjs/encoding"
 import { WalletError } from "../constant";
 import { DemexSigner } from "../signer";
 import { getEvmHexAddress } from "./address";
@@ -8,6 +9,11 @@ export enum DemexSignerTypes {
   PrivateKey = 'PrivateKey',
   PublicKey = 'PublicKey',
   EIP712 = 'EIP712',
+}
+
+export interface AccountAddresses {
+  bech32Address: string;
+  evmBech32Address?: string;
 }
 
 export const getDefaultSignerAddress = async (signer: DemexSigner) => {
@@ -21,9 +27,19 @@ export const getDefaultSignerAccount = async (signer: DemexSigner) => {
   return account
 }
 
-export const getDefaultSignerEvmAddress = async (signer: DemexSigner) => {
+export const getDefaultSignerEvmAddress = async (signer: DemexSigner, bech32Prefix: string) => {
   const account = await getDefaultSignerAccount(signer);
-  return getEvmHexAddress(account.pubkey);
+  const hexAddress = getEvmHexAddress(account.pubkey);
+  const evmAddressBytes = Buffer.from(hexAddress.slice(2), "hex");
+  return toBech32(bech32Prefix, evmAddressBytes);
+
+}
+
+export const getDefaultSignerAddresses = async (signer: DemexSigner, bech32Prefix: string): Promise<AccountAddresses> => {
+  return {
+    bech32Address: await getDefaultSignerAddress(signer),
+    evmBech32Address: await getDefaultSignerEvmAddress(signer, bech32Prefix),
+  }
 }
 
 export function isDemexEIP712Signer(signer: DemexSigner): boolean {
