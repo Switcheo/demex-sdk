@@ -11,6 +11,11 @@ export enum DemexSignerTypes {
   EIP712 = 'EIP712',
 }
 
+export interface AccountAddresses {
+  bech32Address: string;
+  evmBech32Address?: string;
+}
+
 export const getDefaultSignerAddress = async (signer: DemexSigner) => {
   const account = await getDefaultSignerAccount(signer);
   return account.address;
@@ -30,7 +35,7 @@ export const getDefaultSignerEvmAddress = async (signer: DemexSigner, bech32Pref
 
 }
 
-export const getDefaultSignerAddresses = async (signer: DemexSigner, bech32Prefix: string) => {
+export const getDefaultSignerAddresses = async (signer: DemexSigner, bech32Prefix: string): Promise<AccountAddresses> => {
   return {
     bech32Address: await getDefaultSignerAddress(signer),
     evmBech32Address: await getDefaultSignerEvmAddress(signer, bech32Prefix),

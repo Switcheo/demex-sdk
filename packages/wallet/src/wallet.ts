@@ -18,7 +18,7 @@ import { Grantee } from "./grantee";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner } from "./signer";
 import { DemexEIP712SigningClient } from "./signingClient/eip712";
 import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, SigningData, SignTxOpts, SignTxRequest, WalletAccount } from "./types";
-import { findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerAddresses, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
+import { AccountAddresses, findMessageByTypeUrl, getDefaultSignerAddress, getDefaultSignerAddresses, getEvmHexAddress, isDemexEIP712Signer } from "./utils";
 
 
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
@@ -235,15 +235,39 @@ export class DemexWallet {
   * Returns the updated wallet account info
   */
   public async reloadAccount(bech32Address: string, evmBech32Address?: string) {
-    const info = await this.reloadAccountInfo(bech32Address, evmBech32Address);
+    if(!this.validateAccountAddresses({ bech32Address, evmBech32Address })) {
+      throw new WalletError(`invalid addresses input. only wallet or grantee addresses can be reloaded`)
+    }
+    const info = await this.getAccountInfo(bech32Address, evmBech32Address);
     if (!info) return;
     this.walletAccounts[bech32Address] = info;
     await this.updateMergeAccountStatus(bech32Address);
     return this.walletAccounts[bech32Address];
   }
 
+  private async validateAccountAddresses(inputAddresses: AccountAddresses) {
+    const { bech32Address: signerBech32Address, evmBech32Address: signerEvmBech32Address } = await getDefaultSignerAddresses(this.signer, this.networkConfig.bech32Prefix);
+    const hasGranteeSigner = !!this.grantee?.signer;
+    const signerAddresses: AccountAddresses = { bech32Address: signerBech32Address, evmBech32Address: signerEvmBech32Address };
+    const addressesMatchesSigner = this.validateSignerAddressesWithInput(inputAddresses, signerAddresses);
+    if (!hasGranteeSigner) return addressesMatchesSigner;
+    const { bech32Address: granteeBech32Address, evmBech32Address: granteeEvmBech32Address } = await getDefaultSignerAddresses(this.grantee!.signer, this.networkConfig.bech32Prefix);
+    const granteeAddresses: AccountAddresses = { bech32Address: granteeBech32Address, evmBech32Address: granteeEvmBech32Address };
+    const addressesMatchesGrantee = this.validateSignerAddressesWithInput(inputAddresses, granteeAddresses);
+    return addressesMatchesSigner || addressesMatchesGrantee;
+  }
 
-  private async reloadAccountInfo(bech32Address: string, evmBech32Address?: string) {
+  private async validateSignerAddressesWithInput(input: AccountAddresses, signer: AccountAddresses) {
+    const { bech32Address: signerBech32Address, evmBech32Address: signerEvmBech32Address } = signer;
+    const { bech32Address: inputBech32Address, evmBech32Address: inputEvmBech32Address } = input;
+    const bech32AddressMatches = inputBech32Address === signerBech32Address;
+    const evmBech32AddressMatches = inputEvmBech32Address === signerEvmBech32Address;
+    const validEvmBech32AddressInput = evmBech32AddressMatches || !inputEvmBech32Address;
+    return bech32AddressMatches && validEvmBech32AddressInput;
+  }
+
+
+  private async getAccountInfo(bech32Address: string, evmBech32Address?: string) {
     const account: Account | undefined = await this.getAccount(bech32Address);
     if (account) return account;
     if (evmBech32Address) {
@@ -259,10 +283,10 @@ export class DemexWallet {
 
   private async getMergedAccountStatus(address: string): Promise<boolean> {
     if (this.walletAccounts[address]?.isMerged) return true
-    return await this.queryAccountMergeStatus(address)
+    return await this.queryMergedAccountStatus(address)
   }
 
-  private async queryAccountMergeStatus(address: string): Promise<boolean> {
+  private async queryMergedAccountStatus(address: string): Promise<boolean> {
     const queryClient = await this.getQueryClient();
     const response = await queryClient.evmmerge.MappedAddress({ address });
     return !!response?.mappedAddress;
@@ -297,16 +321,20 @@ export class DemexWallet {
 
     const { sequence, accountNumber } = accountState;
 
+    const txTimeoutHeight = signOpts?.tx?.timeoutHeight ?? timeoutHeight;
+    const txAccountNumber = signOpts?.signer?.accountNumber ?? accountNumber;
+    const txSequence = signOpts?.signer?.sequence ?? sequence;
+
     const _signOpts: SignTxOpts = {
       ...signOpts,
       tx: {
         ...signOpts?.tx,
-        timeoutHeight: signOpts?.tx?.timeoutHeight ?? timeoutHeight,
+        timeoutHeight: txTimeoutHeight,
       },
       signer: {
         ...signOpts?.signer,
-        accountNumber: signOpts?.signer?.accountNumber ?? accountNumber,
-        sequence: signOpts?.signer?.sequence ?? sequence,
+        accountNumber: txAccountNumber,
+        sequence: txSequence,
       }
     };
 
@@ -351,7 +379,7 @@ export class DemexWallet {
       }),
     }
     await this.queueTx([message]);
-    await this.reloadWalletAccountPostSuccessMerge();
+    await this.reloadMergedWalletAccount();
   }
 
   private containsMergeWalletAccountMessage(messages: readonly EncodeObject[]) {
@@ -367,7 +395,7 @@ export class DemexWallet {
     return false;
   }
 
-  private async reloadWalletAccountPostSuccessMerge() {
+  private async reloadMergedWalletAccount() {
     await this.reloadAccountFromSigner(this.signer);
     const address = await getDefaultSignerAddress(this.signer);
     this.updateWalletAccount(address, { isMerged: true });
@@ -524,7 +552,7 @@ export class DemexWallet {
     try {
       const result = await broadcastFunc(signedTx, broadcastOpts);
       await callIgnoreError(() => this.onBroadcastTxSuccess?.(messages));
-      if (this.containsMergeWalletAccountMessage(messages)) await this.reloadWalletAccountPostSuccessMerge();
+      if (this.containsMergeWalletAccountMessage(messages)) await this.reloadMergedWalletAccount();
       resolve(result);
     } catch (error) {
       const reattempts = txRequest.reattempts ?? 0;
