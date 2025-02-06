@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/core",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
@@ -15,7 +15,7 @@
   "dependencies": {
     "@cosmjs/stargate": "^0.32.4",
     "@cosmjs/tendermint-rpc": "^0.32.4",
-    "@demex-sdk/codecs": "0.0.9",
+    "@demex-sdk/codecs": "0.0.10",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
     "bignumber.js": "^9.1.2",

@@ -1,5 +1,11 @@
 # @demex-sdk/examples
 
+## 0.0.10
+
+### Patch Changes
+
+- update v2.63 codecs
+
 ## 0.0.9
 
 ### Patch Changes

@@ -1,5 +1,14 @@
 # @demex-sdk/wallet
 
+## 0.0.10
+
+### Patch Changes
+
+- update v2.63 codecs
+- Updated dependencies
+  - @demex-sdk/codecs@0.0.10
+  - @demex-sdk/core@0.0.10
+
 ## 0.0.9
 
 ### Patch Changes
