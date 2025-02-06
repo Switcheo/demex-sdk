@@ -37,6 +37,7 @@ export interface Order {
   poolRoute: Uint8Array;
   cancelReason?: number;
   insertedBlockHeight: Long;
+  isUseBestPrice: boolean;
 }
 
 export interface DBOrder {
@@ -45,11 +46,6 @@ export interface DBOrder {
   allocatedMarginAmount: string;
   username: string;
   lastUpdatedBlockHeight: Long;
-}
-
-export interface OrdersForMarket {
-  marketId: string;
-  orders: Order[];
 }
 
 export interface OrderIdsForMarket {
@@ -91,6 +87,7 @@ const baseOrder: object = {
   referralCommission: 0,
   referralKickback: 0,
   insertedBlockHeight: Long.ZERO,
+  isUseBestPrice: false,
 };
 
 export const Order = {
@@ -187,6 +184,9 @@ export const Order = {
     }
     if (!message.insertedBlockHeight.isZero()) {
       writer.uint32(232).int64(message.insertedBlockHeight);
+    }
+    if (message.isUseBestPrice === true) {
+      writer.uint32(240).bool(message.isUseBestPrice);
     }
     return writer;
   },
@@ -290,6 +290,9 @@ export const Order = {
           break;
         case 29:
           message.insertedBlockHeight = reader.int64() as Long;
+          break;
+        case 30:
+          message.isUseBestPrice = reader.bool();
           break;
         default:
           reader.skipType(tag & 7);
@@ -418,6 +421,10 @@ export const Order = {
       object.insertedBlockHeight !== null
         ? Long.fromString(object.insertedBlockHeight)
         : Long.ZERO;
+    message.isUseBestPrice =
+      object.isUseBestPrice !== undefined && object.isUseBestPrice !== null
+        ? Boolean(object.isUseBestPrice)
+        : false;
     return message;
   },
 
@@ -476,6 +483,8 @@ export const Order = {
       (obj.insertedBlockHeight = (
         message.insertedBlockHeight || Long.ZERO
       ).toString());
+    message.isUseBestPrice !== undefined &&
+      (obj.isUseBestPrice = message.isUseBestPrice);
     return obj;
   },
 
@@ -527,6 +536,7 @@ export const Order = {
       object.insertedBlockHeight !== null
         ? Long.fromValue(object.insertedBlockHeight)
         : Long.ZERO;
+    message.isUseBestPrice = object.isUseBestPrice ?? false;
     return message;
   },
 };
@@ -649,73 +659,6 @@ export const DBOrder = {
       object.lastUpdatedBlockHeight !== null
         ? Long.fromValue(object.lastUpdatedBlockHeight)
         : Long.ZERO;
-    return message;
-  },
-};
-
-const baseOrdersForMarket: object = { marketId: "" };
-
-export const OrdersForMarket = {
-  encode(
-    message: OrdersForMarket,
-    writer: _m0.Writer = _m0.Writer.create()
-  ): _m0.Writer {
-    if (message.marketId !== "") {
-      writer.uint32(10).string(message.marketId);
-    }
-    for (const v of message.orders) {
-      Order.encode(v!, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): OrdersForMarket {
-    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = { ...baseOrdersForMarket } as OrdersForMarket;
-    message.orders = [];
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          message.marketId = reader.string();
-          break;
-        case 2:
-          message.orders.push(Order.decode(reader, reader.uint32()));
-          break;
-        default:
-          reader.skipType(tag & 7);
-          break;
-      }
-    }
-    return message;
-  },
-
-  fromJSON(object: any): OrdersForMarket {
-    const message = { ...baseOrdersForMarket } as OrdersForMarket;
-    message.marketId =
-      object.marketId !== undefined && object.marketId !== null
-        ? String(object.marketId)
-        : "";
-    message.orders = (object.orders ?? []).map((e: any) => Order.fromJSON(e));
-    return message;
-  },
-
-  toJSON(message: OrdersForMarket): unknown {
-    const obj: any = {};
-    message.marketId !== undefined && (obj.marketId = message.marketId);
-    if (message.orders) {
-      obj.orders = message.orders.map((e) => (e ? Order.toJSON(e) : undefined));
-    } else {
-      obj.orders = [];
-    }
-    return obj;
-  },
-
-  fromPartial(object: DeepPartial<OrdersForMarket>): OrdersForMarket {
-    const message = { ...baseOrdersForMarket } as OrdersForMarket;
-    message.marketId = object.marketId ?? "";
-    message.orders = (object.orders ?? []).map((e) => Order.fromPartial(e));
     return message;
   },
 };
