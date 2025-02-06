@@ -1,5 +1,11 @@
 # @demex-sdk/transact
 
+## 0.0.9
+
+### Patch Changes
+
+- Update v2.63 codecs
+
 ## 0.0.8
 
 ### Patch Changes
