@@ -5,11 +5,11 @@ import { AminoInit, ConvertEncType, generateAminoType } from "../utils";
 
 
 
-type MarketTxTypes = 'UpdateMarket' | 'DisableSpotMarket' | 'AddFeeTier' | 'RemoveFeeTier' | 'UpdateFeeTier' | 'SetStakeEquivalence'
+type MarketTxTypes = 'UpdateMarket' | 'SettleSpotMarket' | 'AddFeeTier' | 'RemoveFeeTier' | 'UpdateFeeTier' | 'SetStakeEquivalence'
 
 const TxTypes: Record<MarketTxTypes, string> = {
   UpdateMarket: "market/UpdateMarket",
-  DisableSpotMarket: "market/DisableSpotMarket",
+  SettleSpotMarket: "market/SettleSpotMarket",
   AddFeeTier: "market/AddFeeTier",
   RemoveFeeTier: "market/RemoveFeeTier",
   UpdateFeeTier: "market/UpdateFeeTier",
@@ -33,8 +33,8 @@ const MsgUpdateMarket: AminoInit = {
   },
 };
 
-const MsgDisableSpotMarket: AminoInit = {
-  aminoType: TxTypes.DisableSpotMarket,
+const MsgSettleSpotMarket: AminoInit = {
+  aminoType: TxTypes.SettleSpotMarket,
   valueMap: {},
 };
 
@@ -72,7 +72,7 @@ const MsgSetStakeEquivalence: AminoInit = {
 
 const MarketAmino: Record<string, AminoConverter> = {
   [CarbonTxTypes.MsgUpdateMarket]: generateAminoType(MsgUpdateMarket),
-  [CarbonTxTypes.MsgDisableSpotMarket]: generateAminoType(MsgDisableSpotMarket),
+  [CarbonTxTypes.MsgSettleSpotMarket]: generateAminoType(MsgSettleSpotMarket),
   [CarbonTxTypes.MsgAddFeeTier]: generateAminoType(MsgAddFeeTier),
   [CarbonTxTypes.MsgRemoveFeeTier]: generateAminoType(MsgRemoveFeeTier),
   [CarbonTxTypes.MsgUpdateFeeTier]: generateAminoType(MsgUpdateFeeTier),
