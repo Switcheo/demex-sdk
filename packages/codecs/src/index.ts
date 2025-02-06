@@ -298,6 +298,8 @@ registry.register("/Switcheo.carbon.ccm.MsgUpdateParamsResponse", PolyNetwork.Cc
 
 registry.register("/Switcheo.carbon.coin.MsgCreateToken", Carbon.Coin.MsgCreateToken);
 registry.register("/Switcheo.carbon.coin.MsgCreateTokenResponse", Carbon.Coin.MsgCreateTokenResponse);
+registry.register("/Switcheo.carbon.coin.MsgCreatePerpetualToken", Carbon.Coin.MsgCreatePerpetualToken);
+registry.register("/Switcheo.carbon.coin.MsgCreatePerpetualTokenResponse", Carbon.Coin.MsgCreatePerpetualTokenResponse);
 registry.register("/Switcheo.carbon.coin.MsgSyncToken", Carbon.Coin.MsgSyncToken);
 registry.register("/Switcheo.carbon.coin.MsgSyncTokenResponse", Carbon.Coin.MsgSyncTokenResponse);
 registry.register("/Switcheo.carbon.coin.MsgMintToken", Carbon.Coin.MsgMintToken);
@@ -359,8 +361,10 @@ registry.register("/Switcheo.carbon.subaccount.MsgRemoveSubAccountResponse", Car
 registry.register("/Switcheo.carbon.subaccount.MsgUpdateParams", Carbon.Subaccount.MsgUpdateParams);
 registry.register("/Switcheo.carbon.subaccount.MsgUpdateParamsResponse", Carbon.Subaccount.MsgUpdateParamsResponse);
 
-registry.register("/Switcheo.carbon.market.MsgDisableSpotMarket", Carbon.Market.MsgDisableSpotMarket);
-registry.register("/Switcheo.carbon.market.MsgDisableSpotMarketResponse", Carbon.Market.MsgDisableSpotMarketResponse);
+registry.register("/Switcheo.carbon.market.MsgSettleSpotMarket", Carbon.Market.MsgSettleSpotMarket);
+registry.register("/Switcheo.carbon.market.MsgSettleSpotMarketResponse", Carbon.Market.MsgSettleSpotMarketResponse);
+registry.register("/Switcheo.carbon.market.MsgExpirePerpsMarket", Carbon.Market.MsgExpirePerpsMarket);
+registry.register("/Switcheo.carbon.market.MsgExpirePerpsMarketResponse", Carbon.Market.MsgExpirePerpsMarketResponse);
 registry.register("/Switcheo.carbon.market.MsgCreateMarket", Carbon.Market.MsgCreateMarket);
 registry.register("/Switcheo.carbon.market.MsgCreateMarketResponse", Carbon.Market.MsgCreateMarketResponse);
 registry.register("/Switcheo.carbon.market.MsgUpdateMarket", Carbon.Market.MsgUpdateMarket);
@@ -479,6 +483,10 @@ registry.register("/Switcheo.carbon.lockproxy.MsgSetWrapperMapping", PolyNetwork
 registry.register("/Switcheo.carbon.lockproxy.MsgSetWrapperMappingResponse", PolyNetwork.Lockproxy.MsgSetWrapperMappingResponse);
 registry.register("/Switcheo.carbon.lockproxy.MsgDeleteWrapperMapping", PolyNetwork.Lockproxy.MsgDeleteWrapperMapping);
 registry.register("/Switcheo.carbon.lockproxy.MsgDeleteWrapperMappingResponse", PolyNetwork.Lockproxy.MsgDeleteWrapperMappingResponse);
+registry.register("/Switcheo.carbon.lockproxy.MsgAddExtension", PolyNetwork.Lockproxy.MsgAddExtension);
+registry.register("/Switcheo.carbon.lockproxy.MsgAddExtensionResponse", PolyNetwork.Lockproxy.MsgAddExtensionResponse);
+registry.register("/Switcheo.carbon.lockproxy.MsgRemoveExtension", PolyNetwork.Lockproxy.MsgRemoveExtension);
+registry.register("/Switcheo.carbon.lockproxy.MsgRemoveExtensionResponse", PolyNetwork.Lockproxy.MsgRemoveExtensionResponse);
 
 registry.register("/alliance.alliance.MsgDelegate", Carbon.Alliance.MsgDelegate);
 registry.register("/alliance.alliance.MsgDelegateResponse", Carbon.Alliance.MsgDelegateResponse);
@@ -999,6 +1007,8 @@ export const TxTypes = {
   "MsgCcmUpdateParamsResponse": "/Switcheo.carbon.ccm.MsgUpdateParamsResponse",
   "MsgCreateToken": "/Switcheo.carbon.coin.MsgCreateToken",
   "MsgCreateTokenResponse": "/Switcheo.carbon.coin.MsgCreateTokenResponse",
+  "MsgCreatePerpetualToken": "/Switcheo.carbon.coin.MsgCreatePerpetualToken",
+  "MsgCreatePerpetualTokenResponse": "/Switcheo.carbon.coin.MsgCreatePerpetualTokenResponse",
   "MsgSyncToken": "/Switcheo.carbon.coin.MsgSyncToken",
   "MsgSyncTokenResponse": "/Switcheo.carbon.coin.MsgSyncTokenResponse",
   "MsgMintToken": "/Switcheo.carbon.coin.MsgMintToken",
@@ -1056,8 +1066,10 @@ export const TxTypes = {
   "MsgRemoveSubAccountResponse": "/Switcheo.carbon.subaccount.MsgRemoveSubAccountResponse",
   "MsgSubaccountUpdateParams": "/Switcheo.carbon.subaccount.MsgUpdateParams",
   "MsgSubaccountUpdateParamsResponse": "/Switcheo.carbon.subaccount.MsgUpdateParamsResponse",
-  "MsgDisableSpotMarket": "/Switcheo.carbon.market.MsgDisableSpotMarket",
-  "MsgDisableSpotMarketResponse": "/Switcheo.carbon.market.MsgDisableSpotMarketResponse",
+  "MsgSettleSpotMarket": "/Switcheo.carbon.market.MsgSettleSpotMarket",
+  "MsgSettleSpotMarketResponse": "/Switcheo.carbon.market.MsgSettleSpotMarketResponse",
+  "MsgExpirePerpsMarket": "/Switcheo.carbon.market.MsgExpirePerpsMarket",
+  "MsgExpirePerpsMarketResponse": "/Switcheo.carbon.market.MsgExpirePerpsMarketResponse",
   "MsgCreateMarket": "/Switcheo.carbon.market.MsgCreateMarket",
   "MsgCreateMarketResponse": "/Switcheo.carbon.market.MsgCreateMarketResponse",
   "MsgUpdateMarket": "/Switcheo.carbon.market.MsgUpdateMarket",
@@ -1170,6 +1182,10 @@ export const TxTypes = {
   "MsgSetWrapperMappingResponse": "/Switcheo.carbon.lockproxy.MsgSetWrapperMappingResponse",
   "MsgDeleteWrapperMapping": "/Switcheo.carbon.lockproxy.MsgDeleteWrapperMapping",
   "MsgDeleteWrapperMappingResponse": "/Switcheo.carbon.lockproxy.MsgDeleteWrapperMappingResponse",
+  "MsgAddExtension": "/Switcheo.carbon.lockproxy.MsgAddExtension",
+  "MsgAddExtensionResponse": "/Switcheo.carbon.lockproxy.MsgAddExtensionResponse",
+  "MsgRemoveExtension": "/Switcheo.carbon.lockproxy.MsgRemoveExtension",
+  "MsgRemoveExtensionResponse": "/Switcheo.carbon.lockproxy.MsgRemoveExtensionResponse",
   "MsgAllianceDelegate": "/alliance.alliance.MsgDelegate",
   "MsgAllianceDelegateResponse": "/alliance.alliance.MsgDelegateResponse",
   "MsgAllianceUndelegate": "/alliance.alliance.MsgUndelegate",
@@ -1428,7 +1444,7 @@ export { Timestamp } from "./data/google/protobuf/timestamp";
 export { DoubleValue, FloatValue, Int64Value, UInt64Value, Int32Value, UInt32Value, BoolValue, StringValue, BytesValue } from "./data/google/protobuf/wrappers";
 export { Duration } from "./data/google/protobuf/duration";
 export { Empty } from "./data/google/protobuf/empty";
-export { Edition, editionFromJSON, editionToJSON, ExtensionRangeOptions_VerificationState, extensionRangeOptions_VerificationStateFromJSON, extensionRangeOptions_VerificationStateToJSON, FieldDescriptorProto_Type, fieldDescriptorProto_TypeFromJSON, fieldDescriptorProto_TypeToJSON, FieldDescriptorProto_Label, fieldDescriptorProto_LabelFromJSON, fieldDescriptorProto_LabelToJSON, FileOptions_OptimizeMode, fileOptions_OptimizeModeFromJSON, fileOptions_OptimizeModeToJSON, FieldOptions_CType, fieldOptions_CTypeFromJSON, fieldOptions_CTypeToJSON, FieldOptions_JSType, fieldOptions_JSTypeFromJSON, fieldOptions_JSTypeToJSON, FieldOptions_OptionRetention, fieldOptions_OptionRetentionFromJSON, fieldOptions_OptionRetentionToJSON, FieldOptions_OptionTargetType, fieldOptions_OptionTargetTypeFromJSON, fieldOptions_OptionTargetTypeToJSON, MethodOptions_IdempotencyLevel, methodOptions_IdempotencyLevelFromJSON, methodOptions_IdempotencyLevelToJSON, FeatureSet_FieldPresence, featureSet_FieldPresenceFromJSON, featureSet_FieldPresenceToJSON, FeatureSet_EnumType, featureSet_EnumTypeFromJSON, featureSet_EnumTypeToJSON, FeatureSet_RepeatedFieldEncoding, featureSet_RepeatedFieldEncodingFromJSON, featureSet_RepeatedFieldEncodingToJSON, FeatureSet_Utf8Validation, featureSet_Utf8ValidationFromJSON, featureSet_Utf8ValidationToJSON, FeatureSet_MessageEncoding, featureSet_MessageEncodingFromJSON, featureSet_MessageEncodingToJSON, FeatureSet_JsonFormat, featureSet_JsonFormatFromJSON, featureSet_JsonFormatToJSON, GeneratedCodeInfo_Annotation_Semantic, generatedCodeInfo_Annotation_SemanticFromJSON, generatedCodeInfo_Annotation_SemanticToJSON, FileDescriptorSet, FileDescriptorProto, DescriptorProto, DescriptorProto_ExtensionRange, DescriptorProto_ReservedRange, ExtensionRangeOptions, ExtensionRangeOptions_Declaration, FieldDescriptorProto, OneofDescriptorProto, EnumDescriptorProto, EnumDescriptorProto_EnumReservedRange, EnumValueDescriptorProto, ServiceDescriptorProto, MethodDescriptorProto, FileOptions, MessageOptions, FieldOptions, FieldOptions_EditionDefault, FieldOptions_FeatureSupport, OneofOptions, EnumOptions, EnumValueOptions, ServiceOptions, MethodOptions, UninterpretedOption, UninterpretedOption_NamePart, FeatureSet, FeatureSetDefaults, FeatureSetDefaults_FeatureSetEditionDefault, SourceCodeInfo, SourceCodeInfo_Location, GeneratedCodeInfo, GeneratedCodeInfo_Annotation } from "./data/google/protobuf/descriptor";
+export { Edition, editionFromJSON, editionToJSON, ExtensionRangeOptions_VerificationState, extensionRangeOptions_VerificationStateFromJSON, extensionRangeOptions_VerificationStateToJSON, FieldDescriptorProto_Type, fieldDescriptorProto_TypeFromJSON, fieldDescriptorProto_TypeToJSON, FieldDescriptorProto_Label, fieldDescriptorProto_LabelFromJSON, fieldDescriptorProto_LabelToJSON, FileOptions_OptimizeMode, fileOptions_OptimizeModeFromJSON, fileOptions_OptimizeModeToJSON, FieldOptions_CType, fieldOptions_CTypeFromJSON, fieldOptions_CTypeToJSON, FieldOptions_JSType, fieldOptions_JSTypeFromJSON, fieldOptions_JSTypeToJSON, FieldOptions_OptionRetention, fieldOptions_OptionRetentionFromJSON, fieldOptions_OptionRetentionToJSON, FieldOptions_OptionTargetType, fieldOptions_OptionTargetTypeFromJSON, fieldOptions_OptionTargetTypeToJSON, MethodOptions_IdempotencyLevel, methodOptions_IdempotencyLevelFromJSON, methodOptions_IdempotencyLevelToJSON, FeatureSet_FieldPresence, featureSet_FieldPresenceFromJSON, featureSet_FieldPresenceToJSON, FeatureSet_EnumType, featureSet_EnumTypeFromJSON, featureSet_EnumTypeToJSON, FeatureSet_RepeatedFieldEncoding, featureSet_RepeatedFieldEncodingFromJSON, featureSet_RepeatedFieldEncodingToJSON, FeatureSet_Utf8Validation, featureSet_Utf8ValidationFromJSON, featureSet_Utf8ValidationToJSON, FeatureSet_MessageEncoding, featureSet_MessageEncodingFromJSON, featureSet_MessageEncodingToJSON, FeatureSet_JsonFormat, featureSet_JsonFormatFromJSON, featureSet_JsonFormatToJSON, GeneratedCodeInfo_Annotation_Semantic, generatedCodeInfo_Annotation_SemanticFromJSON, generatedCodeInfo_Annotation_SemanticToJSON, FileDescriptorSet, FileDescriptorProto, DescriptorProto, DescriptorProto_ExtensionRange, DescriptorProto_ReservedRange, ExtensionRangeOptions, ExtensionRangeOptions_Declaration, FieldDescriptorProto, OneofDescriptorProto, EnumDescriptorProto, EnumDescriptorProto_EnumReservedRange, EnumValueDescriptorProto, ServiceDescriptorProto, MethodDescriptorProto, FileOptions, MessageOptions, FieldOptions, FieldOptions_EditionDefault, OneofOptions, EnumOptions, EnumValueOptions, ServiceOptions, MethodOptions, UninterpretedOption, UninterpretedOption_NamePart, FeatureSet, FeatureSetDefaults, FeatureSetDefaults_FeatureSetEditionDefault, SourceCodeInfo, SourceCodeInfo_Location, GeneratedCodeInfo, GeneratedCodeInfo_Annotation } from "./data/google/protobuf/descriptor";
 export { RewardWeightRange, AllianceAsset, RewardWeightChangeSnapshot } from "./data/alliance/alliance/alliance";
 export { MsgCreateAllianceProposal, MsgUpdateAllianceProposal, MsgDeleteAllianceProposal } from "./data/alliance/alliance/gov";
 export { MsgDelegate, MsgDelegateResponse, MsgUndelegate, MsgUndelegateResponse, MsgRedelegate, MsgRedelegateResponse, MsgClaimDelegationRewards, MsgClaimDelegationRewardsResponse, MsgCreateAlliance, MsgCreateAllianceResponse, MsgUpdateAlliance, MsgUpdateAllianceResponse, MsgDeleteAlliance, MsgDeleteAllianceResponse } from "./data/alliance/alliance/tx";
@@ -1771,6 +1787,10 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "bool"
       },
       {
+        "name": "php_generic_services",
+        "type": "bool"
+      },
+      {
         "name": "deprecated",
         "type": "bool"
       },
@@ -1905,11 +1925,6 @@ export const EIP712Types: { [index: string]: any } = {
         "packageName": "/google.protobuf"
       },
       {
-        "name": "feature_support",
-        "type": "FeatureSupport",
-        "packageName": "/google.protobuf.FieldOptions"
-      },
-      {
         "name": "uninterpreted_option",
         "type": "UninterpretedOption[]",
         "packageName": "/google.protobuf"
@@ -1964,11 +1979,6 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "debug_redact",
         "type": "bool"
-      },
-      {
-        "name": "feature_support",
-        "type": "FeatureSupport",
-        "packageName": "/google.protobuf.FieldOptions"
       },
       {
         "name": "uninterpreted_option",
@@ -3521,6 +3531,10 @@ export const EIP712Types: { [index: string]: any } = {
         "name": "relay_details",
         "type": "RelayDetails",
         "packageName": "/Switcheo.carbon.bridge"
+      },
+      {
+        "name": "method",
+        "type": "string"
       }
     ],
     "QueryParamsRequest": [],
@@ -4312,17 +4326,9 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "uint64"
       },
       {
-        "name": "quoting_hash",
-        "type": "uint8[]"
-      },
-      {
         "name": "markets",
         "type": "PerpsMarketAmm[]",
         "packageName": "/Switcheo.carbon.broker"
-      },
-      {
-        "name": "last_quoted_at",
-        "type": "string"
       }
     ],
     "PerpsMarketAmm": [
@@ -4584,7 +4590,7 @@ export const EIP712Types: { [index: string]: any } = {
         "packageName": "/Switcheo.carbon.broker"
       },
       {
-        "name": "MinMaxBoundary",
+        "name": "min_max_boundary",
         "type": "MinMaxBoundary",
         "packageName": "/Switcheo.carbon.broker"
       },
@@ -5174,22 +5180,6 @@ export const EIP712Types: { [index: string]: any } = {
       },
       {
         "name": "variable_rate_slope_2",
-        "type": "string"
-      },
-      {
-        "name": "base_stable_borrow_rate",
-        "type": "string"
-      },
-      {
-        "name": "stable_rate_slope_1",
-        "type": "string"
-      },
-      {
-        "name": "stable_rate_slope_2",
-        "type": "string"
-      },
-      {
-        "name": "optimal_stable_to_total_debt_ratio",
         "type": "string"
       }
     ],
@@ -6931,7 +6921,7 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "string"
       },
       {
-        "name": "cdpPaused",
+        "name": "cdp_paused",
         "type": "bool"
       }
     ],
@@ -7452,6 +7442,41 @@ export const EIP712Types: { [index: string]: any } = {
       }
     ],
     "MsgCreateTokenResponse": [
+      {
+        "name": "denom",
+        "type": "string"
+      }
+    ],
+    "MsgCreatePerpetualToken": [
+      {
+        "name": "creator",
+        "type": "string"
+      },
+      {
+        "name": "create_perpetual_token_params",
+        "type": "CreatePerpetualTokenParams",
+        "packageName": "/Switcheo.carbon.coin"
+      }
+    ],
+    "CreatePerpetualTokenParams": [
+      {
+        "name": "creator",
+        "type": "string"
+      },
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "symbol",
+        "type": "string"
+      },
+      {
+        "name": "decimals",
+        "type": "int64"
+      }
+    ],
+    "MsgCreatePerpetualTokenResponse": [
       {
         "name": "denom",
         "type": "string"
@@ -9870,6 +9895,10 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "inserted_block_height",
         "type": "int64"
+      },
+      {
+        "name": "is_use_best_price",
+        "type": "bool"
       }
     ],
     "DBOrder": [
@@ -9893,17 +9922,6 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "last_updated_block_height",
         "type": "int64"
-      }
-    ],
-    "OrdersForMarket": [
-      {
-        "name": "market_id",
-        "type": "string"
-      },
-      {
-        "name": "orders",
-        "type": "Order[]",
-        "packageName": "/Switcheo.carbon.order"
       }
     ],
     "OrderIdsForMarket": [
@@ -10017,12 +10035,20 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "max_referral_commission",
         "type": "uint32"
+      },
+      {
+        "name": "futures_order_block_delay",
+        "type": "int64"
       }
     ],
     "ParamsToUpdate": [
       {
         "name": "max_referral_commission",
         "type": "uint32"
+      },
+      {
+        "name": "futures_order_block_delay",
+        "type": "int64"
       }
     ],
     "GenesisState": [
@@ -10244,9 +10270,18 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "referral_kickback",
         "type": "uint32"
+      },
+      {
+        "name": "is_use_best_price",
+        "type": "bool"
       }
     ],
-    "MsgCreateOrderResponse": [],
+    "MsgCreateOrderResponse": [
+      {
+        "name": "order_id",
+        "type": "string"
+      }
+    ],
     "MsgEditOrder": [
       {
         "name": "creator",
@@ -10270,6 +10305,24 @@ export const EIP712Types: { [index: string]: any } = {
       }
     ],
     "MsgEditOrderResponse": [],
+    "EditOrders": [
+      {
+        "name": "edit_orders",
+        "type": "MsgEditOrder[]",
+        "packageName": "/Switcheo.carbon.order"
+      }
+    ],
+    "EditOrdersForMarket": [
+      {
+        "name": "market_id",
+        "type": "string"
+      },
+      {
+        "name": "edit_orders",
+        "type": "MsgEditOrder[]",
+        "packageName": "/Switcheo.carbon.order"
+      }
+    ],
     "MsgCancelOrder": [
       {
         "name": "creator",
@@ -12076,7 +12129,45 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "string"
       }
     ],
-    "MsgDeleteWrapperMappingResponse": []
+    "MsgDeleteWrapperMappingResponse": [],
+    "MsgAddExtension": [
+      {
+        "name": "creator",
+        "type": "string"
+      },
+      {
+        "name": "chain_id",
+        "type": "uint64"
+      },
+      {
+        "name": "lockproxy_address",
+        "type": "string"
+      },
+      {
+        "name": "extension_address",
+        "type": "string"
+      }
+    ],
+    "MsgAddExtensionResponse": [],
+    "MsgRemoveExtension": [
+      {
+        "name": "creator",
+        "type": "string"
+      },
+      {
+        "name": "chain_id",
+        "type": "uint64"
+      },
+      {
+        "name": "lockproxy_address",
+        "type": "string"
+      },
+      {
+        "name": "extension_address",
+        "type": "string"
+      }
+    ],
+    "MsgRemoveExtensionResponse": []
   },
   "/Switcheo.carbon.market": {
     "Params": [
@@ -12145,7 +12236,7 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "uint32"
       },
       {
-        "name": "max_active_markets",
+        "name": "max_unsettled_markets",
         "type": "uint32"
       },
       {
@@ -12243,7 +12334,7 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "uint32"
       },
       {
-        "name": "max_active_markets",
+        "name": "max_unsettled_markets",
         "type": "uint32"
       },
       {
@@ -12644,6 +12735,10 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "is_active",
         "type": "bool"
+      },
+      {
+        "name": "is_settled",
+        "type": "bool"
       }
     ],
     "QueryAllMarketResponse": [
@@ -12811,7 +12906,7 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "bool"
       }
     ],
-    "MsgDisableSpotMarket": [
+    "MsgSettleSpotMarket": [
       {
         "name": "creator",
         "type": "string"
@@ -12821,7 +12916,22 @@ export const EIP712Types: { [index: string]: any } = {
         "type": "string"
       }
     ],
-    "MsgDisableSpotMarketResponse": [],
+    "MsgSettleSpotMarketResponse": [],
+    "MsgExpirePerpsMarket": [
+      {
+        "name": "authority",
+        "type": "string"
+      },
+      {
+        "name": "market_id",
+        "type": "string"
+      },
+      {
+        "name": "expiry_time",
+        "type": "string"
+      }
+    ],
+    "MsgExpirePerpsMarketResponse": [],
     "MsgCreateMarket": [
       {
         "name": "creator",
@@ -14458,6 +14568,22 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "depositor",
         "type": "string"
+      },
+      {
+        "name": "fee_to_pool_denom",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_pool_amount",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_pool_commission_denom",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_pool_commission_amount",
+        "type": "string"
       }
     ],
     "WithdrawFromPoolEvent": [
@@ -14483,6 +14609,22 @@ export const EIP712Types: { [index: string]: any } = {
       },
       {
         "name": "withdrawer",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_pool_denom",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_pool_amount",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_commission_denom",
+        "type": "string"
+      },
+      {
+        "name": "fee_to_commission_amount",
         "type": "string"
       }
     ],
@@ -14524,6 +14666,18 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "index_last_updated_at_threshold",
         "type": "string"
+      },
+      {
+        "name": "trade_commission_ratio",
+        "type": "string"
+      },
+      {
+        "name": "fee_commission_ratio",
+        "type": "string"
+      },
+      {
+        "name": "pool_commission_address",
+        "type": "string"
       }
     ],
     "ParamsToUpdate": [
@@ -14553,6 +14707,18 @@ export const EIP712Types: { [index: string]: any } = {
       },
       {
         "name": "index_last_updated_at_threshold",
+        "type": "string"
+      },
+      {
+        "name": "trade_commission_ratio",
+        "type": "string"
+      },
+      {
+        "name": "fee_commission_ratio",
+        "type": "string"
+      },
+      {
+        "name": "pool_commission_address",
         "type": "string"
       }
     ],
@@ -14960,6 +15126,10 @@ export const EIP712Types: { [index: string]: any } = {
       {
         "name": "opened_block_height",
         "type": "uint64"
+      },
+      {
+        "name": "allocated_margin_amount",
+        "type": "string"
       }
     ],
     "Positions": [
@@ -31892,6 +32062,13 @@ export const MsgsOptions: { [index: string]: any } = {
     ],
     "[gogoproto.goproto_getters]": false
   },
+  "MsgCreatePerpetualToken": {
+    "[amino.name]": "carbon/MsgCreatePerpetualToken",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
   "MsgSyncToken": {
     "[amino.name]": "carbon/MsgSyncToken",
     "[cosmos.msg.v1.signer]": [
@@ -32262,6 +32439,20 @@ export const MsgsOptions: { [index: string]: any } = {
     ],
     "[gogoproto.goproto_getters]": false
   },
+  "MsgAddExtension": {
+    "[amino.name]": "lockproxy/AddExtension",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
+  "MsgRemoveExtension": {
+    "[amino.name]": "lockproxy/RemoveExtension",
+    "[cosmos.msg.v1.signer]": [
+      "creator"
+    ],
+    "[gogoproto.goproto_getters]": false
+  },
   "CreateMarketProposal": {
     "[amino.name]": "market/CreateMarketProposal"
   },
@@ -32271,10 +32462,16 @@ export const MsgsOptions: { [index: string]: any } = {
   "UpdatePerpetualsFundingIntervalProposal": {
     "[amino.name]": "market/UpdatePerpsFundingIntervalProp"
   },
-  "MsgDisableSpotMarket": {
-    "[amino.name]": "market/DisableSpotMarket",
+  "MsgSettleSpotMarket": {
+    "[amino.name]": "market/SettleSpotMarket",
     "[cosmos.msg.v1.signer]": [
       "creator"
+    ]
+  },
+  "MsgExpirePerpsMarket": {
+    "[amino.name]": "market/ExpirePerpsMarket",
+    "[cosmos.msg.v1.signer]": [
+      "authority"
     ]
   },
   "MsgCreateMarket": {

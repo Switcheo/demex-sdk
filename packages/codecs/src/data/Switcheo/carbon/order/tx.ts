@@ -29,9 +29,12 @@ export interface MsgCreateOrder {
   referralAddress: string;
   referralCommission: number;
   referralKickback: number;
+  isUseBestPrice: boolean;
 }
 
-export interface MsgCreateOrderResponse {}
+export interface MsgCreateOrderResponse {
+  orderId: string;
+}
 
 export interface MsgEditOrder {
   creator: string;
@@ -42,6 +45,15 @@ export interface MsgEditOrder {
 }
 
 export interface MsgEditOrderResponse {}
+
+export interface EditOrders {
+  editOrders: MsgEditOrder[];
+}
+
+export interface EditOrdersForMarket {
+  marketId: string;
+  editOrders: MsgEditOrder[];
+}
 
 export interface MsgCancelOrder {
   creator: string;
@@ -225,6 +237,7 @@ const baseMsgCreateOrder: object = {
   referralAddress: "",
   referralCommission: 0,
   referralKickback: 0,
+  isUseBestPrice: false,
 };
 
 export const MsgCreateOrder = {
@@ -273,6 +286,9 @@ export const MsgCreateOrder = {
     }
     if (message.referralKickback !== 0) {
       writer.uint32(112).uint32(message.referralKickback);
+    }
+    if (message.isUseBestPrice === true) {
+      writer.uint32(120).bool(message.isUseBestPrice);
     }
     return writer;
   },
@@ -325,6 +341,9 @@ export const MsgCreateOrder = {
           break;
         case 14:
           message.referralKickback = reader.uint32();
+          break;
+        case 15:
+          message.isUseBestPrice = reader.bool();
           break;
         default:
           reader.skipType(tag & 7);
@@ -393,6 +412,10 @@ export const MsgCreateOrder = {
       object.referralKickback !== undefined && object.referralKickback !== null
         ? Number(object.referralKickback)
         : 0;
+    message.isUseBestPrice =
+      object.isUseBestPrice !== undefined && object.isUseBestPrice !== null
+        ? Boolean(object.isUseBestPrice)
+        : false;
     return message;
   },
 
@@ -418,6 +441,8 @@ export const MsgCreateOrder = {
       (obj.referralCommission = message.referralCommission);
     message.referralKickback !== undefined &&
       (obj.referralKickback = message.referralKickback);
+    message.isUseBestPrice !== undefined &&
+      (obj.isUseBestPrice = message.isUseBestPrice);
     return obj;
   },
 
@@ -437,17 +462,21 @@ export const MsgCreateOrder = {
     message.referralAddress = object.referralAddress ?? "";
     message.referralCommission = object.referralCommission ?? 0;
     message.referralKickback = object.referralKickback ?? 0;
+    message.isUseBestPrice = object.isUseBestPrice ?? false;
     return message;
   },
 };
 
-const baseMsgCreateOrderResponse: object = {};
+const baseMsgCreateOrderResponse: object = { orderId: "" };
 
 export const MsgCreateOrderResponse = {
   encode(
-    _: MsgCreateOrderResponse,
+    message: MsgCreateOrderResponse,
     writer: _m0.Writer = _m0.Writer.create()
   ): _m0.Writer {
+    if (message.orderId !== "") {
+      writer.uint32(10).string(message.orderId);
+    }
     return writer;
   },
 
@@ -461,6 +490,9 @@ export const MsgCreateOrderResponse = {
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
+        case 1:
+          message.orderId = reader.string();
+          break;
         default:
           reader.skipType(tag & 7);
           break;
@@ -469,18 +501,26 @@ export const MsgCreateOrderResponse = {
     return message;
   },
 
-  fromJSON(_: any): MsgCreateOrderResponse {
+  fromJSON(object: any): MsgCreateOrderResponse {
     const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+    message.orderId =
+      object.orderId !== undefined && object.orderId !== null
+        ? String(object.orderId)
+        : "";
     return message;
   },
 
-  toJSON(_: MsgCreateOrderResponse): unknown {
+  toJSON(message: MsgCreateOrderResponse): unknown {
     const obj: any = {};
+    message.orderId !== undefined && (obj.orderId = message.orderId);
     return obj;
   },
 
-  fromPartial(_: DeepPartial<MsgCreateOrderResponse>): MsgCreateOrderResponse {
+  fromPartial(
+    object: DeepPartial<MsgCreateOrderResponse>
+  ): MsgCreateOrderResponse {
     const message = { ...baseMsgCreateOrderResponse } as MsgCreateOrderResponse;
+    message.orderId = object.orderId ?? "";
     return message;
   },
 };
@@ -630,6 +670,140 @@ export const MsgEditOrderResponse = {
 
   fromPartial(_: DeepPartial<MsgEditOrderResponse>): MsgEditOrderResponse {
     const message = { ...baseMsgEditOrderResponse } as MsgEditOrderResponse;
+    return message;
+  },
+};
+
+const baseEditOrders: object = {};
+
+export const EditOrders = {
+  encode(
+    message: EditOrders,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    for (const v of message.editOrders) {
+      MsgEditOrder.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): EditOrders {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseEditOrders } as EditOrders;
+    message.editOrders = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.editOrders.push(MsgEditOrder.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EditOrders {
+    const message = { ...baseEditOrders } as EditOrders;
+    message.editOrders = (object.editOrders ?? []).map((e: any) =>
+      MsgEditOrder.fromJSON(e)
+    );
+    return message;
+  },
+
+  toJSON(message: EditOrders): unknown {
+    const obj: any = {};
+    if (message.editOrders) {
+      obj.editOrders = message.editOrders.map((e) =>
+        e ? MsgEditOrder.toJSON(e) : undefined
+      );
+    } else {
+      obj.editOrders = [];
+    }
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<EditOrders>): EditOrders {
+    const message = { ...baseEditOrders } as EditOrders;
+    message.editOrders = (object.editOrders ?? []).map((e) =>
+      MsgEditOrder.fromPartial(e)
+    );
+    return message;
+  },
+};
+
+const baseEditOrdersForMarket: object = { marketId: "" };
+
+export const EditOrdersForMarket = {
+  encode(
+    message: EditOrdersForMarket,
+    writer: _m0.Writer = _m0.Writer.create()
+  ): _m0.Writer {
+    if (message.marketId !== "") {
+      writer.uint32(10).string(message.marketId);
+    }
+    for (const v of message.editOrders) {
+      MsgEditOrder.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): EditOrdersForMarket {
+    const reader = input instanceof _m0.Reader ? input : new _m0.Reader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseEditOrdersForMarket } as EditOrdersForMarket;
+    message.editOrders = [];
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.marketId = reader.string();
+          break;
+        case 2:
+          message.editOrders.push(MsgEditOrder.decode(reader, reader.uint32()));
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): EditOrdersForMarket {
+    const message = { ...baseEditOrdersForMarket } as EditOrdersForMarket;
+    message.marketId =
+      object.marketId !== undefined && object.marketId !== null
+        ? String(object.marketId)
+        : "";
+    message.editOrders = (object.editOrders ?? []).map((e: any) =>
+      MsgEditOrder.fromJSON(e)
+    );
+    return message;
+  },
+
+  toJSON(message: EditOrdersForMarket): unknown {
+    const obj: any = {};
+    message.marketId !== undefined && (obj.marketId = message.marketId);
+    if (message.editOrders) {
+      obj.editOrders = message.editOrders.map((e) =>
+        e ? MsgEditOrder.toJSON(e) : undefined
+      );
+    } else {
+      obj.editOrders = [];
+    }
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<EditOrdersForMarket>): EditOrdersForMarket {
+    const message = { ...baseEditOrdersForMarket } as EditOrdersForMarket;
+    message.marketId = object.marketId ?? "";
+    message.editOrders = (object.editOrders ?? []).map((e) =>
+      MsgEditOrder.fromPartial(e)
+    );
     return message;
   },
 };
