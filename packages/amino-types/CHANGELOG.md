@@ -1,5 +1,13 @@
 # @demex-sdk/amino-types
 
+## 0.0.11
+
+### Patch Changes
+
+- update v2.64 codecs
+- Updated dependencies
+  - @demex-sdk/codecs@0.0.11
+
 ## 0.0.10
 
 ### Patch Changes
