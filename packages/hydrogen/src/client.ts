@@ -1,17 +1,19 @@
+import { baseTransformResponse, createFetchClient } from "@demex-sdk/core";
 import qs from "query-string";
 import { GetFeeQuoteResponse, GetRelaysRequest, GetRelaysResponse, GetTransfersRequest, GetTransfersResponse, PaginatedResult } from "./types";
-import { createFetchClient, baseTransformResponse } from "@demex-sdk/core";
 
 const transformDate = (result: any, key: string) => {
   if (!(key in result) || !result[key] || typeof result[key] !== "string") return result;
-  result[key] = new Date(result[key]);
+  const value = new Date(result[key]);
+  if (isNaN(value as unknown as number)) return result;
+  result[key] = value;
   return result;
 }
 
 const createHydrogenClient = (baseUrl: string) => createFetchClient(baseUrl, (builder) => ({
   relays: builder.get({
     query: (request: GetRelaysRequest = {}) => ({
-      path: `relays?${qs.stringify({
+      path: `/relays?${qs.stringify({
         ...request,
         include_tx: true,
       })}`,
@@ -20,18 +22,18 @@ const createHydrogenClient = (baseUrl: string) => createFetchClient(baseUrl, (bu
   }),
   feeQuote: builder.get({
     query: (denom: string, feeDenoms: string[] = []) => {
+      const path = `fee_quote?token_denom=${denom}`;
       const hasFeeDenoms = (feeDenoms.length ?? 0) > 0;
-      return {
-        path: `fee_quote?token_denom=${denom}`,
-        method: hasFeeDenoms ? "post" : "get",
-        ...hasFeeDenoms && {
+      if (!hasFeeDenoms) {
+        return { path };
+      } else {
+        return {
+          path, method: "post",
           init: {
-            headers: {
-              "content-type": "application/json",
-            },
+            headers: { "content-type": "application/json" },
             body: JSON.stringify({ fee_denoms: feeDenoms }),
           },
-        }
+        };
       }
     },
     transformResponse: (result) => {
@@ -42,9 +44,17 @@ const createHydrogenClient = (baseUrl: string) => createFetchClient(baseUrl, (bu
   }),
   transferPayloads: builder.get({
     query: (params: GetTransfersRequest = {}) => ({
-      path: `transfer_payloads?${qs.stringify(params)}`,
+      path: `/transfer_payloads?${qs.stringify(params)}`,
     }),
-    transformResponse: baseTransformResponse<GetTransfersResponse>
+    transformResponse: (result) => {
+      if (Array.isArray(result?.data)) {
+        result.data.forEach((item: data) => {
+          transformDate(item, "created_at");
+          transformDate(item, "updated_at");
+        });
+      }
+      return result as GetTransfersResponse;
+    }
   }),
 }));
 

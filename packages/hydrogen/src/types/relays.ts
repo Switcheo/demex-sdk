@@ -21,6 +21,6 @@ export interface GetRelaysResponse {
   destination_event_index: number;
   source_broadcast_status: string;
   bridging_broadcast_status: string;
-  start_block_time: string;
-  end_block_time: string;
+  start_block_time: number;
+  end_block_time: number;
 }
