@@ -1,5 +1,11 @@
 # @demex-sdk/codecs
 
+## 0.1.0
+
+### Minor Changes
+
+- update v2.65 codecs
+
 ## 0.0.11
 
 ### Patch Changes

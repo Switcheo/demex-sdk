@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/websocket",
-  "version": "0.0.11",
+  "version": "0.1.0",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
@@ -13,7 +13,7 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
-    "@demex-sdk/codecs": "0.0.11",
+    "@demex-sdk/codecs": "0.1.0",
     "tslib": "^2.6.2",
     "typescript": "^5.7.2",
     "ws": "^8.18.0"

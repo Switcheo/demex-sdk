@@ -1,5 +1,16 @@
 # @demex-sdk/hydrogen
 
+## 0.1.0
+
+### Minor Changes
+
+- update v2.65 codecs
+
+### Patch Changes
+
+- Updated dependencies
+  - @demex-sdk/core@0.1.0
+
 ## 0.0.12
 
 ### Patch Changes
