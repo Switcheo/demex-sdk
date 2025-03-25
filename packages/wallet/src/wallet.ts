@@ -1,14 +1,14 @@
 import { rawSecp256k1PubkeyToRawAddress } from "@cosmjs/amino";
-import { keccak256, Slip10, Slip10Curve, stringToPath } from "@cosmjs/crypto";
+import { Slip10, Slip10Curve, stringToPath } from "@cosmjs/crypto";
 import { fromBech32, toBech32, toHex } from "@cosmjs/encoding";
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { Account, accountFromAny, DeliverTxResponse, isDeliverTxFailure, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
-import { registry, Tx, TxTypes } from "@demex-sdk/codecs";
-import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
+import { Cosmos, registry, TxTypes } from "@demex-sdk/codecs";
 import { MsgMergeAccount } from "@demex-sdk/codecs/data/Switcheo/carbon/evmmerge/tx";
+import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
 import { BIP44Path, BN_ZERO, bnOrZero, callIgnoreError, DefaultGas, defaultNetworkConfig, DemexQueryClient, Network, NetworkConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, stringOrBufferToBuffer, TxDefaultGasDenom, TxGasCostTypeDefaultKey } from "@demex-sdk/core";
 import BigNumber from "bignumber.js";
 import * as Bip39 from "bip39";
@@ -24,6 +24,7 @@ import { AccountAddresses, findMessageByTypeUrl, getDefaultSignerAddress, getDef
 export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
 
 type RequireOnly<T, K extends keyof T> = Partial<T> & Required<Pick<T, K>>;
+
 export interface ConnectWalletParams {
   mnemonic: string
   hdPath: string
@@ -55,6 +56,9 @@ export interface BaseDemexWalletInitOpts {
    */
   providerAgent?: string
 
+  triggerMerge?: boolean
+  grantee?: Grantee
+
   tmClient?: Tendermint37Client
   queryClient?: DemexQueryClient
 
@@ -64,8 +68,6 @@ export interface BaseDemexWalletInitOpts {
   txDefaultBroadCastMode?: BroadcastTxMode
   disableRetryOnSequenceError?: boolean
   defaultTimeoutBlocks?: number
-
-  triggerMerge?: boolean
 
   /** Optional callback that will be called before signing is requested/executed. */
   onRequestSign?: OnRequestSignCallback;
@@ -87,6 +89,10 @@ export class DemexWallet {
 
   public readonly networkConfig: NetworkConfig
 
+  // wallet signer/account info 
+  public readonly signer: DemexSigner
+  public readonly providerAgent?: string
+
   public readonly publicKey: Buffer
 
   public readonly bech32Address: string
@@ -94,12 +100,14 @@ export class DemexWallet {
   public readonly evmHexAddress: string
   public readonly evmBech32Address: string
 
-  public readonly signer: DemexSigner
   public grantee: Grantee | null = null;
   public triggerMerge: boolean | null = null;
 
   public txDefaultBroadCastMode?: BroadcastTxMode
-  public disableRetryOnSequenceError: boolean = false
+  public disableRetryOnSequenceError: boolean
+
+  public get network() { return this.networkConfig.network }
+  public get accountMerged() { return false }
 
   // tx queue management
   private txSignManager: QueueManager<SignTxRequest>
@@ -128,12 +136,18 @@ export class DemexWallet {
 
     this.initOpts = opts;
     this.signer = opts.signer;
+    this.providerAgent = opts.providerAgent;
+
+    this.grantee = opts.grantee ?? null
+    this.triggerMerge = opts.triggerMerge ?? null
+
     this.txDefaultBroadCastMode = opts.txDefaultBroadCastMode;
+    this.disableRetryOnSequenceError = opts.disableRetryOnSequenceError ?? false;
     this.defaultTimeoutBlocks = opts.defaultTimeoutBlocks ?? DEFAULT_TX_TIMEOUT_BLOCKS;
+
     this._tmClient = opts.tmClient;
     this._queryClient = opts.queryClient;
     this.walletAccounts = {};
-    this.triggerMerge = opts.triggerMerge ?? null
 
     this.onRequestSign = opts.onRequestSign;
     this.onSignComplete = opts.onSignComplete;
@@ -235,7 +249,7 @@ export class DemexWallet {
   * Returns the updated wallet account info
   */
   public async reloadAccount(bech32Address: string, evmBech32Address?: string) {
-    if(!this.validateAccountAddresses({ bech32Address, evmBech32Address })) {
+    if (!this.validateAccountAddresses({ bech32Address, evmBech32Address })) {
       throw new WalletError(`invalid addresses input. only wallet or grantee addresses can be reloaded`)
     }
     const info = await this.getAccountInfo(bech32Address, evmBech32Address);
@@ -433,7 +447,7 @@ export class DemexWallet {
     messages: readonly EncodeObject[],
     signingClient: SigningStargateClient,
     opts: SignTxOpts,
-  ): Promise<Tx.TxRaw> {
+  ): Promise<Cosmos.Tx.TxRaw> {
     const { signer, tx } = opts;
     const { memo = "", fee, feeDenom, feeGranter, timeoutHeight = 0 } = tx ?? {};
     const { sequence = 0, accountNumber = 0 } = signer ?? {};
@@ -579,9 +593,9 @@ export class DemexWallet {
    * broadcast TX and wait for block confirmation
    *
    */
-  async broadcastTx(txRaw: Tx.TxRaw, opts: BroadcastTxOpts = {}): Promise<DeliverTxResponse> {
+  async broadcastTx(txRaw: Cosmos.Tx.TxRaw, opts: BroadcastTxOpts = {}): Promise<DeliverTxResponse> {
     const { pollIntervalMs = 3_000, timeoutMs = 60_000 } = opts;
-    const tx = Tx.TxRaw.encode(txRaw).finish();
+    const tx = Cosmos.Tx.TxRaw.encode(txRaw).finish();
     const carbonClient = await this.getSigningStargateClient();
     const response = await carbonClient.broadcastTx(tx, timeoutMs, pollIntervalMs);
     if (isDeliverTxFailure(response)) throw new DemexBroadcastError(`[${response.code}] ${response.rawLog}`, ErrorType.BlockFail, response)
@@ -592,8 +606,8 @@ export class DemexWallet {
    * broadcast TX to mempool but doesnt wait for block confirmation
    *
    */
-  async broadcastTxToMempoolWithoutConfirm(txRaw: Tx.TxRaw): Promise<BroadcastTxSyncResponse> {
-    const tx = Tx.TxRaw.encode(txRaw).finish();
+  async broadcastTxToMempoolWithoutConfirm(txRaw: Cosmos.Tx.TxRaw): Promise<BroadcastTxSyncResponse> {
+    const tx = Cosmos.Tx.TxRaw.encode(txRaw).finish();
     const tmClient = await this.getTmClient();
     const response = await tmClient.broadcastTxSync({ tx });
     if (!broadcastTxSyncSuccess(response)) throw new DemexBroadcastError(`[${response.code}] ${response.log}`, ErrorType.BroadcastFail, response);
@@ -604,8 +618,8 @@ export class DemexWallet {
    * broadcast TX but doesnt wait for block confirmation nor submission to mempool
    *
    */
-  async broadcastTxWithoutConfirm(txRaw: Tx.TxRaw): Promise<BroadcastTxAsyncResponse> {
-    const tx = Tx.TxRaw.encode(txRaw).finish();
+  async broadcastTxWithoutConfirm(txRaw: Cosmos.Tx.TxRaw): Promise<BroadcastTxAsyncResponse> {
+    const tx = Cosmos.Tx.TxRaw.encode(txRaw).finish();
     const tmClient = await this.getTmClient();
     return tmClient.broadcastTxAsync({ tx });
   }

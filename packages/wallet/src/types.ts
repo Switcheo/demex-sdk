@@ -1,7 +1,7 @@
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { Account, DeliverTxResponse, SignerData, SigningStargateClient, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, BroadcastTxSyncResponse, Method } from "@cosmjs/tendermint-rpc";
-import { Tx } from "@demex-sdk/codecs";
+import { Cosmos } from "@demex-sdk/codecs";
 import { DemexSigner } from "./signer";
 import { WalletError } from "./constant";
 
@@ -34,7 +34,7 @@ export interface SigningData extends SignTxRequest {
 
 export interface BroadcastTxRequest extends SigningData {
   signerAddress: string;
-  signedTx: Tx.TxRaw;
+  signedTx: Cosmos.Tx.TxRaw;
 }
 
 export interface TxOverrides {
