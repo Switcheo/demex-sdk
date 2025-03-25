@@ -3,3 +3,9 @@ export class PackageError extends Error {
     super(`[@demex-sdk/${name}]: ${msg}`);
   }
 }
+
+export class CoreError extends PackageError {
+  constructor(msg: string) {
+    super('core', msg);
+  }
+}

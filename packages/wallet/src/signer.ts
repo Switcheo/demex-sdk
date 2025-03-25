@@ -1,4 +1,5 @@
 import { AminoSignResponse, makeSignDoc as makeSignDocAmino, OfflineAminoSigner, Secp256k1Wallet, StdSignDoc } from "@cosmjs/amino";
+import { toBech32 } from "@cosmjs/encoding";
 import { LedgerSigner } from "@cosmjs/ledger-amino";
 import { AccountData, DirectSecp256k1Wallet, DirectSignResponse, makeSignDoc as makeSignDocProto, OfflineDirectSigner, TxBodyEncodeObject } from "@cosmjs/proto-signing";
 import { StdFee } from "@cosmjs/stargate";
@@ -9,7 +10,8 @@ import { constructAdr36SignDoc, evmChainIds } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
 import { WalletError } from "./constant";
 import { constructEIP712Tx, EIP712Tx, parseChainId } from "./eip712";
-import { DemexSignerTypes, getEvmHexAddress } from "./utils";
+import { getEvmHexAddress } from "./utils";
+
 export interface EIP712Signer {
   getEvmChainId: () => Promise<string>;
   signEIP712: (hexAddress: string, doc: EIP712Tx) => Promise<string>;
@@ -174,7 +176,50 @@ export class DemexNonSigner implements DemexDirectSigner {
   }
 }
 
+
 // Uses amino because ledger does not work with protobuf yet
 export class DemexLedgerSigner extends LedgerSigner {
   type = DemexSignerTypes.Ledger;
+}
+
+export enum DemexSignerTypes {
+  Ledger = 'Ledger',
+  PrivateKey = 'PrivateKey',
+  PublicKey = 'PublicKey',
+  EIP712 = 'EIP712',
+}
+
+export interface AccountAddresses {
+  bech32Address: string;
+  evmBech32Address?: string;
+}
+
+export const getDefaultSignerAddress = async (signer: DemexSigner) => {
+  const account = await getDefaultSignerAccount(signer);
+  return account.address;
+}
+
+export const getDefaultSignerAccount = async (signer: DemexSigner) => {
+  const [account] = await signer.getAccounts();
+  if (!account) throw new WalletError('failed to get account from signer')
+  return account
+}
+
+export const getDefaultSignerEvmAddress = async (signer: DemexSigner, bech32Prefix: string) => {
+  const account = await getDefaultSignerAccount(signer);
+  const hexAddress = getEvmHexAddress(account.pubkey);
+  const evmAddressBytes = Buffer.from(hexAddress.slice(2), "hex");
+  return toBech32(bech32Prefix, evmAddressBytes);
+
+}
+
+export const getDefaultSignerAddresses = async (signer: DemexSigner, bech32Prefix: string): Promise<AccountAddresses> => {
+  return {
+    bech32Address: await getDefaultSignerAddress(signer),
+    evmBech32Address: await getDefaultSignerEvmAddress(signer, bech32Prefix),
+  }
+}
+
+export function isDemexEIP712Signer(signer: DemexSigner): boolean {
+  return signer.type === DemexSignerTypes.EIP712
 }

@@ -2,8 +2,8 @@ import { StdSignDoc } from "@cosmjs/amino";
 import { AminoMsg } from "@cosmjs/amino/build";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { EIP712Types } from "@demex-sdk/codecs";
-import { WalletError } from "./constant";
 import { capitalize } from "@demex-sdk/core";
+import { WalletError } from "./constant";
 export interface TypedDataField {
   name: string;
   type: string;
