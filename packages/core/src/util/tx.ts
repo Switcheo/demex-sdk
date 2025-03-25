@@ -92,4 +92,4 @@ export namespace QueueManager {
     triggerDelay?: number;
     maxDelayThreshold?: number;
   }
-}
+};

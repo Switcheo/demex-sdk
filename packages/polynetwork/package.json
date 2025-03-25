@@ -13,6 +13,14 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
+    "@cityofzion/neon-api": "^4.9.0",
+    "@cityofzion/neon-core": "^4.9.0",
+    "@cityofzion/neon-core-next": "npm:@cityofzion/neon-core@^5.0.0",
+    "@cityofzion/neon-js": "^4.9.0",
+    "@demex-sdk/core": "0.0.7",
+    "@zilliqa-js/zilliqa": "^2.2.0",
+    "neo-dapi": "^2.0.4",
+    "neo3-dapi": "^1.0.1",
     "tslib": "^2.6.2"
   },
   "exports": {
