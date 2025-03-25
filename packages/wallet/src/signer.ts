@@ -8,9 +8,9 @@ import { registry } from "@demex-sdk/codecs";
 import { AuthInfo, TxBody } from "@demex-sdk/codecs/data/cosmos/tx/v1beta1/tx";
 import { constructAdr36SignDoc, evmChainIds } from "@demex-sdk/core";
 import { SignDoc } from "cosmjs-types/cosmos/tx/v1beta1/tx";
-import { WalletError } from "./constant";
-import { constructEIP712Tx, EIP712Tx, parseChainId } from "./eip712";
-import { getEvmHexAddress } from "./utils";
+import { WalletError } from "./errors";
+import { getEvmHexAddress } from "./address";
+import { constructEIP712Tx, EIP712Tx } from "./eip712";
 
 export interface EIP712Signer {
   getEvmChainId: () => Promise<string>;
@@ -223,3 +223,20 @@ export const getDefaultSignerAddresses = async (signer: DemexSigner, bech32Prefi
 export function isDemexEIP712Signer(signer: DemexSigner): boolean {
   return signer.type === DemexSignerTypes.EIP712
 }
+
+export function parseChainId(evmChainId?: string): string {
+  if (!evmChainId) {
+    throw new WalletError("chain-id is undefined")
+  }
+  const chainId = evmChainId.trim()
+
+  if (chainId.length > 48) {
+    throw new WalletError(`chain-id '${chainId}' cannot exceed 48 chars`)
+  }
+
+  if (!chainId.match(/^[a-z]+_\d+-\d+$/)) {
+    throw new WalletError(`chain-id '${chainId}' does not conform to the required format`)
+  }
+  return chainId.split("_")[1]?.split("-")[0] ?? ''
+}
+

@@ -6,14 +6,14 @@ import { Account, accountFromAny, SignerData, SigningStargateClient } from "@cos
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { Cosmos, registry } from "@demex-sdk/codecs";
-import { BIP44Path, DefaultGas, DemexQueryClient, isAccountNotFoundError, stringOrBufferToBuffer } from "@demex-sdk/core";
+import { BIP44Path, ClientProvider, DefaultGas, DemexQueryClient, isAccountNotFoundError, Network, NetworkConfig, overrideConfig, stringOrBufferToBuffer } from "@demex-sdk/core";
 import * as Bip39 from "bip39";
 import elliptic from "elliptic";
-import { WalletError } from "./constant";
+import { DemexEIP712SigningClient } from "./eip712signingClient";
+import { WalletError } from "./errors";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
-import { DemexEIP712SigningClient } from "./signingClient/eip712";
 import { SignTxOpts, SignTxRequest, SignTxResult, WalletAccount } from "./types";
-import { getEvmHexAddress } from "./utils";
+import { getEvmHexAddress } from "./address";
 
 const DEFAULT_STD_FEE: StdFee = {
   amount: [],
@@ -54,19 +54,19 @@ export interface BaseDemexWalletInitOpts {
   role?: string
 
   triggerMerge?: boolean
+
+  tmClient?: Tendermint37Client
+  queryClient?: DemexQueryClient
+
+  networkConfig?: NetworkConfig
 }
-export type DemexWalletConnectOpts = BaseDemexWalletInitOpts & ConnectWalletOpts;
-export type DemexWalletInitOpts = Partial<DemexWalletConnectOpts> & {
+export type DemexWalletConnectOpts = BaseDemexWalletInitOpts & Partial<ConnectWalletOpts>;
+export type DemexWalletInitOpts = BaseDemexWalletInitOpts & ConnectWalletOpts & {
   signer: DemexSigner
-
-  tmClient: Tendermint37Client
-  queryClient: DemexQueryClient
-  bech32Prefix: string
-  chainId: string
 }
 
 
-export class DemexWallet {
+export class DemexWallet extends ClientProvider {
   public readonly initOpts: DemexWalletInitOpts
 
   // wallet signer/account info 
@@ -77,7 +77,6 @@ export class DemexWallet {
 
   public readonly publicKey: Buffer
 
-  public readonly chainId: string
   public readonly bech32Address: string
   public readonly hexAddress: string
   public readonly evmHexAddress: string
@@ -88,21 +87,27 @@ export class DemexWallet {
   // network state caches
   private account?: WalletAccount
 
-  private readonly tmClient: Tendermint37Client
-  private readonly queryClient: DemexQueryClient
+  private _chainId?: string
   private _signingClient?: SigningStargateClient
 
   public constructor(opts: DemexWalletInitOpts) {
-
+    const network = opts.networkConfig?.network ?? Network.MainNet;
+    const networkConfig = overrideConfig(network, opts.networkConfig);
+    super({
+      networkConfig,
+      tmClient: opts.tmClient,
+      queryClient: opts.queryClient,
+    });
     this.initOpts = opts;
+
     this.signer = opts.signer;
     this.role = opts.role;
     this.providerAgent = opts.providerAgent;
-    this.tmClient = opts.tmClient;
-    this.queryClient = opts.queryClient;
-    this.chainId = opts.chainId;
+    this._tmClient = opts.tmClient;
+    this._queryClient = opts.queryClient;
+    this._chainId = this.networkConfig.chainId;
 
-    const bech32Prefix = opts.bech32Prefix;
+    const bech32Prefix = this.networkConfig.bech32Prefix;
 
     if (opts.bech32Address) {
       // address (view-only) connection
@@ -175,7 +180,8 @@ export class DemexWallet {
   }
 
   private async queryMergedAccountStatus(): Promise<boolean> {
-    const response = await this.queryClient.evmmerge.MappedAddress({ address: this.bech32Address });
+    const queryClient = await this.getQueryClient();
+    const response = await queryClient.evmmerge.MappedAddress({ address: this.bech32Address });
     return !!response?.mappedAddress;
   }
 
@@ -242,7 +248,7 @@ export class DemexWallet {
     const { memo = "", fee = DEFAULT_STD_FEE, timeoutHeight = 0 } = tx ?? {};
     const { sequence = 0, accountNumber = 0 } = signer ?? {};
 
-    const chainId = this.chainId;
+    const chainId = await this.getChainId();
     const signerData: SignerData = {
       accountNumber,
       chainId,
@@ -254,21 +260,29 @@ export class DemexWallet {
 
   private async getAccount(queryAddress: string): Promise<Account | undefined> {
     try {
-      const result = await this.queryClient.auth.Account({ address: queryAddress });
+      const queryClient = await this.getQueryClient();
+      const result = await queryClient.auth.Account({ address: queryAddress });
       if (result.account) return accountFromAny(result.account);
     } catch (error) {
       if (!isAccountNotFoundError(error, queryAddress)) throw error
     }
   }
 
+  public async getChainId(): Promise<string> {
+    if (this._chainId) return this._chainId;
+    const queryClient = await this.getQueryClient();
+    this._chainId = await queryClient.chain.getChainId();
+    return this._chainId;
+  }
+
   public async getSigningStargateClient(): Promise<SigningStargateClient> {
     if (this._signingClient) return this._signingClient;
-    const tmClient = this.tmClient;
+    const tmClient = await this.getTmClient();
     const signingClient = isDemexEIP712Signer(this.signer)
       ? await DemexEIP712SigningClient.createWithSigner(tmClient, this.signer as DemexEIP712Signer, { registry, aminoTypes: AminoTypesMap })
       : await SigningStargateClient.createWithSigner(tmClient, this.signer, { registry, aminoTypes: AminoTypesMap });
     this._signingClient = signingClient
-    return this._signingClient;
+    return this._signingClient!;
   }
 
   public clone(opts: Partial<DemexWalletInitOpts> = {}) {
@@ -282,11 +296,12 @@ export class DemexWallet {
     });
   }
 
-  public static withPrivateKey(privateKey: string | Buffer, opts: Omit<DemexWalletInitOpts, "signer" | "privateKey">) {
+  public static withPrivateKey(privateKey: string | Buffer, opts: Omit<DemexWalletConnectOpts, "privateKey"> = {}) {
     const privateKeyBuffer = stringOrBufferToBuffer(privateKey);
     if (!privateKeyBuffer || !privateKeyBuffer.length) throw new WalletError("");
 
-    const signer = new DemexPrivateKeySigner(privateKeyBuffer, opts.bech32Prefix);
+    const networkConfig = overrideConfig(opts.networkConfig?.network ?? Network.MainNet, opts.networkConfig);
+    const signer = new DemexPrivateKeySigner(privateKeyBuffer, networkConfig.bech32Prefix);
     return new DemexWallet({
       ...opts,
       privateKey: privateKeyBuffer,
@@ -294,7 +309,7 @@ export class DemexWallet {
     });
   }
 
-  public static withMnemonic(mnemonic: string, hdPath: string | undefined, opts: Omit<DemexWalletInitOpts, "signer" | "mnemonic" | "hdPath">) {
+  public static withMnemonic(mnemonic: string, hdPath?: string, opts: Omit<DemexWalletConnectOpts, "mnemonic" | "hdPath"> = {}) {
     if (!hdPath) hdPath = new BIP44Path(44, 118).generate();
     const seed = Bip39.mnemonicToSeedSync(mnemonic);
     const result = Slip10.derivePath(Slip10Curve.Secp256k1, seed, stringToPath(hdPath));
@@ -305,7 +320,7 @@ export class DemexWallet {
     });
   }
 
-  public static withSigner(signer: DemexSigner, publicKeyBase64: string, opts: Omit<DemexWalletInitOpts, "signer">) {
+  public static withSigner(signer: DemexSigner, publicKeyBase64: string, opts: Omit<DemexWalletConnectOpts, "signer"> = {}) {
     return new DemexWallet({
       ...opts,
       signer,
@@ -313,7 +328,7 @@ export class DemexWallet {
     });
   }
 
-  public static withAddress(bech32Address: string, opts: DemexWalletInitOpts) {
+  public static withAddress(bech32Address: string, opts: DemexWalletConnectOpts = {}) {
     return new DemexWallet({
       ...opts,
       bech32Address,

@@ -77,3 +77,12 @@ export const evmChainIds: Record<string, string> = Object.values(defaultNetworkC
   }),
   {}
 );
+
+
+export const overrideConfig = (network: Network, networkConfig: Partial<NetworkConfig> = {}) => {
+  return {
+    ...defaultNetworkConfig[network],
+    ...networkConfig,
+    network,
+  }
+}

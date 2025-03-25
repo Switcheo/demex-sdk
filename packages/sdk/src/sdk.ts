@@ -1,9 +1,9 @@
 import { EncodeObject } from "@cosmjs/proto-signing";
-import { DeliverTxResponse, isDeliverTxFailure, StargateClient, StdFee } from "@cosmjs/stargate";
+import { DeliverTxResponse, isDeliverTxFailure, StdFee } from "@cosmjs/stargate";
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
-import { BN_ZERO, bnOrZero, callIgnoreError, Cosmos, DefaultGas, defaultNetworkConfig, Demex, DemexQueryClient, isNonceMismatchError, Mutex, Network, NetworkConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, TxDefaultGasDenom, TxGasCostTypeDefaultKey, TxTypes } from "@demex-sdk/core";
+import { BN_ZERO, bnOrZero, callIgnoreError, ClientProvider, Cosmos, DefaultGas, Demex, DemexQueryClient, isNonceMismatchError, Network, NetworkConfig, overrideConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, TxDefaultGasDenom, TxGasCostTypeDefaultKey, TxTypes } from "@demex-sdk/core";
 import { DemexWallet, GranteeWallet, SignTxOpts } from "@demex-sdk/wallet";
 import BigNumber from "bignumber.js";
 import { SdkError } from "./constant";
@@ -56,9 +56,8 @@ export interface DemexSDKInitOpts extends BaseDemexSDKInitOpts {
 
 }
 
-export class DemexSDK {
+export class DemexSDK extends ClientProvider {
   public readonly initOpts: DemexSDKInitOpts
-  public readonly networkConfig: NetworkConfig
 
   public get network() { return this.networkConfig.network }
   public get wallet() { return this.getWallet() }
@@ -75,16 +74,8 @@ export class DemexSDK {
   private txDispatchManager: QueueManager<BroadcastTxRequest>
   private defaultTimeoutBlocks: number
 
-  private chainId: string | null = null
   private txGasCosts: Record<string, BigNumber> | null = null
   private txGasPrices: Record<string, BigNumber> | null = null
-
-  // cosmjs rpc clients
-  private _tmClient?: Tendermint37Client
-  private _stargateClient?: StargateClient
-  private _queryClient?: DemexQueryClient
-
-  private _mutexes: Record<string, Mutex> = {};
 
   private onRequestSign?: OnRequestSignCallback;
   private onSignComplete?: OnSignCompleteCallback;
@@ -92,17 +83,19 @@ export class DemexSDK {
   private onBroadcastTxFail?: OnBroadcastTxFailCallback;
 
   constructor(opts: DemexSDKInitOpts = {}) {
-    this.initOpts = opts;
-
     const network = opts.network ?? Network.MainNet;
-    this.networkConfig = DemexSDK.overrideConfig(network, opts.networkConfig);
+    const networkConfig = overrideConfig(network, opts.networkConfig);
+    super({
+      networkConfig,
+      tmClient: opts.tmClient,
+      queryClient: opts.queryClient,
+    });
+
+    this.initOpts = opts;
 
     this.txDefaultBroadCastMode = opts.txDefaultBroadCastMode;
     this.disableRetryOnSequenceError = opts.disableRetryOnSequenceError ?? false;
     this.defaultTimeoutBlocks = opts.defaultTimeoutBlocks ?? DEFAULT_TX_TIMEOUT_BLOCKS;
-
-    this._tmClient = opts.tmClient;
-    this._queryClient = opts.queryClient;
 
     this.triggerMerge = opts.triggerMerge ?? false;
 
@@ -130,6 +123,7 @@ export class DemexSDK {
   public async setGrantee(wallet: GranteeWallet) {
     this.wallets[WalletRole.Grantee] = wallet;
   }
+
   public isGranteeEligible(messages: readonly EncodeObject[]) {
     const wallet = this.getWallet(WalletRole.Grantee);
     if (!wallet) return false;
@@ -417,44 +411,7 @@ export class DemexSDK {
     return await this.getTotalGasCost(msgs);
   }
 
-  public async getTmClient(): Promise<Tendermint37Client> {
-    const release = await (this._mutexes.tmClient ??= new Mutex()).lock();
-    try {
-      if (!this._tmClient)
-        this._tmClient = await Tendermint37Client.connect(this.networkConfig.tmRpcUrl);
-      return this._tmClient;
-    } finally {
-      release();
-    }
-  }
-  public async getStargateClient(): Promise<StargateClient> {
-    const release = await (this._mutexes.stargateClient ??= new Mutex()).lock();
-    try {
-      if (this._stargateClient) return this._stargateClient;
-      const tmClient = await this.getTmClient();
-      this._stargateClient = await StargateClient.create(tmClient);
-      return this._stargateClient;
-    } finally {
-      release();
-    }
-  }
-  public async getQueryClient(): Promise<DemexQueryClient> {
-    const release = await (this._mutexes.queryClient ??= new Mutex()).lock();
-    try {
-      if (this._queryClient) return this._queryClient;
-      const tmClient = await this.getTmClient();
-      this._queryClient = await DemexQueryClient.instance({ tmClient });
-      return this._queryClient;
-    } finally {
-      release();
-    }
-  }
-
-  public static overrideConfig(network: Network, networkConfig: Partial<NetworkConfig> = {}) {
-    return {
-      ...defaultNetworkConfig[network],
-      ...networkConfig,
-      network,
-    }
+  public static instance(opts: DemexSDKInitOpts = {}) {
+    return new DemexSDK(opts);
   }
 }
