@@ -11,7 +11,7 @@
     "codecs:copy": "cp ~/go/src/github.com/Switcheo/carbon/gen/proto-ts.tar.gz .",
     "codecs:update": "sh scripts/update-codecs.sh",
     "codecs:register": "yarn codecs:reset && sh scripts/generate-registry.sh",
-    "codecs:reset": "find . -type f -name 'export.ts' -delete && rm -f src/*-models.ts && rm -f src/index.ts"
+    "codecs:reset": "find . -type f -name 'export.ts' -delete && rm -f src/*-models.ts && rm -f src/query-clients.ts && rm -f src/index.ts"
   },
   "main": "./dist-cjs/index.js",
   "module": "./dist-es/index.js",

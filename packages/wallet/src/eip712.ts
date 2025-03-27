@@ -2,8 +2,8 @@ import { StdSignDoc } from "@cosmjs/amino";
 import { AminoMsg } from "@cosmjs/amino/build";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { EIP712Types } from "@demex-sdk/codecs";
-import { WalletError } from "./constant";
 import { capitalize } from "@demex-sdk/core";
+
 export interface TypedDataField {
   name: string;
   type: string;
@@ -307,23 +307,6 @@ function convertMsgs(msgs: readonly AminoMsg[]): any {
     convertedMsgs[`msg${index}`] = msg
   })
   return convertedMsgs
-}
-
-
-export function parseChainId(evmChainId?: string): string {
-  if (!evmChainId) {
-    throw new WalletError("chain-id is undefined")
-  }
-  const chainId = evmChainId.trim()
-
-  if (chainId.length > 48) {
-    throw new WalletError(`chain-id '${chainId}' cannot exceed 48 chars`)
-  }
-
-  if (!chainId.match(/^[a-z]+_\d+-\d+$/)) {
-    throw new WalletError(`chain-id '${chainId}' does not conform to the required format`)
-  }
-  return chainId.split("_")[1]?.split("-")[0] ?? ''
 }
 
 

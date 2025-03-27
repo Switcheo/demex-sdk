@@ -9,8 +9,8 @@ import { Any, TxTypes } from "@demex-sdk/codecs";
 import { SignMode } from "@demex-sdk/codecs/data/cosmos/tx/signing/v1beta1/signing";
 import { TxRaw } from "@demex-sdk/codecs/data/cosmos/tx/v1beta1/tx";
 import { PubKey } from "@demex-sdk/codecs/data/ethermint/crypto/v1/ethsecp256k1/keys";
-import { WalletError } from "../constant";
-import { DemexEIP712Signer } from "../signer";
+import { WalletError } from "./errors";
+import { DemexEIP712Signer } from "./signer";
 
 export class DemexEIP712SigningClient extends SigningStargateClient {
   private eip712Signer: DemexEIP712Signer;

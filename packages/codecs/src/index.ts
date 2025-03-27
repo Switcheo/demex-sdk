@@ -36,8 +36,7 @@ import { MsgEthereumTx, MsgEthereumTxResponse, MsgUpdateParams as MsgEvmUpdatePa
 import { Proposal } from "./data/cosmos/gov/v1/gov";
 import { ClientUpdateProposal, UpgradeProposal } from "./data/ibc/core/client/v1/client";
 
-export * from './cosmos-models';
-
+export * as Cosmos from './cosmos-models';
 
 export * as IBC from './ibc-models';
 
@@ -46,6 +45,8 @@ export * as PolyNetwork from './polynetwork-models';
 
 import * as Carbon from './carbon-models';
 export * as Carbon from './carbon-models';
+
+export * as QueryClients from './query-clients';
 
 export const registry = new Registry();
 
@@ -33590,73 +33591,3 @@ export const MsgsOptions: { [index: string]: any } = {
 };
 
 
-// Query Clients
-
-export { QueryClientImpl as MiscQueryClient } from './data/Switcheo/carbon/misc/query';
-export { QueryClientImpl as OrderQueryClient } from './data/Switcheo/carbon/order/query';
-export { QueryClientImpl as CdpQueryClient } from './data/Switcheo/carbon/cdp/query';
-export { QueryClientImpl as HeadersyncQueryClient } from './data/Switcheo/carbon/headersync/query';
-export { QueryClientImpl as BrokerQueryClient } from './data/Switcheo/carbon/broker/query';
-export { QueryClientImpl as DemexFeeQueryClient } from './data/Switcheo/carbon/fee/query';
-export { QueryClientImpl as Erc20QueryClient } from './data/Switcheo/carbon/erc20/query';
-export { QueryClientImpl as EvmmergeQueryClient } from './data/Switcheo/carbon/evmmerge/query';
-export { QueryClientImpl as DemexBankQueryClient } from './data/Switcheo/carbon/bank/query';
-export { QueryClientImpl as BtcxQueryClient } from './data/Switcheo/carbon/btcx/query';
-export { QueryClientImpl as BridgeQueryClient } from './data/Switcheo/carbon/bridge/query';
-export { QueryClientImpl as LiquidationQueryClient } from './data/Switcheo/carbon/liquidation/query';
-export { QueryClientImpl as PositionQueryClient } from './data/Switcheo/carbon/position/query';
-export { QueryClientImpl as OracleQueryClient } from './data/Switcheo/carbon/oracle/query';
-export { QueryClientImpl as OtcQueryClient } from './data/Switcheo/carbon/otc/query';
-export { QueryClientImpl as EvmcontractQueryClient } from './data/Switcheo/carbon/evmcontract/query';
-export { QueryClientImpl as AdminQueryClient } from './data/Switcheo/carbon/admin/query';
-export { QueryClientImpl as CcmQueryClient } from './data/Switcheo/carbon/ccm/query';
-export { QueryClientImpl as MarketstatsQueryClient } from './data/Switcheo/carbon/marketstats/query';
-export { QueryClientImpl as EvmbankQueryClient } from './data/Switcheo/carbon/evmbank/query';
-export { QueryClientImpl as AdlQueryClient } from './data/Switcheo/carbon/adl/query';
-export { QueryClientImpl as CoinQueryClient } from './data/Switcheo/carbon/coin/query';
-export { QueryClientImpl as LeverageQueryClient } from './data/Switcheo/carbon/leverage/query';
-export { QueryClientImpl as ProfileQueryClient } from './data/Switcheo/carbon/profile/query';
-export { QueryClientImpl as SubaccountQueryClient } from './data/Switcheo/carbon/subaccount/query';
-export { QueryClientImpl as BookQueryClient } from './data/Switcheo/carbon/book/query';
-export { QueryClientImpl as MarketQueryClient } from './data/Switcheo/carbon/market/query';
-export { QueryClientImpl as PerpspoolQueryClient } from './data/Switcheo/carbon/perpspool/query';
-export { QueryClientImpl as InflationQueryClient } from './data/Switcheo/carbon/inflation/query';
-export { QueryClientImpl as SequenceQueryClient } from './data/Switcheo/carbon/sequence/query';
-export { QueryClientImpl as LiquiditypoolQueryClient } from './data/Switcheo/carbon/liquiditypool/query';
-export { QueryClientImpl as InsuranceQueryClient } from './data/Switcheo/carbon/insurance/query';
-export { QueryClientImpl as PricingQueryClient } from './data/Switcheo/carbon/pricing/query';
-export { QueryClientImpl as LockproxyQueryClient } from './data/Switcheo/carbon/lockproxy/query';
-export { QueryClientImpl as OraclesvcQueryClient } from './data/oraclesvc/query';
-export { QueryClientImpl as AllianceQueryClient } from './data/alliance/alliance/query';
-export { QueryClientImpl as ConsensusQueryClient } from './data/cosmos/consensus/v1/query';
-export { QueryClientImpl as UpgradeQueryClient } from './data/cosmos/upgrade/v1beta1/query';
-export { QueryClientImpl as FeegrantQueryClient } from './data/cosmos/feegrant/v1beta1/query';
-export { QueryClientImpl as MintQueryClient } from './data/cosmos/mint/v1beta1/query';
-export { QueryClientImpl as AppQueryClient } from './data/cosmos/app/v1alpha1/query';
-export { QueryClientImpl as EvidenceQueryClient } from './data/cosmos/evidence/v1beta1/query';
-export { QueryClientImpl as NftQueryClient } from './data/cosmos/nft/v1beta1/query';
-export { QueryClientImpl as AuthQueryClient } from './data/cosmos/auth/v1beta1/query';
-export { QueryClientImpl as GroupQueryClient } from './data/cosmos/group/v1/query';
-export { QueryClientImpl as BankQueryClient } from './data/cosmos/bank/v1beta1/query';
-export { QueryClientImpl as CircuitQueryClient } from './data/cosmos/circuit/v1/query';
-export { QueryClientImpl as DistributionQueryClient } from './data/cosmos/distribution/v1beta1/query';
-export { QueryClientImpl as StakingQueryClient } from './data/cosmos/staking/v1beta1/query';
-export { QueryClientImpl as ParamsQueryClient } from './data/cosmos/params/v1beta1/query';
-export { QueryClientImpl as AuthzQueryClient } from './data/cosmos/authz/v1beta1/query';
-export { QueryClientImpl as QueryQueryClient } from './data/cosmos/orm/query/v1alpha1/query';
-export { QueryClientImpl as SlashingQueryClient } from './data/cosmos/slashing/v1beta1/query';
-export { QueryClientImpl as AutocliQueryClient } from './data/cosmos/autocli/v1/query';
-export { ServiceClientImpl as TendermintQueryClient } from './data/cosmos/base/tendermint/v1beta1/query';
-export { ServiceClientImpl as NodeQueryClient } from './data/cosmos/base/node/v1beta1/query';
-export { QueryClientImpl as GovV1QueryClient } from './data/cosmos/gov/v1/query';
-export { QueryClientImpl as GovV1beta1QueryClient } from './data/cosmos/gov/v1beta1/query';
-export { QueryClientImpl as ConnectionQueryClient } from './data/ibc/core/connection/v1/query';
-export { QueryClientImpl as ChannelQueryClient } from './data/ibc/core/channel/v1/query';
-export { QueryClientImpl as ClientQueryClient } from './data/ibc/core/client/v1/query';
-export { QueryClientImpl as WasmQueryClient } from './data/ibc/lightclients/wasm/v1/query';
-export { QueryClientImpl as IbcFeeQueryClient } from './data/ibc/applications/fee/v1/query';
-export { QueryClientImpl as TransferQueryClient } from './data/ibc/applications/transfer/v1/query';
-export { QueryClientImpl as HostQueryClient } from './data/ibc/applications/interchain_accounts/host/v1/query';
-export { QueryClientImpl as ControllerQueryClient } from './data/ibc/applications/interchain_accounts/controller/v1/query';
-export { QueryClientImpl as FeemarketQueryClient } from './data/ethermint/feemarket/v1/query';
-export { QueryClientImpl as EvmQueryClient } from './data/ethermint/evm/v1/query';

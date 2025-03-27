@@ -1,5 +1,5 @@
-import elliptic  from "elliptic";
 import { DemexWallet } from "@demex-sdk/wallet";
+import elliptic from "elliptic";
 import { run } from "../utils";
 
 run(async () => {

@@ -1,13 +1,14 @@
-import { SigningStargateClient } from "@cosmjs/stargate";
-import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
-import { registry, TxTypes } from "@demex-sdk/codecs";
-import { DemexSigner } from "./signer";
 import { EncodeObject } from "@cosmjs/proto-signing";
+import { registry, TxTypes } from "@demex-sdk/codecs";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
-import { getDefaultSignerAddress } from "./utils";
+import { DemexSigner } from "./signer";
+import { DemexWallet, DemexWalletInitOpts } from "./wallet";
 
-export interface GranteeInitOpts {
-  mnemonic: string;
+export type GranteeInitOpts = DemexWalletInitOpts & {
+  mnemonic: string
+  signer: DemexSigner
+  expiry: Date
+  authorisedMessages: Set<string>
 }
 
 export interface GranteeUpdateOpts {
@@ -20,19 +21,18 @@ export interface GranteeDetails {
   authorisedMessages: string[];
 }
 
-
 const EXPIRY_BUFFER_PERIOD_SECONDS = 20
 
-export class Grantee {
-  expiry: Date;
-  authorisedMessages: Set<string>;
-  signer: DemexSigner;
-  _signingClient?: SigningStargateClient;
+export class GranteeWallet extends DemexWallet {
+  expiry: Date
+  authorisedMessages: Set<string>
+  signer: DemexSigner
 
-  constructor(signer: DemexSigner, expiry: Date, authorisedMessages: Set<string>) {
-    this.signer = signer;
-    this.expiry = expiry;
-    this.authorisedMessages = authorisedMessages;
+  constructor(opts: GranteeInitOpts) {
+    super(opts);
+    this.signer = opts.signer;
+    this.expiry = opts.expiry;
+    this.authorisedMessages = opts.authorisedMessages;
   }
 
   private hasExpired() {
@@ -55,19 +55,12 @@ export class Grantee {
     return !this.hasExpired();
   }
 
-  public async getSigningClient(tmClient: Tendermint37Client) {
-    if (this._signingClient) return this._signingClient;
-    this._signingClient = await SigningStargateClient.createWithSigner(tmClient, this.signer, { registry });
-    return this._signingClient;
-  }
-
-  public async constructExecMessage(messages: readonly EncodeObject[]): Promise<EncodeObject> {
-    const address = await getDefaultSignerAddress(this.signer);
+  public constructExecMessage(messages: readonly EncodeObject[]): EncodeObject {
     const msgs = messages.map((message) => registry.encodeAsAny({ ...message }))
     return {
       typeUrl: TxTypes.MsgExec,
       value: MsgExec.fromPartial({
-        grantee: address,
+        grantee: this.bech32Address,
         msgs,
       }),
     }

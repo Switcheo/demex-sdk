@@ -12,3 +12,25 @@ export const capitalize = (str: string) => {
 export type MaybePromise<T> = T | PromiseLike<T>;
 export type UnwrapPromise<T> = T extends PromiseLike<infer V> ? V : T;
 
+export const delay = (ms: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+
+export const getErrorMessage = (error: unknown) => {
+  if (typeof error === "object" && error && "message" in error && typeof error.message === "string")
+    return error.message;
+  return String(error);
+}
+
+export const isAccountNotFoundError = (error: unknown, address: string) => {
+  return getErrorMessage(error)?.includes(`account ${address} not found`);
+}
+export const isNonceMismatchError = (error: unknown) => {
+  const matchMessage = "account sequence mismatch";
+  const includes = getErrorMessage(error).includes(matchMessage);
+  if (includes)
+    return error as Error;
+
+  return false
+}
