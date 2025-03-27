@@ -7,5 +7,5 @@ run(async () => {
   const mnemonic = hdWallet.mnemonic;
   const sdk = DemexSDK.instanceWithMnemonic(mnemonic);
 
-  console.log("address", sdk.wallet.bech32Address);
+  console.log("address", sdk.wallet!.bech32Address);
 });
