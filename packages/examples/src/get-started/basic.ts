@@ -7,5 +7,12 @@ run(async () => {
   const mnemonic = hdWallet.mnemonic;
   const sdk = DemexSDK.instanceWithMnemonic(mnemonic);
 
-  console.log("address", sdk.wallet!.bech32Address);
+  const wallet = sdk.wallet;
+
+  // since DemexSDK.wallet is actually sdk.getWallet(WalletRole.Main),
+  // which tolerates the case where wallet is not found within a map,
+  // hence the type will be `DemexWallet | undefined`.
+  if (!wallet) throw new Error("the impossible just occurred!")
+
+  console.log("address", wallet.bech32Address);
 });
