@@ -3,14 +3,13 @@ import { DeliverTxResponse, isDeliverTxFailure, StdFee } from "@cosmjs/stargate"
 import { BroadcastTxAsyncResponse, Method, Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { BroadcastTxSyncResponse, broadcastTxSyncSuccess } from "@cosmjs/tendermint-rpc/build/tendermint37";
 import { MsgExec } from "@demex-sdk/codecs/data/cosmos/authz/v1beta1/tx";
-import { BN_ZERO, bnOrZero, callIgnoreError, ClientProvider, Cosmos, DefaultGas, Demex, DemexQueryClient, isNonceMismatchError, Network, NetworkConfig, overrideConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, TxDefaultGasDenom, TxGasCostTypeDefaultKey, TxTypes } from "@demex-sdk/core";
-import { DemexWallet, GranteeWallet, SignTxOpts } from "@demex-sdk/wallet";
+import { Network as _Network, BN_ZERO, bnOrZero, callIgnoreError, ClientProvider, Cosmos, DEFAULT_GAS, DEFAULT_GAS_COST_TX_TYPE, DEFAULT_GAS_DENOM, DEFAULT_TX_TIMEOUT_BLOCKS, Demex, DemexQueryClient, isNonceMismatchError, Mutex, Network, NetworkConfig, overrideConfig, PGN_1K, QueueManager, SHIFT_DEC_DECIMALS, TxTypes } from "@demex-sdk/core";
+import { BaseDemexWalletInitOpts, DemexSigner, DemexWallet, GranteeWallet, SignTxOpts } from "@demex-sdk/wallet";
 import BigNumber from "bignumber.js";
 import { SdkError } from "./constant";
+import GasFee from "./fee";
 import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, EnqueueSignTxOpts, ErrorType, OnBroadcastTxFailCallback, OnBroadcastTxSuccessCallback, OnRequestSignCallback, OnSignCompleteCallback, SigningData, SignTxRequest } from "./types";
 import { containsMergeWalletAccountMessage } from "./utils";
-
-export const DEFAULT_TX_TIMEOUT_BLOCKS = 35; // ~1min at 1.7s/blk
 
 export enum WalletRole {
   Main = "main",
@@ -28,6 +27,7 @@ export interface BaseDemexSDKInitOpts {
    * of different signer providers. this should not be used by DemexWallet
    * as identifier for connection type.
    */
+  enableJwtAuth?: boolean
   providerAgent?: string
 
   triggerMerge?: boolean
@@ -38,7 +38,7 @@ export interface BaseDemexSDKInitOpts {
   network?: Network
   networkConfig?: Partial<NetworkConfig>
 
-  txDefaultBroadCastMode?: BroadcastTxMode
+  txDefaultBroadcastMode?: BroadcastTxMode
   disableRetryOnSequenceError?: boolean
   defaultTimeoutBlocks?: number
 
@@ -56,7 +56,7 @@ export interface DemexSDKInitOpts extends BaseDemexSDKInitOpts {
 
 }
 
-export class DemexSDK extends ClientProvider {
+class DemexSDK extends ClientProvider {
   public readonly initOpts: DemexSDKInitOpts
 
   public get network() { return this.networkConfig.network }
@@ -66,16 +66,17 @@ export class DemexSDK extends ClientProvider {
 
   // tx dispatch configurations
   public triggerMerge: boolean;
-  public txDefaultBroadCastMode?: BroadcastTxMode
+  public txDefaultBroadcastMode?: BroadcastTxMode
   public disableRetryOnSequenceError: boolean
+
+  public enableJwtAuth: boolean;
 
   // tx queue management
   private txSignManager: QueueManager<SignTxRequest>
   private txDispatchManager: QueueManager<BroadcastTxRequest>
   private defaultTimeoutBlocks: number
 
-  private txGasCosts: Record<string, BigNumber> | null = null
-  private txGasPrices: Record<string, BigNumber> | null = null
+  private _gasFee: GasFee | null = null
 
   private onRequestSign?: OnRequestSignCallback;
   private onSignComplete?: OnSignCompleteCallback;
@@ -93,11 +94,12 @@ export class DemexSDK extends ClientProvider {
 
     this.initOpts = opts;
 
-    this.txDefaultBroadCastMode = opts.txDefaultBroadCastMode;
+    this.txDefaultBroadcastMode = opts.txDefaultBroadcastMode;
     this.disableRetryOnSequenceError = opts.disableRetryOnSequenceError ?? false;
     this.defaultTimeoutBlocks = opts.defaultTimeoutBlocks ?? DEFAULT_TX_TIMEOUT_BLOCKS;
 
     this.triggerMerge = opts.triggerMerge ?? false;
+    this.enableJwtAuth = opts.enableJwtAuth ?? true;
 
     this.onRequestSign = opts.onRequestSign;
     this.onSignComplete = opts.onSignComplete;
@@ -120,8 +122,46 @@ export class DemexSDK extends ClientProvider {
     return await this.queueTx(messages, signOpts, broadcastOpts);
   }
 
-  public async setGrantee(wallet: GranteeWallet) {
-    this.wallets[WalletRole.Grantee] = wallet;
+  public generateCloneOpts(): DemexSDKInitOpts {
+    return {
+      // init with original opts provided during origin wallet instantiation
+      ...this.initOpts,
+      networkConfig: this.networkConfig,
+
+      // override clients if already initialized
+      tmClient: this._tmClient,
+      queryClient: this._queryClient,
+
+      // copy other configurations that may be assigned post-instantiation      
+      txDefaultBroadcastMode: this.txDefaultBroadcastMode,
+      disableRetryOnSequenceError: this.disableRetryOnSequenceError,
+      defaultTimeoutBlocks: this.defaultTimeoutBlocks,
+
+      triggerMerge: this.triggerMerge,
+
+      onRequestSign: this.onRequestSign,
+      onSignComplete: this.onSignComplete,
+      onBroadcastTxSuccess: this.onBroadcastTxSuccess,
+      onBroadcastTxFail: this.onBroadcastTxFail,
+    }
+  }
+
+  public generateWalletInitOpts(): BaseDemexWalletInitOpts {
+    return {
+      tmClient: this._tmClient,
+      queryClient: this._queryClient,
+
+      networkConfig: this.networkConfig,
+    }
+  }
+
+  public async setGrantee(granteeMnemonics?: string) {
+    if (granteeMnemonics) {
+      const walletOpts = this.generateWalletInitOpts();
+      const granteeWallet = GranteeWallet.withMnemonic(granteeMnemonics, undefined, walletOpts);
+      this.setWallet(granteeWallet, WalletRole.Grantee);
+    } else
+      this.removeWallet(WalletRole.Grantee);
   }
 
   public isGranteeEligible(messages: readonly EncodeObject[]) {
@@ -144,9 +184,22 @@ export class DemexSDK extends ClientProvider {
     }
   }
 
-  private getWallet(roleOrAddress: string = WalletRole.Main): DemexWallet | undefined {
+  public getWallet(roleOrAddress: string = WalletRole.Main): DemexWallet | undefined {
     if (this.wallets[roleOrAddress]) return this.wallets[roleOrAddress];
-    return Object.values(this.wallets).find(w => w.role === roleOrAddress);
+  }
+  private setWallet(wallet: DemexWallet, role: WalletRole = WalletRole.Main) {
+    this.wallets[wallet.bech32Address] = wallet;
+    if (role) {
+      this.wallets[role] = wallet;
+    }
+  }
+  private removeWallet(roleOrAddress: string) {
+    const wallet = this.wallets[roleOrAddress];
+    if (!wallet) return;
+    delete this.wallets[roleOrAddress];
+
+    if (roleOrAddress !== wallet.bech32Address)
+      delete this.wallets[wallet.bech32Address];
   }
   private getSigningWallet(roleOrAddress: string = WalletRole.Main): DemexWallet {
     const wallet = this.getWallet(roleOrAddress);
@@ -202,13 +255,17 @@ export class DemexSDK extends ClientProvider {
     return promise;
   }
 
+  private isRole(address: string, role: WalletRole) {
+    return this.wallets[role]?.bech32Address === address;
+  }
+
   private async signTx(txRequest: SignTxRequest) {
     const { bypassGrantee, triggerMerge, signOpts = {}, messages, handler, signerAddress } = txRequest;
     const { memo = "", fee, feeDenom, feeGranter, timeoutHeight } = signOpts.tx ?? {};
     try {
       const wallet = this.recommendSigningWallet(messages, { bypassGrantee, signerAddress });
       const signingData: SigningData = { signer: wallet.signer, ...txRequest };
-      if (wallet.role === WalletRole.Grantee) {
+      if (this.isRole(wallet.bech32Address, WalletRole.Grantee)) {
         const grantee = wallet as GranteeWallet;
         const granter = this.getSigningWallet(WalletRole.Main);
         signingData.messages = [grantee.constructExecMessage(txRequest.messages)];
@@ -223,7 +280,7 @@ export class DemexSDK extends ClientProvider {
         this.triggerWalletAccMergeIfRequired(signingData.messages, wallet);
       }
 
-      const txFee = fee ?? await this.estimateTxFee(signingData.messages, feeDenom ?? TxDefaultGasDenom, feeGranter);
+      const txFee = fee ?? await this.estimateTxFee(signingData.messages, feeDenom ?? DEFAULT_GAS_DENOM, feeGranter);
       const txTimeoutHeight = timeoutHeight ?? await this.getTimeoutHeight();
 
       signOpts.tx = {
@@ -260,7 +317,7 @@ export class DemexSDK extends ClientProvider {
       signedTx,
       handler: { resolve, reject },
     } = txRequest;
-    const broadcastMode = broadcastOpts?.mode ?? this.txDefaultBroadCastMode;
+    const broadcastMode = broadcastOpts?.mode ?? this.txDefaultBroadcastMode;
     const broadcastFunc = this.getBroadcastFunc(broadcastMode);
     const wallet = this.getSigningWallet(signerAddress);
 
@@ -340,25 +397,45 @@ export class DemexSDK extends ClientProvider {
     return await wallet.reloadAccount();
   }
 
-  public async getGasCost(msgTypeUrl: string): Promise<BigNumber> {
-    if (!this.txGasCosts) {
-      const queryClient = await this.getQueryClient();
-      const { msgGasCosts } = await queryClient.fee.MsgGasCostAll({ pagination: PGN_1K });
-      this.txGasCosts = Object.fromEntries(msgGasCosts.map(cost => [cost.msgType, bnOrZero(cost.gasCost)]));
+  public async getGasFee(): Promise<GasFee> {
+    const release = await (this._mutexes.gasFee ??= new Mutex()).lock();
+    try {
+      if (!this._gasFee) {
+        const queryClient = await this.getQueryClient();
+        const { msgGasCosts } = await queryClient.fee.MsgGasCostAll({ pagination: PGN_1K });
+        const txGasCosts = Object.fromEntries(msgGasCosts.map(cost => [cost.msgType, bnOrZero(cost.gasCost)]));
+
+        const { minGasPrices } = await queryClient.fee.MinGasPriceAll({ pagination: PGN_1K });
+        const txGasPrices = Object.fromEntries(minGasPrices.map(cost => [cost.denom, bnOrZero(cost.gasPrice).shiftedBy(-SHIFT_DEC_DECIMALS)]));
+
+        this._gasFee = new GasFee(txGasCosts, txGasPrices);
+      }
+      return this._gasFee;
+    } finally {
+      release();
     }
-    const gasCost = this.txGasCosts[msgTypeUrl] ?? this.txGasCosts[TxGasCostTypeDefaultKey];
+  }
+
+  public async getGasCosts(): Promise<Record<string, BigNumber>> {
+    const gasFee = await this.getGasFee();
+    return gasFee.txGasCosts;
+  }
+  public async getGasCost(msgTypeUrl: string): Promise<BigNumber> {
+    const txGasCosts = await this.getGasCosts();
+    const gasCost = txGasCosts[msgTypeUrl] ?? txGasCosts[DEFAULT_GAS_COST_TX_TYPE];
     if (!gasCost) {
-      throw new SdkError(`unable to obtain gas cost for message type: ${msgTypeUrl} and default key: ${TxGasCostTypeDefaultKey}`);
+      throw new SdkError(`unable to obtain gas cost for message type: ${msgTypeUrl} and default key: ${DEFAULT_GAS_COST_TX_TYPE}`);
     }
     return gasCost;
   }
+
+  public async getGasPrices(): Promise<Record<string, BigNumber>> {
+    const gasFee = await this.getGasFee();
+    return gasFee.txGasPrices;
+  }
   public async getGasPrice(denom: string): Promise<BigNumber | null> {
-    if (!this.txGasPrices) {
-      const queryClient = await this.getQueryClient();
-      const { minGasPrices } = await queryClient.fee.MinGasPriceAll({ pagination: PGN_1K });
-      this.txGasPrices = Object.fromEntries(minGasPrices.map(cost => [cost.denom, bnOrZero(cost.gasPrice).shiftedBy(-SHIFT_DEC_DECIMALS)]));
-    }
-    return this.txGasPrices[denom] ?? null;
+    const txGasPrices = await this.getGasPrices();
+    return txGasPrices[denom] ?? null;
   }
 
   private async getTotalGasCost(messages: readonly EncodeObject[]) {
@@ -394,24 +471,76 @@ export class DemexSDK extends ClientProvider {
           denom,
         },
       ],
-      gas: DefaultGas.toString(10),
+      gas: DEFAULT_GAS.toString(10),
       granter,
     };
   }
 
   private async addAdditionalGasCost(message: EncodeObject) {
     switch (message.typeUrl) {
-      case TxTypes.MsgExec: return await this.getExecGasCost(message.value as MsgExec);
+      case TxTypes.MsgExec: {
+        const { msgs } = message.value as MsgExec
+        return await this.getTotalGasCost(msgs);
+      }
     }
     return BN_ZERO;
-  }
-
-  private async getExecGasCost(message: MsgExec) {
-    const { msgs } = message;
-    return await this.getTotalGasCost(msgs);
   }
 
   public static instance(opts: DemexSDKInitOpts = {}) {
     return new DemexSDK(opts);
   }
+
+  public static instanceWithMnemonic(mnemonic: string, hdPath?: string, opts: DemexSDKInitOpts = {}) {
+    const sdk = DemexSDK.instance(opts);
+    const walletOpts = sdk.generateWalletInitOpts()
+    const wallet = DemexWallet.withMnemonic(mnemonic, hdPath, {
+      ...walletOpts,
+      providerAgent: opts.providerAgent,
+      triggerMerge: opts.triggerMerge,
+    });
+    sdk.setWallet(wallet);
+    return sdk;
+  }
+
+  public static instanceWithPrivateKey(privateKey: string, opts: DemexSDKInitOpts = {}) {
+    const sdk = DemexSDK.instance(opts);
+    const walletOpts = sdk.generateWalletInitOpts()
+    const wallet = DemexWallet.withPrivateKey(privateKey, {
+      ...walletOpts,
+      providerAgent: opts.providerAgent,
+      triggerMerge: opts.triggerMerge,
+    });
+    sdk.setWallet(wallet);
+    return sdk;
+  }
+
+  public static instanceWithSigner(signer: DemexSigner, publicKeyBase64: string, opts: DemexSDKInitOpts = {}) {
+    const sdk = DemexSDK.instance(opts);
+    const walletOpts = sdk.generateWalletInitOpts()
+    const wallet = DemexWallet.withSigner(signer, publicKeyBase64, {
+      ...walletOpts,
+      providerAgent: opts.providerAgent,
+      triggerMerge: opts.triggerMerge,
+    });
+    sdk.setWallet(wallet);
+    return sdk;
+  }
+
+  public static instanceWithAddress(address: string, opts: DemexSDKInitOpts = {}) {
+    const sdk = DemexSDK.instance(opts);
+    const walletOpts = sdk.generateWalletInitOpts()
+    const wallet = DemexWallet.withAddress(address, {
+      ...walletOpts,
+      providerAgent: opts.providerAgent,
+      triggerMerge: opts.triggerMerge,
+    });
+    sdk.setWallet(wallet);
+    return sdk;
+  }
 }
+
+namespace DemexSDK {
+  export import Network = _Network;
+}
+
+export { DemexSDK };

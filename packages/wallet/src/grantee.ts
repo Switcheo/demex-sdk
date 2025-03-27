@@ -8,31 +8,24 @@ export type GranteeInitOpts = DemexWalletInitOpts & {
   mnemonic: string
   signer: DemexSigner
   expiry: Date
-  authorisedMessages: Set<string>
-}
-
-export interface GranteeUpdateOpts {
-  mnemonic: string;
-  expiry: Date;
-}
-
-export interface GranteeDetails {
-  expiry: Date;
-  authorisedMessages: string[];
+  authorizedMsgs: Set<string>
+  authorizedMsgsVersion: string
 }
 
 const EXPIRY_BUFFER_PERIOD_SECONDS = 20
 
 export class GranteeWallet extends DemexWallet {
   expiry: Date
-  authorisedMessages: Set<string>
+  authorizedMsgs: Set<string>
+  authorizedMsgsVersion: string
   signer: DemexSigner
 
   constructor(opts: GranteeInitOpts) {
     super(opts);
     this.signer = opts.signer;
     this.expiry = opts.expiry;
-    this.authorisedMessages = opts.authorisedMessages;
+    this.authorizedMsgs = opts.authorizedMsgs;
+    this.authorizedMsgsVersion = opts.authorizedMsgsVersion;
   }
 
   private hasExpired() {
@@ -42,7 +35,12 @@ export class GranteeWallet extends DemexWallet {
   }
 
   private isMessageAuthorised(message: string) {
-    return this.authorisedMessages.has(message);
+    return this.authorizedMsgs.has(message);
+  }
+
+  public setAuthorisedMessages(messages: Set<string>, version: string) {
+    this.authorizedMsgs = messages;
+    this.authorizedMsgsVersion = version;
   }
 
   public isAuthorised(messages: Set<string>) {
