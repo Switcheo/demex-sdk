@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/amino-types",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
@@ -13,7 +13,7 @@
   "module": "./dist-es/index.js",
   "types": "./dist-types/index.d.ts",
   "dependencies": {
-    "@demex-sdk/codecs": "0.1.0",
+    "@demex-sdk/codecs": "0.2.0",
     "tslib": "^2.6.2"
   },
   "exports": {

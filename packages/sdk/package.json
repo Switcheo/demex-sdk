@@ -1,6 +1,6 @@
 {
   "name": "@demex-sdk/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "scripts": {
     "build": "concurrently 'yarn:build:cjs' 'yarn:build:es' 'yarn:build:types'",
@@ -15,9 +15,9 @@
   "dependencies": {
     "@cosmjs/stargate": "^0.32.4",
     "@cosmjs/tendermint-rpc": "^0.32.4",
-    "@demex-sdk/codecs": "0.1.0",
-    "@demex-sdk/core": "0.1.0",
-    "@demex-sdk/wallet": "0.1.0",
+    "@demex-sdk/codecs": "0.2.0",
+    "@demex-sdk/core": "0.2.0",
+    "@demex-sdk/wallet": "0.2.0",
     "bignumber.js": "^9.1.2",
     "tslib": "^2.6.2",
     "typescript": "^5.7.2"
