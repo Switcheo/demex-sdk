@@ -1,7 +1,6 @@
 import { EncodeObject } from "@cosmjs/proto-signing";
 import { Account, SignerData, StdFee } from "@cosmjs/stargate";
 import { Cosmos } from "@demex-sdk/core/src";
-import { DemexSigner } from "./signer";
 
 export interface WalletAccount extends Account {
   isMerged?: boolean

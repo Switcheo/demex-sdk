@@ -8,7 +8,7 @@ import { BaseDemexWalletInitOpts, DemexSigner, DemexWallet, GranteeWallet, SignT
 import BigNumber from "bignumber.js";
 import { SdkError } from "./constant";
 import GasFee from "./fee";
-import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, EnqueueSignTxOpts, ErrorType, OnBroadcastTxFailCallback, OnBroadcastTxSuccessCallback, OnRequestSignCallback, OnSignCompleteCallback, SigningData, SignTxRequest } from "./types";
+import { BroadcastTxMode, BroadcastTxOpts, BroadcastTxRequest, BroadcastTxResult, DemexBroadcastError, ErrorType, OnBroadcastTxFailCallback, OnBroadcastTxSuccessCallback, OnRequestSignCallback, OnSignCompleteCallback, SendTxSignOpts, SigningData, SignTxRequest } from "./types";
 import { containsMergeWalletAccountMessage } from "./utils";
 
 export enum WalletRole {
@@ -155,6 +155,32 @@ class DemexSDK extends ClientProvider {
     }
   }
 
+  public async sendTx(msg: EncodeObject, opts?: SendTxSignOpts): Promise<DeliverTxResponse> {
+    return this.sendTxs([msg], opts);
+  }
+  public async sendTxs(msgs: EncodeObject[], opts: SendTxSignOpts = {}): Promise<DeliverTxResponse> {
+    if (this.triggerMerge || opts?.triggerMerge) {
+      // TODO: trigger merge account tx
+      // await this.sendInitialMergeAccountTx(msgs, opts)
+    }
+    try {
+      const roleOrAddress = opts?.signerAddress ?? WalletRole.Main;
+      const wallet = this.getWallet(roleOrAddress);
+      if (!wallet) throw new SdkError("cannot obtain wallet for sendTx, using " + roleOrAddress);
+
+      const result = await this.signAndBroadcast(msgs, { ...opts, signerAddress: wallet.bech32Address});
+      if (msgs[0]?.typeUrl === TxTypes.MsgMergeAccount) {
+        await wallet!.updateMergeAccountStatus();
+      }
+      await callIgnoreError(() => this.onBroadcastTxSuccess?.(msgs));
+      return result as DeliverTxResponse;
+    }
+    catch (error) {
+      await callIgnoreError(() => this.onBroadcastTxFail?.(msgs));
+      throw error
+    }
+  }
+
   public async setGrantee(granteeMnemonics?: string) {
     if (granteeMnemonics) {
       const walletOpts = this.generateWalletInitOpts();
@@ -237,7 +263,7 @@ class DemexSDK extends ClientProvider {
 
   private queueTx(
     messages: EncodeObject[],
-    signTxOpts?: EnqueueSignTxOpts,
+    signTxOpts?: SendTxSignOpts,
     broadcastOpts?: BroadcastTxOpts
   ): Promise<BroadcastTxResult> {
     const promise = new Promise<BroadcastTxResult>((resolve, reject) => {

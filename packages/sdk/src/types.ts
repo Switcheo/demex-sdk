@@ -14,10 +14,10 @@ export interface PromiseHandler<T> {
   reject: (reason?: any) => void;
 }
 
-export interface EnqueueSignTxOpts extends SignTxOpts {
+export interface SendTxSignOpts extends SignTxOpts {
   signerAddress?: string
-  bypassGrantee?: boolean;
   triggerMerge?: boolean;
+  bypassGrantee?: boolean;
 }
 
 export interface SignTxRequest {
@@ -27,7 +27,7 @@ export interface SignTxRequest {
   triggerMerge?: boolean;
   messages: readonly EncodeObject[];
   broadcastOpts?: BroadcastTxOpts;
-  signOpts?: SignTxOpts;
+  signOpts?: SendTxSignOpts;
   handler: PromiseHandler<BroadcastTxResult>;
 }
 export interface SigningData extends SignTxRequest {

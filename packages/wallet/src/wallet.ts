@@ -156,6 +156,11 @@ export class DemexWallet extends ClientProvider {
     return info
   }
 
+  public async updateMergeAccountStatus() {
+    const isMerged = await this.getMergedAccountStatus();
+    this.updateWalletAccount({ isMerged });
+  }
+
   private async getAccountInfo(bech32Address: string, evmBech32Address?: string) {
     const account: Account | undefined = await this.getAccount(bech32Address);
     if (account) return account;
@@ -163,11 +168,6 @@ export class DemexWallet extends ClientProvider {
       const evmAccount: Account | undefined = await this.getAccount(evmBech32Address);
       if (evmAccount) return evmAccount;
     }
-  }
-
-  private async updateMergeAccountStatus() {
-    const isMerged = await this.getMergedAccountStatus();
-    this.updateWalletAccount({ isMerged });
   }
 
   private async getMergedAccountStatus(): Promise<boolean> {
