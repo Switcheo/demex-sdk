@@ -74,9 +74,9 @@ export class DemexBroadcastError extends SdkError {
   }
 }
 
-export type OnRequestSignCallback = (msgs: readonly EncodeObject[]) => PromiseLike<void>;
-export type OnSignCompleteCallback = (signature: Uint8Array | null) => PromiseLike<void>;
-export type OnBroadcastTxFailCallback = (msgs: readonly EncodeObject[]) => PromiseLike<void>;
-export type OnBroadcastTxSuccessCallback = (msgs: readonly EncodeObject[]) => PromiseLike<void>;
+export type OnRequestSignCallback = (msgs: readonly EncodeObject[]) => PromiseLike<void> | void;
+export type OnSignCompleteCallback = (signature: Uint8Array | null) => PromiseLike<void> | void;
+export type OnBroadcastTxFailCallback = (msgs: readonly EncodeObject[]) => PromiseLike<void> | void;
+export type OnBroadcastTxSuccessCallback = (msgs: readonly EncodeObject[]) => PromiseLike<void> | void;
 
 export type SignAndBroadcastOpts = Partial<SignTxOpts & BroadcastTxOpts>;

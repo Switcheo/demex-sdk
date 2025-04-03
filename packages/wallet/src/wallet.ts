@@ -6,18 +6,18 @@ import { Account, accountFromAny, SignerData, SigningStargateClient } from "@cos
 import { Tendermint37Client } from "@cosmjs/tendermint-rpc";
 import { AminoTypesMap } from "@demex-sdk/amino-types";
 import { Cosmos, registry } from "@demex-sdk/codecs";
-import { BIP44Path, ClientProvider, DefaultGas, DemexQueryClient, isAccountNotFoundError, Network, NetworkConfig, overrideConfig, stringOrBufferToBuffer } from "@demex-sdk/core";
+import { BIP44Path, ClientProvider, DEFAULT_GAS, DemexQueryClient, isAccountNotFoundError, Network, NetworkConfig, overrideConfig, stringOrBufferToBuffer } from "@demex-sdk/core";
 import * as Bip39 from "bip39";
 import elliptic from "elliptic";
+import { getEvmHexAddress } from "./address";
 import { DemexEIP712SigningClient } from "./eip712signingClient";
 import { WalletError } from "./errors";
 import { DemexEIP712Signer, DemexNonSigner, DemexPrivateKeySigner, DemexSigner, isDemexEIP712Signer } from "./signer";
 import { SignTxOpts, SignTxRequest, SignTxResult, WalletAccount } from "./types";
-import { getEvmHexAddress } from "./address";
 
 const DEFAULT_STD_FEE: StdFee = {
   amount: [],
-  gas: DefaultGas.toString(10),
+  gas: DEFAULT_GAS.toString(10),
 }
 type RequireOnly<T, K extends keyof T> = Partial<T> & Required<Pick<T, K>>;
 
@@ -51,7 +51,6 @@ export interface BaseDemexWalletInitOpts {
    * as identifier for connection type.
    */
   providerAgent?: string
-  role?: string
 
   triggerMerge?: boolean
 
@@ -72,8 +71,6 @@ export class DemexWallet extends ClientProvider {
   // wallet signer/account info 
   public readonly signer: DemexSigner
   public readonly providerAgent?: string
-
-  public readonly role?: string
 
   public readonly publicKey: Buffer
 
@@ -101,7 +98,6 @@ export class DemexWallet extends ClientProvider {
     this.initOpts = opts;
 
     this.signer = opts.signer;
-    this.role = opts.role;
     this.providerAgent = opts.providerAgent;
     this._tmClient = opts.tmClient;
     this._queryClient = opts.queryClient;

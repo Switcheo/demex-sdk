@@ -28,6 +28,10 @@ export abstract class ClientProvider {
     this._stargateClient = opts.stargateClient;
   }
 
+  public getNetworkConfig() {
+    return this.networkConfig;
+  }
+
   public async getTmClient(): Promise<Tendermint37Client> {
     const release = await (this._mutexes.tmClient ??= new Mutex()).lock();
     try {

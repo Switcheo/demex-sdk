@@ -1,3 +1,3 @@
-export * from "./tx";
-export * from "./query";
+export * from "./defaults";
 export * from "./errors";
+export * from "./query";

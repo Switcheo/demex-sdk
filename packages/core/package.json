@@ -15,6 +15,7 @@
   "dependencies": {
     "@cosmjs/stargate": "^0.32.4",
     "@cosmjs/tendermint-rpc": "^0.32.4",
+    "@cosmjs/encoding": "^0.32.4",
     "@demex-sdk/codecs": "0.2.0",
     "@improbable-eng/grpc-web": "^0.15.0",
     "@improbable-eng/grpc-web-node-http-transport": "^0.15.0",
