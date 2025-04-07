@@ -1,5 +1,11 @@
 # @demex-sdk/node-ledger
 
+## 0.2.1
+
+### Patch Changes
+
+- move transaction broadcast from DemexWallet to DemexSDK
+
 ## 0.2.0
 
 ### Minor Changes
